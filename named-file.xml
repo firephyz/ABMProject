@@ -1,0 +1,36 @@
+<environment relationType="spatial">
+  <spatialRelation dimensions="2" wrap="false"/>
+  <globalParameters>
+  <!-- Add attribute for parameters that specifies if the environment changes the parameter's value over time -->
+    <gvar name="temperature" value="0.0" \>
+  </globalParameters>
+  <!-- Local parameter resolution is always at the simulation cell level.  -->
+  <localParameters>
+  </localParameters>
+  <!-- Check to make sure that all dynamic (under the environment) variables are described in here and that
+       all non-dynamic variables are not. -->
+  <parameterRules>
+    <varRule name="temperature">
+    </varRule>
+  </parameterRules>
+</environment>
+<agentDefinitions>
+  <agent type='AgentType'>
+    <agentScope>
+      <!-- Parameters -->
+    </agentScope>
+    <rules>
+      <state name='StateA'>
+        <stateScope>
+          <!-- Parameters -->
+        </stateScope>
+        <logic>
+          <!-- XML sublanguage -->
+        </logic>
+    </rules>
+  </agent>
+</agentDefinitions>
+
+<!-- Should be in separate file -->
+<initialCondition>
+</initialCondition>
