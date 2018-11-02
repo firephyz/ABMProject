@@ -1,0 +1,64 @@
+<!-- Must define simulation cells that can act as source compartments for other agents -->
+<!-- Simulation cell must somehow be able to support multiple agent types within it.-->
+
+<environment relationType="spatial">
+  <spatialRelation dimensions="2" wrap="true"/>
+  <globalParameters>
+  <!-- Add attribute for parameters that specifies if the environment changes the parameter's value over time -->
+    <var name="chemo_diffusion_const" value="0.0">
+  </globalParameters>
+  <!-- Local parameter resolution is always at the simulation cell level.  -->
+  <localParameters>
+    <var name="chemokine" dynamic="true"/>
+    <var name="bacteria" dynamic="true"/>
+  </localParameters>
+  <!-- Check to make sure that all dynamic (under the environment) variables are described in here and that
+       all non-dynamic variables are not. -->
+  <parameterRules>
+    <varRule name="chemokine">
+      <!-- Rules -->
+      c(t+1)=c(1-L) + L(sum(c_neighbors)) / 4
+    </varRule>
+    <varRule name="bacteria">
+      <!-- Rules -->
+    </varRule>
+  </parameterRules>
+</environment>
+<agentDefinitions>
+  <agent type="macrophage">
+    <agentScope>
+      <!-- Parameters -->
+    </agentScope>
+    <rules>
+      <state name='Resting'>
+      </state>
+      <state name='Infected'>
+      </state>
+      <state name='ChronicInfected'>
+      </state>
+      <state name='Active'>
+      </state>
+      <state name='Dead'>
+      </state>
+    </rules>
+  </agent>
+  <agent type="tcell">
+  </agent>
+</agentDefinitions>
+
+<!-- Should be in separate file -->
+<initialCondition>
+</initialCondition>
+
+<!--
+Cellular automata perspective vs high level model perspective
+ - Close to the implementation or close to the model
+<CommunicationInterface>
+  <Ask>
+  {type AgentType, var VarName} // Asking about AgentType's member variable VarName
+  <Answer>
+<EnvironmentalInterface>
+...
+
+Definition of neighborhoods & how to interface those between environment and agent logic
+-->
