@@ -1,38 +1,98 @@
 <environment relationType="spatial">
-  <spatialRelation dimensions="2" wrap="false"/>
+  <spatialRelation dimensions="2" wrap="true"/>
 </environment>
 <agentDefinitions>
   <agent type='AgentType'>
     <agentScope>
-      <!-- Parameters -->
+      <var type='bool' id='is-alive'/>
     </agentScope>
     <rules>
-      <state name='StateA'>
-        <stateScope>
-          <!-- Parameters -->
-        </stateScope>
+      <stateScope>
+        <var type='int' id='neighbors-alive'/>
+      </stateScope>
+      <state name='Alive'>
         <logic>
+          <assign>
+            <var id='neighbors-alive'/>
+            <ask name='living-neighbors'/>
+          </assign>
           <if>
-
+            <predicate>
+              <var id='is-alive'/>
+            </predicate>
+            <then>
+              <if>
+                <predicate>
+                  <not>
+                    <or>
+                      <equal>
+                        <var id='neighbors-alive'>
+                        <constant type='int' value='2'>
+                      </equal>
+                      <equal>
+                        <var id='neighbors-alive'>
+                        <constant type='int' value='3'>
+                      </equal>
+                    </or>
+                  </not>
+                </predicate>
+                <then>
+                  <assign>
+                    <var id='is-alive'>
+                    <constant type='bool' value='false'>
+                  </assign>
+                </then>
+              </if>
+            </then>
+            <else>
+              <if>
+                <predicate>
+                  <equal>
+                    <var id='neighbors-alive'>
+                    <constant type='int' value='3'>
+                  </equal>
+                </predicate>
+                <then>
+                  <assign>
+                    <var id='is-alive'/>
+                    <constant type='bool' value='true'/>
+                  </assign>
+                </then>
+              </if>
+            </else>
           </if>
         </logic>
     </rules>
+    <CommsInterface neighborhood="square_2">
+      <Question name='living-neighbors'/>
+        <logic>
+          <var type='int' id='count'/>
+          <iterate list='neighbors' param='response'>
+            <if>
+              <predicate>
+                <equal>
+                  <var id='response'/>
+                  <constant type='bool' value='true'/>
+                </equal>
+              </predicate>
+              <then>
+                <assign>
+                  <var id='count'/>
+                  <add>
+                    <var id='count'/>
+                    <constant type='int' value='1'>
+                  </add>
+                </assign>
+              </then>
+          </iterate>
+          <return id='count'/>
+        </logic>
+      </Question>
+      <Answers>
+        <response>
+          <var id='is-alive'/>
+        </response>
+      </Answers>
+    </CommsInterface>
   </agent>
 </agentDefinitions>
-
-<!-- Should be in separate file -->
-<initialCondition>
-</initialCondition>
-
-<!--
-Cellular automata perspective vs high level model perspective
- - Close to the implementation or close to the model
-<CommunicationInterface>
-  <Ask>
-  {type AgentType, var VarName} // Asking about AgentType's member variable VarName
-  <Answer>
-<EnvironmentalInterface>
-...
-
-Definition of neighborhoods & how to interface those between environment and agent logic
--->

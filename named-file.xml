@@ -1,3 +1,9 @@
+<!-- Keywords -->
+<!-- neighborhood: corresponds to the neighboorhood declared in the comms interface -->
+
+<!-- Question: Is it adequate to restrict answer data types to basic types
+ like bool, int, float, etc. No arrays. -->
+
 <environment relationType="spatial">
   <spatialRelation dimensions="2" wrap="false"/>
   <globalParameters>
@@ -34,3 +40,16 @@
 <!-- Should be in separate file -->
 <initialCondition>
 </initialCondition>
+
+<!--
+Cellular automata perspective vs high level model perspective
+ - Close to the implementation or close to the model
+<CommunicationInterface>
+  <Ask>
+  {type AgentType, var VarName} // Asking about AgentType's member variable VarName
+  <Answer>
+<EnvironmentalInterface>
+...
+
+Definition of neighborhoods & how to interface those between environment and agent logic
+-->
