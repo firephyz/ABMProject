@@ -9,35 +9,38 @@
 // Extensions include variable bindings to global structures
 // Spatial extension will provide simulation space and access to the agents
 
-// Q & A Dichotomy: Do agents ask questions or give answers?
+// Q & A Dichotomy: Do agents ask questions or give answers? no.
 
 extern AgentModel model;
 
 int main() {
 
-    SimSpace space(model);
-    //Communications::init();
+  SimSpace space(model);
+  //Communications::init();
 
-    while(true) {
-        // Ask every agent's question
-        for(auto& agent : space.getAgents()) {
-            agent.askQuestions(neighbors);
+  while(true) {
+    // Ask every agent's question
+    for(auto& sender : space.cells) {
+      void * agent_answer = giveAnswer(sender.mlm_data);
+      for(auto& receiver : space.cells) {
+        if(sender != receiver) {
+          CommsNeighborhood n = giveNeighborhood(receiver.mlm_data);
+          if(n.predicate(receiver, sender, n.size)) {
+            receiveAnswer(receiver.mlm_data, agent_answer);
+          }
         }
-
-        for(auto& agent : space.getAgents()) {
-            agent.processStateLogic();
-        }
-
-        for(auto& agent : space.getAgents()) {
-            // Updates internal and local variables of the agent
-            agent.update();
-        }
-
-        // Logging Extension stufffff
-        // for(auto& agent : space.getAgents()) {
-        //     agent.log();
-        // }
+      }
     }
 
-    return 0;
+    for(auto& cell : space.cells) {
+      updateAgent(cell.mlm_data);
+    }
+
+    // Logging Extension stufffff
+    // for(auto& agent : space.getAgents()) {
+    //     agent.log();
+    // }
+  }
+
+  return 0;
 }

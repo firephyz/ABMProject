@@ -7,17 +7,16 @@
 
 class SimCell {
 public:
-  bool has_agent;
-  AgentType agent_id;
-  std::array<uint8_t> local_agent_bytes;
-  std::array<uint8_t> local_parameter_bytes;
+  int x;
+  int y;
+  void * mlm_data;
 };
 
 class SimSpace {
 public:
   std::vector<SimCell> cells;
-  
-  SimSpace(AgentModel& model);
+
+  SimSpace();
   ~SimSpace();
 };
 

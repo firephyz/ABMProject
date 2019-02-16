@@ -38,18 +38,14 @@
 
 // All ABM models must implement these types
 extern enum AgentType;
-extern struct AgentAnswerData;
+
+// get AgentAnswerBlock
+AgentAnswerBlock giveAnswer(void * agent);
 
 struct AgentPosition {
   double x;
   double y;
 };
-
-class AgentAnswer {
-  enum AgentType agent_type;
-  struct AgentPosition pos;
-  struct AgentAnswerData data;
-}
 
 class AgentModel {
 //  std::vector<Agent> agents;

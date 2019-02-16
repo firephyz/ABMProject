@@ -8,17 +8,14 @@
 //       - Explicit: sim space data is outside of agents
 //       - Implicit: sim space data is internal to agents. Moves processing to agent internals
 
-SimCell::SimCell(AgentModel& model)
-  : has_agent(false)
-  , agent_id(AgentType::None)
-  , local_agent_bytes(model.max_agent_size)
-  , local_parameter_bytes(model.parameter_field_size)
+SimCell::SimCell()
+  : mlm_data(NULL)
 {}
 
-SimSpace::SimSpace(AgentModel& model) 
-  : sim_cells(model.x_res * model.y_res, SimCell(model))
+SimSpace::SimSpace() 
+  : sim_cells()
 {
-    // Set initial state from model
+    for()
 }
 
 SimSpace::~SimSpace() {

@@ -1,3 +1,4 @@
+<!-- Simulation provided getDistance(agentA, agentB) function -->
 <environment relationType="spatial">
   <spatialRelation dimensions="2" wrap="true"/>
 </environment>
