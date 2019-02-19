@@ -15,6 +15,12 @@ extern AgentModel model;
 
 int main() {
 
+  // Load model dynamic library
+  // giveAnswer
+  // giveNeighborhood
+  // recieveAnswer
+  // num_dimensions and dimensions
+
   SimSpace space(model);
   //Communications::init();
 
@@ -25,7 +31,7 @@ int main() {
       for(auto& receiver : space.cells) {
         if(sender != receiver) {
           CommsNeighborhood n = giveNeighborhood(receiver.mlm_data);
-          if(n.predicate(receiver, sender, n.size)) {
+          if(n.predicate(space, receiver, sender, n.size)) {
             receiveAnswer(receiver.mlm_data, agent_answer);
           }
         }

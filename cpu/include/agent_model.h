@@ -40,12 +40,7 @@
 extern enum AgentType;
 
 // get AgentAnswerBlock
-AgentAnswerBlock giveAnswer(void * agent);
-
-struct AgentPosition {
-  double x;
-  double y;
-};
+extern void * giveAnswer(void * mlm_data);
 
 class AgentModel {
 //  std::vector<Agent> agents;
