@@ -1,6 +1,8 @@
 #ifndef AGENT_MODEL_INCLUDED
 #define AGENT_MODEL_INCLUDED
 
+#include "communications.h"
+
 // Verify all variables are defined when we load the model
 
 // Agents must implement the Agent class
@@ -37,17 +39,17 @@
 // }
 
 // All ABM models must implement these types
-extern enum AgentType;
+//extern enum AgentType;
 
 // get AgentAnswerBlock
-extern void * giveAnswer(void * mlm_data);
+//extern void * giveAnswer(void * mlm_data);
 
 class AgentModel {
 //  std::vector<Agent> agents;
 public:
-  size_t max_agent_size;
-  size_t parameter_field_size;
-//  static MARS::DataType getFieldByName(const std::string& name);
+  void * giveAnswer(void * mlm_data);
+  void receiveAnswer(void * mlm_data, void * answer);
+  CommsNeighborhood giveNeighborhood(void * mlm_data);
 };
 
 #endif

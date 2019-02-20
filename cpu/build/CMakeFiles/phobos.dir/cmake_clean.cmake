@@ -1,5 +1,7 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/phobos.dir/src/communications.cpp.o"
   "CMakeFiles/phobos.dir/src/main.cpp.o"
+  "CMakeFiles/phobos.dir/src/spatial.cpp.o"
   "phobos.pdb"
   "phobos"
 )

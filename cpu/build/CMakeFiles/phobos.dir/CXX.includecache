@@ -1,0 +1,44 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+.././include/agent_model.h
+communications.h
+.././include/communications.h
+
+.././include/communications.h
+spatial.h
+.././include/spatial.h
+
+.././include/spatial.h
+vector
+-
+agent_model.h
+.././include/agent_model.h
+
+/home/kyle/dev/ABMProject/cpu/src/communications.cpp
+communications.h
+/home/kyle/dev/ABMProject/cpu/src/communications.h
+cmath
+-
+
+/home/kyle/dev/ABMProject/cpu/src/main.cpp
+agent_model.h
+/home/kyle/dev/ABMProject/cpu/src/agent_model.h
+spatial.h
+/home/kyle/dev/ABMProject/cpu/src/spatial.h
+iostream
+-
+
+/home/kyle/dev/ABMProject/cpu/src/spatial.cpp
+spatial.h
+/home/kyle/dev/ABMProject/cpu/src/spatial.h
+agent_model.h
+/home/kyle/dev/ABMProject/cpu/src/agent_model.h
+vector
+-
+

@@ -57,7 +57,7 @@ EQUALS = =
 CMAKE_SOURCE_DIR = /home/kyle/dev/ABMProject/cpu
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/kyle/dev/ABMProject/cpu
+CMAKE_BINARY_DIR = /home/kyle/dev/ABMProject/cpu/build
 
 #=============================================================================
 # Target rules for target CMakeFiles/phobos.dir
@@ -66,7 +66,7 @@ CMAKE_BINARY_DIR = /home/kyle/dev/ABMProject/cpu
 CMakeFiles/phobos.dir/all:
 	$(MAKE) -f CMakeFiles/phobos.dir/build.make CMakeFiles/phobos.dir/depend
 	$(MAKE) -f CMakeFiles/phobos.dir/build.make CMakeFiles/phobos.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/kyle/dev/ABMProject/cpu/CMakeFiles --progress-num=1,2 "Built target phobos"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/kyle/dev/ABMProject/cpu/build/CMakeFiles --progress-num=1,2,3,4 "Built target phobos"
 .PHONY : CMakeFiles/phobos.dir/all
 
 # Include target in all.
@@ -76,9 +76,9 @@ all: CMakeFiles/phobos.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/phobos.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kyle/dev/ABMProject/cpu/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kyle/dev/ABMProject/cpu/build/CMakeFiles 4
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/phobos.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kyle/dev/ABMProject/cpu/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kyle/dev/ABMProject/cpu/build/CMakeFiles 0
 .PHONY : CMakeFiles/phobos.dir/rule
 
 # Convenience name for target.

@@ -6,5 +6,5 @@ CXX_FLAGS =   -std=c++14 -Wall -g
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = 
+CXX_INCLUDES = -I/home/kyle/dev/ABMProject/cpu/./include 
 

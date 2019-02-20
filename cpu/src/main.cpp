@@ -1,3 +1,6 @@
+#include "agent_model.h"
+#include "spatial.h"
+
 #include <iostream>
 
 // Requirements for othe team
@@ -27,12 +30,12 @@ int main() {
   while(true) {
     // Ask every agent's question
     for(auto& sender : space.cells) {
-      void * agent_answer = giveAnswer(sender.mlm_data);
+      void * agent_answer = model.giveAnswer(sender.mlm_data);
       for(auto& receiver : space.cells) {
         if(sender != receiver) {
-          CommsNeighborhood n = giveNeighborhood(receiver.mlm_data);
+          CommsNeighborhood n = model.giveNeighborhood(receiver.mlm_data);
           if(n.predicate(space, receiver, sender, n.size)) {
-            receiveAnswer(receiver.mlm_data, agent_answer);
+            model.receiveAnswer(receiver.mlm_data, agent_answer);
           }
         }
       }
