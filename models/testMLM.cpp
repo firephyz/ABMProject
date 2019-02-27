@@ -1,3 +1,7 @@
+/*                           *
+ *  BOIDS MLM TEST 2/16/2019 *
+ *                           */
+
 #include <string>
 #include <vector>
 #include <stdint.h>
@@ -12,12 +16,12 @@ using answerBlock = std::vector<Answer>;
 enum AgentType{Boid};
 
 typedef struct Answer {
-    uint8_t ID; 
+    integerType ID; 
     dataVector answerData; 
 } Answer;
 
 typedef struct Boid {
-    integerType &ID;
+    integerType ID;
     AgentType type = Boid;
     std::string curState; 
     spatialVector curHeading;
@@ -27,24 +31,17 @@ typedef struct Boid {
 
 // Prototypes
 void giveAnswers();
-void update(void* agent)
-
-
-/*                           *
- *  BOIDS MLM TEST 2/16/2019 *
- *                           */
+void update(void* agent);
+void* initAgent();
+void giveCurHeading(Boid& agent);
+void giveCurPosition(Boid& agent);
 
 int main() {return 0;}
 
 /*                                    *
  * Function to generate agents        *
  *                                    */
-std::vector<auto> generateAgents(uint32_t numOfAgents) {
-    std::vector<Boid> agents;
-    for (uint32_t i = 0; i < numOfAgents; i++) { 
-        
-
-    }
+void* initAgent() {
     
 }
 
@@ -62,19 +59,18 @@ void giveAnswers(void* agent) {
 /*                                                 *
  * Helper function to answer the current heading   *
  *                                                 */
-void giveCurHeading() {
+void giveCurHeading(Boid& agent) {
 
 
 }
 
 /*                                                 *
- * Helper function to answer the current heading   *
+ * Helper function to answer the current positition*
  *                                                 */
-void giveCurHeading() {
+void giveCurPosition(Boid& agent) {
 
 
 }
-
 
 
 /*                                    *
