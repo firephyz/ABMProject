@@ -2,54 +2,53 @@
 #define AGENT_MODEL_INCLUDED
 
 #include "communications.h"
+#include "spatial.h"
 
-// Verify all variables are defined when we load the model
+// Forward declare to avoid circular dependency
+typedef struct comms_neighborhood_t CommsNeighborhood;
+class AgentModel;
 
-// Agents must implement the Agent class
-
-// #include <array>
-// #include <string>
-// #include <vector>
-
-// namespace MARS {
-//   enum DataTypeEnum {
-//     Integer,
-//     Float,
-//   };
-
-//   class DataType {
-//   public:
-//     static struct Integer { int32_t value };
-//     static struct Float { double value };
-
-//     DataType(std::array<uint8_t> data, DataTypeEnum type, size_t offset);
-//   };
-// };
-
-// struct AgentDataField {
-//   std::string name;
-//   MARS::DataTypeEnum type;
-//   size_t offset;
-// }
-
-// class Agent {
-//   std::string agentName;
-//   AgentDataField data_fields;
-
-// }
-
-// All ABM models must implement these types
-//extern enum AgentType;
-
-// get AgentAnswerBlock
-//extern void * giveAnswer(void * mlm_data);
+// Must be outside class to be resolved by dlsym
+// Declared and defined in main during model loading with libdl
+extern void *              (*modelNewAgentPtr)(AgentModel * this_class);
+extern void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_data);
+extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer);
+extern CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data);
+extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data);
 
 class AgentModel {
-//  std::vector<Agent> agents;
 public:
-  void * giveAnswer(void * mlm_data);
-  void receiveAnswer(void * mlm_data, void * answer);
-  CommsNeighborhood giveNeighborhood(void * mlm_data);
+/***********************************************************************
+ * Models must specify these elements                                  *
+ ***********************************************************************/
+  SpatialType space_type;
+  int num_dimensions;
+  size_t * dimensions;
+
+  // Model makers must implement functions below
+  void * modelNewAgent();
+  void * modelGiveAnswer(void * mlm_data);
+  void modelReceiveAnswer(void * mlm_data, void * answer);
+  CommsNeighborhood& modelGiveNeighborhood(void * mlm_data);
+  void modelUpdateAgent(void * mlm_data);
+/***********************************************************************
+ * Model specifc elements done                                         *
+ ***********************************************************************/
+
+
+
+  AgentModel(SpatialType space_type, int num_dimensions, size_t * dimensions)
+    : space_type(space_type)
+    , num_dimensions(num_dimensions)
+    , dimensions(dimensions)
+  {}
+
+  // So we can call these functions in runtime code nicely
+  inline void * newAgent() { return (*modelNewAgentPtr)(this); }
+  inline void * giveAnswer(void * mlm_data) { return (*modelGiveAnswerPtr)(this, mlm_data); }
+  inline void receiveAnswer(void * mlm_data, void * answer) { return (*modelReceiveAnswerPtr)(this, mlm_data, answer); }
+  inline CommsNeighborhood& giveNeighborhood(void * mlm_data) { return (*modelGiveNeighborhoodPtr)(this, mlm_data); }
+  inline void updateAgent(void * mlm_data) { return (*modelUpdateAgentPtr)(this, mlm_data); }
 };
 
 #endif

@@ -7,6 +7,7 @@ add_executable(phobos ${sources})
 
 # set_target_properties()
 target_compile_options(phobos PUBLIC -std=c++14 -Wall -g)
+target_link_libraries(phobos dl)
 include_directories("./include/")
 
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
