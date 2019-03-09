@@ -3,6 +3,8 @@
 
 #include <vector>
 
+extern AgentModel * loaded_model;
+
 // Required model info
 //   - Explicit or implicit spatial data:
 //       - Explicit: sim space data is outside of agents
@@ -10,7 +12,7 @@
 
 SimCell::SimCell(SimSpace& space, int position_index)
   : position(new size_t[space.num_dimensions])
-  , mlm_data(NULL)
+  , mlm_data(loaded_model->newAgent())
 {
   size_t mod_amount = 1;
   for(int dim = 0; dim < space.num_dimensions; ++dim) {
@@ -24,23 +26,34 @@ SimCell::SimCell(SimSpace& space, int position_index)
   }
 }
 
+SimCell::SimCell(SimCell&& other) noexcept
+  : position(std::move(other.position))
+  , mlm_data(other.mlm_data)
+{
+}
+
+bool SimCell::operator!=(SimCell& other)
+{
+  return this != &other;
+}
+
 SimSpace::SimSpace(AgentModel& model) 
   : space_type(model.space_type)
   , num_dimensions(model.num_dimensions)
   , dimensions(new size_t[model.num_dimensions])
-  , sim_cells()
+  , cells()
 {
-  num_cells = 1;
+  int num_cells = 1;
   for(int dim = 0; dim < model.num_dimensions; ++dim) {
     num_cells *= model.dimensions[dim];
-    dimensions[dim] = model.dimensions;
+    dimensions[dim] = model.dimensions[dim];
   }
 
+  cells.reserve(num_cells);
   for(int i = 0; i < num_cells; ++i) {
-    sim_cells.emplace_back(*this, i);
+    cells.emplace_back(*this, i);
   }
 }
 
 SimSpace::~SimSpace() {
-  if(sim_cells != NULL) delete[] sim_cells;
 }
