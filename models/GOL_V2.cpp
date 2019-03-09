@@ -1,9 +1,39 @@
 #include <agent_model.h>
 #include <string.h>
 #include<communications.h>
+
+// stats data
+
+// add collector stuff here
+
+// ENV DATA - nothing really applicable to this mlm so just skeleton
+	// seperate QA methods? maybe in update?
+typedef struct{ // holds all basic environment related information, access tools, and function pointers
+	char *id;
+	char *type; //use in generator method?
+	int status;
+	env_buffer_out ebo;
+	env_buffer_in ebi;
+} env_data;
+
+typedef struct { // holds the output end of env results, including target if any applies
+	int c_xPos; // corrdinate x of center of neighborhood this data concerns
+	int c_yPos; // corrdinate y of center of neighborhood this concerns
+
+	// env parameters
+
+
+} env_buffer_out;
+
+typedef struct { // needs to hold cummulative changes to each region of environment? 
+	// too env type specific to generalize easily
+	
+} env_buffer_in;
+
+// AGNT Data
 // need to add communication and space definitions 
 // need to transpose states as helper methods (similar for their helper methods) states called in switch case of updateAgent hinged on state var in agent struct
-ypedef struct {
+typedef struct {
 	bool status;
 	char *id;
 	int live_neighbors;
@@ -13,6 +43,8 @@ ypedef struct {
     CommsNeighborhood CN; // can probably fill with default
 	CN.predicate = &communications.is_in_square;
 	answer_package outBuffer; // need to fill in generation;
+
+	env_data *env_data;
 
 } mlm_data;
 
@@ -29,7 +61,7 @@ typedef struct { // excessivre for the single answer case, but useful structure 
 
 
 
-mlm_data generate_gol(answer_package iap, int nSize){ // initial answer package
+mlm_data generate_gol(answer_package iap, env_data *envd, int nSize){ // initial answer package, env data, neighborghood size 
 	mlm_data *gen = malloc(sizeof(mlm_data));
 	(*gen).status = iap.status;
 	strcpy((*gen).id, iap.id);
@@ -39,6 +71,7 @@ mlm_data generate_gol(answer_package iap, int nSize){ // initial answer package
 	(*gen).CA.living_neighbor_count = 0;
 	(*gen).CN.predicate = &is_in_square();
 	(*gen).CN.size = nSize;
+	(*gen).env_data = envd;
 }
 
 
@@ -78,7 +111,7 @@ void updateAgent(mlm_data *ad){
 	
 }
 
-void stateAlive(mlm_data *r){
+void stateAlive(mlm_data *r){ // should pull from env_data here 
 	(*r).live_neighbors = (*r).CA.living_neighbor_count;
 	(*r).CA.living_neighbor_count = 0;
 	if(2 <= (*r).live_neighbors && (*r).live_neighbors <= 3){
@@ -90,7 +123,7 @@ void stateAlive(mlm_data *r){
 	
 }
 
-void stateDead(mlm_data *r){
+void stateDead(mlm_data *r){ // should pull from env_data here
 	(*r).live_neighbors = (*r).CA.living_neighbor_count;
 	(*r).CA.living_neighbor_count = 0;
 	if(2 <= (*r).live_neighbors && (*r).live_neighbors <= 3){
@@ -101,3 +134,33 @@ void stateDead(mlm_data *r){
 	}
 	
 }
+
+// start of the ENV 
+
+void update_env(env_data *env) {//  need to run Q, A and update
+	switch ((*env).status) {
+	case 1:
+		env_question(env);
+		break;
+	case 2:
+		env_answer(env); // in agent update need to pull from known name
+		break;
+	default:
+		env_hold(env);
+		break;	
+	}
+}
+
+void env_hold(env_data *env){
+	// hold values
+}
+
+
+void env_question(env_data *env, mlm_data *dm) {
+	//update buffer in
+}
+
+void env_answer(env_data *env) {
+	//update buffer out
+}
+
