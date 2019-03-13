@@ -2,11 +2,14 @@
  * GAMP PARSER 
  * 3.9.19
  */
+#include "parser.h"
+#include "abmodel.h"
 
 using namespace std;
 #include <libxml2/libxml/parser.h>
 #include <istream>
 #include <string>
+
 #include <iomanip>
 #include <algorithm>
 #include <cctype>
@@ -14,28 +17,8 @@ using namespace std;
 #include <iostream>
 #include <stdlib.h>
 
-void readInputFile(const char* fileName);
-void parseEnviroment(xmlNodePtr envChild);
-void parseAgents(xmlNodePtr agentsChild);
-xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name);
-bool stobool(std::string str);
- 
-
-int main(int argc, char** argv) {
-    if (argc < 3) {
-        std::cerr << "Improper use of parser, requires ./parser "
-                  << "[filename] [options]" << std::endl;
-        return(-1);
-    }
-
-    char* fileName = argv[1];
-    std::cout << "Input File: " << fileName << std::endl;
-    
-    readInputFile(fileName);
-    return(0);
-}
-
-void readInputFile(const char* fileName) {
+ABModel parse_model(const char * xml_model_path)
+{
     xmlDocPtr inputDoc = xmlReadFile(fileName, NULL, 0x0);
     if (inputDoc == NULL) {
         std::cerr << "Couldn't read input file! \'" 
@@ -47,15 +30,15 @@ void readInputFile(const char* fileName) {
     xmlNodePtr root = xmlDocGetRootElement(inputDoc);
     xmlNodePtr child = xmlFirstElementChild(root);   
 
-    while (child != NULL) {	
+    while (child != NULL) { 
         if (xmlStrcmp(child->name, (const xmlChar*)"Enviroment") == 0){ 
-   		parseEnviroment(child);
+      parseEnviroment(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"AgentDefinitions") == 0){ 
-   		parseAgents(child);
+      parseAgents(child);
         } else {
-  		std::cout << "OOPS" << std::endl;
+      std::cout << "OOPS" << std::endl;
          child = xmlNextElementSibling(child);
-   	}
+    }
     }
     
   
@@ -66,8 +49,9 @@ void readInputFile(const char* fileName) {
         child = xmlNextElementSibling(child);
     }
     */
-}
 
+    return ABModel();
+}
 
 void parseEnviroment(xmlNodePtr envChild) { 
         std::string relationType = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;

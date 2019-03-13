@@ -5,6 +5,7 @@
 #include "config.h"
 #include "agent_form.h"
 #include "abmodel.h"
+#include "parser.h"
 
 struct program_args_t pargs;
 
