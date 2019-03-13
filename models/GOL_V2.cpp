@@ -1,8 +1,10 @@
 #include <agent_model.h>
 #include <string.h>
+#include<iostream>
 #include<communications.h>
-
-// stats data
+#include <spatial.h>
+//#include "GOL_V2.h"
+// logging data
 
 // add collector stuff here
 
@@ -41,7 +43,7 @@ typedef struct {
 	int yPos;
 	cur_answer CA;
     CommsNeighborhood CN; // can probably fill with default
-	CN.predicate = &communications.is_in_square;
+	//CN.predicate = &communications.is_in_square;
 	answer_package outBuffer; // need to fill in generation;
 
 	env_data *env_data;
@@ -62,20 +64,22 @@ typedef struct { // excessivre for the single answer case, but useful structure 
 
 
 mlm_data generate_gol(answer_package iap, env_data *envd, int nSize){ // initial answer package, env data, neighborghood size 
-	mlm_data *gen = malloc(sizeof(mlm_data));
+	NeighborhoodType nt; // no defninition in comms
+	mlm_data *gen = (mlm_data*) malloc(sizeof(mlm_data));
 	(*gen).status = iap.status;
 	strcpy((*gen).id, iap.id);
 	(*gen).xPos = iap.xPos;
 	(*gen).yPos = iap.yPos;
 	(*gen).live_neighbors = 0;
 	(*gen).CA.living_neighbor_count = 0;
-	(*gen).CN.predicate = &is_in_square();
+	(*gen).CN.type = nt;
+	//(*gen).CN = &is_in_square();
 	(*gen).CN.size = nSize;
 	(*gen).env_data = envd;
 }
 
 
-CommsNeighborhood giveNeighborhood((*mlm_data) ad){
+CommsNeighborhood giveNeighborhood(mlm_data *ad){
 		return (*ad).CN;
 	
 }
@@ -85,18 +89,18 @@ void * giveAnswer(mlm_data *agent_data){ // need a general way to pass useful va
 	strcpy((*agent_data).outBuffer.id , (*agent_data).id);
 	(*agent_data).outBuffer.xPos = (*agent_data).xPos;
 	(*agent_data).outBuffer.yPos = (*agent_data).yPos;
-	return (void*)(&((*agent_data).outBuffer))
+	return (void*)(&((*agent_data).outBuffer));
 	
 } 
 void receiveAnswer(mlm_data *r, void *agent_ans){ // meant for handling much larger data sets with more helper functions
-	 if((*(answer_package*) agent_ans).status == true){
+	 if((*((answer_package*) (agent_ans))).status == true){
 		 (*r).CA.living_neighbor_count++;
 	 }
 	 
 } 
 
 void updateAgent(mlm_data *ad){
-	switch((*mlm_data).status){
+	switch(((*ad).status)){
 		case true:
 			stateAlive(ad);
 			break;
@@ -156,11 +160,25 @@ void env_hold(env_data *env){
 }
 
 
-void env_question(env_data *env, mlm_data *dm) {
+void env_question(env_data *env) {
 	//update buffer in
 }
 
 void env_answer(env_data *env) {
 	//update buffer out
 }
+
+
+// logging
+
+std::string log_agent(mlm_data * md) { // csv, not generic  
+	
+	std::string out_string;
+	out_string.append("id " + std::string((*md).id));
+	out_string.append(", status " + (*md).status);
+	out_string.append(", xPos " + (*md).xPos);
+	out_string.append(", yPos " + (*md).yPos);
+	return out_string;
+}
+
 
