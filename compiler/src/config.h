@@ -10,6 +10,7 @@ enum class OutputTarget {
 struct program_args_t {
   OutputTarget target = OutputTarget::CPU;
   bool print_help = false;
+  const char * xml_model_path;
 };
 
 #endif

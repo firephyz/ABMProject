@@ -1,7 +1,10 @@
 #include <iostream>
 #include <cstring>
+#include <sstream>
 
 #include "config.h"
+#include "agent_form.h"
+#include "abmodel.h"
 
 struct program_args_t pargs;
 
@@ -45,6 +48,9 @@ void parseArgs(int argc, char *argv[])
     else if(strcmp(argv[arg_index], "--help") == 0) {
       pargs.print_help = true;
     }
+    else if(arg_index == argc - 1) {
+      pargs.xml_model_path = argv[arg_index];
+    }
     else {
       std::cerr << "Unrecognized command line argument \'" << argv[arg_index] << "\'\n";
       arg_parse_error = true;
@@ -67,8 +73,10 @@ int main(int argc, char *argv[])
   parseArgs(argc, argv);
 
   // load and parse input model
+  ABModel model = parse_model(pargs.xml_model_path);
 
   // build model library with g++
+  std::stringstream model_source = model.to_c_source();
   
   return 0;
 }
