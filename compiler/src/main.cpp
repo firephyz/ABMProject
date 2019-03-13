@@ -1,16 +1,7 @@
 #include <iostream>
 #include <cstring>
 
-enum class OutputTarget {
-  CPU,
-  Cluster,
-  FPGA,
-};
-
-struct program_args_t {
-  OutputTarget target = OutputTarget::CPU;
-  bool print_help = false;
-};
+#include "config.h"
 
 struct program_args_t pargs;
 
@@ -74,6 +65,10 @@ void parseArgs(int argc, char *argv[])
 int main(int argc, char *argv[]) 
 {
   parseArgs(argc, argv);
+
+  // load and parse input model
+
+  // build model library with g++
   
   return 0;
 }

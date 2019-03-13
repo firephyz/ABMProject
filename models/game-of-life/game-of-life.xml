@@ -63,6 +63,7 @@
             </else>
           </if>
         </logic>
+      </state>
     </rules>
     <CommsInterface neighborhood="square_2">
       <Question name='living-neighbors'/>
