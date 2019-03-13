@@ -65,7 +65,7 @@
         </logic>
     </rules>
     <CommsInterface neighborhood="square_2">
-      <Question name='living-neighbors'/>
+      <Question name='living-neighbors'>
         <logic>
           <var type='int' id='count'/>
           <iterate list='neighbors' param='response'>
