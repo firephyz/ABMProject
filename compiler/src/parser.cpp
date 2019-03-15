@@ -17,7 +17,9 @@ using namespace std;
 #include <iostream>
 #include <stdlib.h>
 
-ABModel parse_model(const char * xml_model_path)
+ABModel abmodel;
+
+ABModel& parse_model(const char * xml_model_path)
 {
     xmlDocPtr inputDoc = xmlReadFile(xml_model_path, NULL, 0x0);
     if (inputDoc == NULL) {
@@ -50,7 +52,7 @@ ABModel parse_model(const char * xml_model_path)
     }
     */
 
-    return ABModel();
+    return abmodel;
 }
 
 void parseEnviroment(xmlNodePtr envChild) { 

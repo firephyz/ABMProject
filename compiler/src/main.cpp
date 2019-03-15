@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
   parseArgs(argc, argv);
 
   // load and parse input model
-  ABModel model = parse_model(pargs.xml_model_path);
+  ABModel& model = parse_model(pargs.xml_model_path);
 
   // build model library with g++
   std::stringstream model_source = model.to_c_source();

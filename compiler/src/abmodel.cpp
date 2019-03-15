@@ -9,3 +9,9 @@ ABModel::to_c_source()
 
   return result;
 }
+
+void
+ABModel::add_agent(AgentForm& agent)
+{
+  agents.push_back(std::move(agent));
+}
