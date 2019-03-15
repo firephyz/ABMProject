@@ -54,21 +54,22 @@ ABModel parse_model(const char * xml_model_path)
 }
 
 void parseEnviroment(xmlNodePtr envChild) { 
-        std::string relationType = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
-        xmlNodePtr curNode = NULL;    		
-   	int numOfDim = 0;
+  const char * value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
+  xmlNodePtr curNode = NULL;    		
+  int numOfDim = 0;
 	bool wrap = 0;
 
-	if (relationType != NULL) { 
-    		if(relationType == "spatial") {
-		        curNode = xmlFirstElementChild(envChild);
+	if (value_str != NULL) {
+    std::string relationType(value_str);
+    if(relationType == "spatial") {
+		  curNode = xmlFirstElementChild(envChild);
 			if (xmlStrcmp(curNode->name, (const xmlChar*)"spatialRelation") == 0){
-                        	numOfDim = std::stoi((const char*)xmlGetAttribute(curNode, "dimensions")->children->content, NULL, 10);
+                     	numOfDim = std::stoi((const char*)xmlGetAttribute(curNode, "dimensions")->children->content, NULL, 10);
 				wrap = stobool((const char*)xmlGetAttribute(curNode, "wrap")->children->content);	
 				std::cout << numOfDim << "\n" << wrap << std::endl;  
 			} else {
 				std::cout << "Invalid Enviroment Definiton" << std::endl;
-        		}
+      }
 		} 
 	} 
 }
