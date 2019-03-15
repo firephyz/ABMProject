@@ -17,8 +17,9 @@ using namespace std;
 #include <iostream>
 #include <stdlib.h>
 
-ABModel parse_model(const char * xml_model_path)
-{
+ABModel abmodel;
+
+ABModel& parse_model(const char * xml_model_path){
     xmlDocPtr inputDoc = xmlReadFile(xml_model_path, NULL, 0x0);
     if (inputDoc == NULL) {
         std::cerr << "Couldn't read input file! \'" 
@@ -32,17 +33,16 @@ ABModel parse_model(const char * xml_model_path)
 
     while (child != NULL) { 
         if (xmlStrcmp(child->name, (const xmlChar*)"Enviroment") == 0){ 
-      parseEnviroment(child);
+          parseEnviroment(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"AgentDefinitions") == 0){ 
-      parseAgents(child);
+          parseAgents(child);
         } else {
-      std::cout << "OOPS" << std::endl;
-         child = xmlNextElementSibling(child);
-    }
+          std::cout << "OOPS" << std::endl;
+        }
+
+       child = xmlNextElementSibling(child);      
     }
     
-  
-
     /* Simple Test 
     while (child != NULL) {
         std::cout << child->name << std::endl; 
@@ -50,7 +50,7 @@ ABModel parse_model(const char * xml_model_path)
     }
     */
 
-    return ABModel();
+    return abmodel;
 }
 
 void parseEnviroment(xmlNodePtr envChild) { 
@@ -75,8 +75,37 @@ void parseEnviroment(xmlNodePtr envChild) {
 }
 
 void parseAgents(xmlNodePtr agentsChild) { 
-
+  xmlNodePtr curNode = NULL;
+  
+  curNode = xmlFirstElementChild(agentsChild);
+ 
+  // While there are more agents to parse keep calling newAgentDef();
+  while (curNode  != NULL) {
+    newAgentDef(curNode);  
+    curNode = nextElementSibling(curNode); 
+  }    
+  
 }
+
+void newAgentDef(xmlNodePtr agent) {
+  AgentForm toAdd;
+  xmlNodePtr curNode = NULL;
+  std::string curAttr = "";  
+
+  curNode = xmlFirstElementChild(agent);
+  
+  // Check that the first tag is Agent and go ahead and grab the name
+  if (xmlStrcmp(curNode->name, (const char*)"Agent") == 0) { 
+    toAdd->name = xmlGetAttribute(curNode, "type");      
+  } else {
+    std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
+  }
+
+  std::cout << toAdd->name << std::endl;
+} 
+
+
+
 
 xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name) {
   xmlAttrPtr result = node->properties;

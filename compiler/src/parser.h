@@ -5,9 +5,10 @@
 
 #include <libxml2/libxml/parser.h>
 
-ABModel parse_model(const char * xml_model_path);
+ABModel& parse_model(const char * xml_model_path);
 void parseEnviroment(xmlNodePtr envChild);
 void parseAgents(xmlNodePtr agentsChild);
+void newAgentDef(xmlNodePtr agent);
 xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name);
 bool stobool(std::string str);
 

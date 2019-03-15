@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(gamp)
+# Set output to be verbose
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Add executable
 file(GLOB sources src/*)
