@@ -19,10 +19,10 @@ using namespace std;
 
 ABModel parse_model(const char * xml_model_path)
 {
-    xmlDocPtr inputDoc = xmlReadFile(fileName, NULL, 0x0);
+    xmlDocPtr inputDoc = xmlReadFile(xml_model_path, NULL, 0x0);
     if (inputDoc == NULL) {
         std::cerr << "Couldn't read input file! \'" 
-                  << fileName << "\'." << std::endl;
+                  << xml_model_path << "\'." << std::endl;
         exit(-1);
     }
     std::cout << "File loaded in!" << std::endl; 
