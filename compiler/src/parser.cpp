@@ -19,7 +19,8 @@ using namespace std;
 
 ABModel abmodel;
 
-ABModel& parse_model(const char * xml_model_path){
+ABModel& parse_model(const char * xml_model_path)
+{
     xmlDocPtr inputDoc = xmlReadFile(xml_model_path, NULL, 0x0);
     if (inputDoc == NULL) {
         std::cerr << "Couldn't read input file! \'" 
