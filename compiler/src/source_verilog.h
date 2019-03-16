@@ -3,11 +3,17 @@
 
 #include "source_ast.h"
 
-class SourceVerilog_if : public SourceAST_if {
+#include <libxml/parser.h>
+
+class SourceAST_if_Verilog : public SourceAST_if {
+public:
+  SourceAST_if_Verilog(xmlNodePtr node);
   std::string to_string();
 };
 
-class SourceVerilog_assignment : public SourceAST_assignment {
+class SourceAST_assignment_Verilog : public SourceAST_assignment {
+public:
+  SourceAST_assignment_Verilog(xmlNodePtr node);
   std::string to_string();
 };
 

@@ -4,6 +4,9 @@
  */
 #include "parser.h"
 #include "abmodel.h"
+#include "config.h"
+#include "source_c.h"
+#include "source_verilog.h"
 
 using namespace std;
 #include <libxml2/libxml/parser.h>
@@ -18,6 +21,7 @@ using namespace std;
 #include <stdlib.h>
 
 ABModel abmodel;
+extern struct program_args_t pargs;
 
 ABModel& parse_model(const char * xml_model_path)
 {
@@ -76,33 +80,33 @@ void parseEnviroment(xmlNodePtr envChild) {
 }
 
 void parseAgents(xmlNodePtr agentsChild) { 
-  xmlNodePtr curNode = NULL;
+  // xmlNodePtr curNode = NULL;
   
-  curNode = xmlFirstElementChild(agentsChild);
+  // curNode = xmlFirstElementChild(agentsChild);
  
-  // While there are more agents to parse keep calling newAgentDef();
-  while (curNode  != NULL) {
-    newAgentDef(curNode);  
-    curNode = nextElementSibling(curNode); 
-  }    
+  // // While there are more agents to parse keep calling newAgentDef();
+  // while (curNode  != NULL) {
+  //   newAgentDef(curNode);  
+  //   curNode = nextElementSibling(curNode); 
+  // }    
   
 }
 
 void newAgentDef(xmlNodePtr agent) {
-  AgentForm toAdd;
-  xmlNodePtr curNode = NULL;
-  std::string curAttr = "";  
+  // AgentForm toAdd;
+  // xmlNodePtr curNode = NULL;
+  // std::string curAttr = "";  
 
-  curNode = xmlFirstElementChild(agent);
+  // curNode = xmlFirstElementChild(agent);
   
-  // Check that the first tag is Agent and go ahead and grab the name
-  if (xmlStrcmp(curNode->name, (const char*)"Agent") == 0) { 
-    toAdd->name = xmlGetAttribute(curNode, "type");      
-  } else {
-    std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
-  }
+  // // Check that the first tag is Agent and go ahead and grab the name
+  // if (xmlStrcmp(curNode->name, (const char*)"Agent") == 0) { 
+  //   toAdd->name = xmlGetAttribute(curNode, "type");      
+  // } else {
+  //   std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
+  // }
 
-  std::cout << toAdd->name << std::endl;
+  // std::cout << toAdd->name << std::endl;
 } 
 
 
@@ -125,4 +129,46 @@ bool stobool(std::string str) {
     bool b;
     is >> std::boolalpha >> b;
     return b;
+}
+
+std::unique_ptr<SourceAST>
+dispatch_on_logic_tag(xmlNodePtr node)
+{
+  if(xmlStrcmp(node->name, (const xmlChar*)"if") == 0) {
+    if(pargs.target == OutputTarget::FPGA) {
+      return std::make_unique<SourceAST_if_Verilog>(node);
+    }
+    else {
+      return std::make_unique<SourceAST_if_C>(node);
+    }
+  }
+  else if(xmlStrcmp(node->name, (const xmlChar*)"assign") == 0) {
+    if(pargs.target == OutputTarget::FPGA) {
+      return std::make_unique<SourceAST_assignment_Verilog>(node);
+    }
+    else {
+      return std::make_unique<SourceAST_assignment_C>(node);
+    }
+  }
+  else {
+    std::cerr << "Unknown xml tag in \'<logic>\' block.\n";
+    exit(-1);
+  }
+}
+
+std::unique_ptr<SourceAST>
+parse_logic(xmlNodePtr node)
+{
+  xmlNodePtr child = xmlFirstElementChild(node);
+  std::unique_ptr<SourceAST> result = dispatch_on_logic_tag(child);
+  std::unique_ptr<SourceAST> * last_node = &result;
+
+  while(child != NULL) {
+    (*last_node)->append_next(dispatch_on_logic_tag(child));
+    last_node = &(*last_node)->next;
+
+    child = child->next;
+  }
+
+  return std::move(result);
 }

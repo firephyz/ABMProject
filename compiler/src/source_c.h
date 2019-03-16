@@ -5,15 +5,15 @@
 
 #include <libxml/parser.h>
 
-class SourceC_if : public SourceAST_if {
+class SourceAST_if_C : public SourceAST_if {
 public:
-  SourceC_if(xmlNodePtr node);
+  SourceAST_if_C(xmlNodePtr node);
   std::string to_string();
 };
 
-class SourceC_assignment : public SourceAST_assignment {
+class SourceAST_assignment_C : public SourceAST_assignment {
 public:
-  SourceC_assignment(xmlNodePtr node);
+  SourceAST_assignment_C(xmlNodePtr node);
   std::string to_string();
 };
 

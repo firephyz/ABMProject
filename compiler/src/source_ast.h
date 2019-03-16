@@ -9,7 +9,11 @@
 
 class SourceAST {
 public:
+  std::unique_ptr<SourceAST> next;
   virtual std::string to_string() = 0;
+  void append_next(std::unique_ptr<SourceAST>&& next_node) {
+    next = std::move(next_node);
+  };
 };
 
 class SourceAST_if : public SourceAST {

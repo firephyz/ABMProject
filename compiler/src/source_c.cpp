@@ -3,10 +3,11 @@
 #include <libxml/parser.h>
 #include <string>
 #include <sstream>
+#include <iostream>
 
-SourceC_if::SourceC_if(xmlNodePtr node)
+SourceAST_if_C::SourceAST_if_C(xmlNodePtr node)
 {
-  xmlNodePtr child = xmlFirstElementChild(root);   
+  xmlNodePtr child = xmlFirstElementChild(node);   
 
   while (child != NULL) { 
     if (xmlStrcmp(child->name, (const xmlChar*)"predicate") == 0) { 
@@ -19,7 +20,8 @@ SourceC_if::SourceC_if(xmlNodePtr node)
 
     }
     else {
-      std::cerr << "Invalid "
+      std::cerr << "Invalid xml tag \'" << child->name << "\' under \'<if>\' tag.\n";
+      exit(-1);
     }
 
     child = xmlNextElementSibling(child);
@@ -27,7 +29,7 @@ SourceC_if::SourceC_if(xmlNodePtr node)
 }
 
 std::string
-SourceC_if::to_string()
+SourceAST_if_C::to_string()
 {
   std::stringstream result;
   result << "if (" << predicate->to_string() << ") { " << then_clause->to_string() << " }";
@@ -37,13 +39,13 @@ SourceC_if::to_string()
   return result.str();
 }
 
-SourceC_assignment::SourceC_assignment(xmlNodePtr node)
+SourceAST_assignment_C::SourceAST_assignment_C(xmlNodePtr node)
 {
 
 }
 
 std::string
-SourceC_assignment::to_string()
+SourceAST_assignment_C::to_string()
 {
   std::stringstream result;
   result << var_name << " = " << value->to_string() << ";";
