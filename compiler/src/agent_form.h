@@ -26,7 +26,7 @@ public:
   AgentForm(const std::string& name);
   AgentForm(const AgentForm&) = delete;
   AgentForm(AgentForm&&) = default;
-
+ 
   void add_symbol_binding(const SymbolBinding& binding);
 };
 
