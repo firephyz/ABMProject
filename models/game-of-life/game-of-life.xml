@@ -1,6 +1,22 @@
 <!-- Simulation provided getDistance(agentA, agentB) function -->
 <environment relationType="spatial">
   <spatialRelation dimensions="2" wrap="true"/>
+  <rules>
+    <stateScope>
+      
+    </stateScope>
+    <state name = 'hold'>
+      
+      
+    </state>
+    <state name ='question'>
+      
+    </state>
+    <state name ='answer'>
+      
+    </state>
+    
+  </rules>
 </environment>
 <agentDefinitions>
   <agent type='AgentType'>
