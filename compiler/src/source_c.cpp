@@ -6,24 +6,6 @@
 
 SourceC_if::SourceC_if(xmlNodePtr node)
 {
-  xmlNodePtr child = xmlFirstElementChild(root);   
-
-  while (child != NULL) { 
-    if (xmlStrcmp(child->name, (const xmlChar*)"predicate") == 0) { 
-    
-    }
-    else if(xmlStrcmp(child->name, (const xmlChar*)"then") == 0) {
-
-    }
-    else if(xmlStrcmp(child->name, (const xmlChar*)"else") == 0) {
-
-    }
-    else {
-      std::cerr << "Invalid "
-    }
-
-    child = xmlNextElementSibling(child);
-  }
 }
 
 std::string

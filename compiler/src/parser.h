@@ -11,5 +11,6 @@ void parseAgents(xmlNodePtr agentsChild);
 void newAgentDef(xmlNodePtr agent);
 xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name);
 bool stobool(std::string str);
+std::string xtos(xmlChar* toString);
 
 #endif

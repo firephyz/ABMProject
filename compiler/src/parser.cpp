@@ -112,39 +112,36 @@ void newAgentDef(xmlNodePtr agent) {
       if(!xmlStrcmp(curNode->name, (const xmlChar*)"agentScope")) { 
         std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl; 
         return; // Return error     
-      }
     
-      curNode = xmlFirstElementChild(curNode);
+        curNode = xmlFirstElementChild(curNode);
        
-      while (curNode != NULL) {
-        struct VariableType* varType;
-        varType->type = strToEnum((const char*)(xmlGetAttribute(curNode, "type")->children->content));  
-        std::string symName = (const char*)(xmlGetAttribute(curNode, "id")->children->content);
+        while (curNode != NULL) {
+         struct VariableType* varType;
+         void* val;
+         bool is_constant;  
+       
+          varType->type = strToEnum((const char*)(xmlGetAttribute(curNode, "type")->children->content));  
+          std::string symName = (const char*)(xmlGetAttribute(curNode, "id")->children->content);
         
-        // Check if the var has a val attribute and if so use that else set default
-        if (xmlGetAttribute(curNode, "val")->children->content != NULL) { 
-         void* val = xmlGetAttribute(curNode, "val")->children->content;
-        } else { 
-         void* val = NULL;
-        }
+         // Check if the var has a val attribute and if so use that else set default
+          if (xmlGetAttribute(curNode, "val")->children->content != NULL) { 
+            val = xmlGetAttribute(curNode, "val")->children->content;
+          } else { 
+            val = NULL;
+          }
       
-        // Check if the var has a is_constant attribute and if so use that else set default
-        if (xmlGetAttribute(curNode, "is_constant")->children->content != NULL) { 
-         bool is_constant = stobool((const char*)(xmlGetAttribute(curNode, "is_constant")->children->content));
-        } else { 
-         bool val = false;
+          // Check if the var has a is_constant attribute and if so use that else set default
+          if (xmlGetAttribute(curNode, "is_constant")->children->content != NULL) { 
+            is_constant = stobool((const char*)(xmlGetAttribute(curNode, "is_constant")->children->content));
+          } else { 
+            is_constant = false;
+          } 
         }
       }
-    }
     
 
     std::vector<StateInstance> states; 
     // Get the agent states 
-    
-
-
-
-
      
   } else {
     std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
@@ -171,4 +168,10 @@ bool stobool(std::string str) {
     bool b;
     is >> std::boolalpha >> b;
     return b;
+}
+
+
+std::string xtos(xmlChar* toString) { 
+  std::string ret = (const char*)(*toString);
+  return ret; 
 }
