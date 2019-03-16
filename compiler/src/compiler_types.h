@@ -10,6 +10,10 @@ enum class VarTypeEnum {
   String,
 };
 
+ VarTypeEnum strToEnum(std::string str);
+  
+
+
 // Additional type info required on FPGA targets
 struct FPGATypeInfo {
   int bit_size;

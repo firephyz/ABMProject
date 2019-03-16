@@ -12,3 +12,4 @@ StateInstance::StateInstance(const std::string& name, std::unique_ptr<SourceAST>
 AgentForm::AgentForm(const std::string& name)
   : agent_name(name)
 {}
+

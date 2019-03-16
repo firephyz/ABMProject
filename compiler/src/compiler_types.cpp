@@ -39,6 +39,21 @@ SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, void *
   }
 }
 
+
+
+VarTypeEnum strToEnum(std::string str){
+   VarTypeEnum ret;
+   if (str == "int") 
+    return VarTypeEnum::Integer; 
+   if (str == "bool")
+    return VarTypeEnum::Bool;
+   if (str == "Real")
+    return VarTypeEnum::Real;
+   if (str == "String")
+    return VarTypeEnum::String;
+   return VarTypeEnum::Integer;
+}
+
 SymbolBinding::~SymbolBinding()
 {
   free(initial_value);
