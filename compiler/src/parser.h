@@ -13,4 +13,8 @@ xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name);
 bool stobool(std::string str);
 std::string xtos(xmlChar* toString);
 
+std::unique_ptr<SourceAST> parse_logic(xmlNodePtr node);
+std::vector<SymbolBinding> parseBindings(xmlNodePtr curNode); 
+std::vector<StateInstance> getAgentStates(xmlNodePtr curNode);
+
 #endif
