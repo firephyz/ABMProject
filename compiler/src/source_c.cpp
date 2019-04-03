@@ -11,7 +11,7 @@ SourceAST_if_C::SourceAST_if_C(xmlNodePtr node)
 
   while (child != NULL) { 
     if (xmlStrcmp(child->name, (const xmlChar*)"predicate") == 0) { 
-    
+      //parse_logic()
     }
     else if(xmlStrcmp(child->name, (const xmlChar*)"then") == 0) {
 
