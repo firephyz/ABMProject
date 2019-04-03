@@ -18,23 +18,25 @@ SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, void *
     exit(-1);
   }
   else {
-    switch(type.type) {
-      case VarTypeEnum::Bool:
-        this->initial_value = malloc(sizeof(bool));
-        *(bool *)this->initial_value = *(bool *)initial_value;
-        break;
-      case VarTypeEnum::Integer:
-        this->initial_value = malloc(sizeof(int));
-        *(int *)this->initial_value = *(int *)initial_value;
-        break;
-      case VarTypeEnum::Real:
-        this->initial_value = malloc(sizeof(double));
-        *(double *)this->initial_value = *(double *)initial_value;
-        break;
-      case VarTypeEnum::String:
-        this->initial_value = malloc(sizeof(char *));
-        *(const char **)this->initial_value = *(const char **)initial_value;
-        break;
+    if(initial_value != NULL) {
+      switch(type.type) {
+        case VarTypeEnum::Bool:
+          this->initial_value = malloc(sizeof(bool));
+          *(bool *)this->initial_value = *(bool *)initial_value;
+          break;
+        case VarTypeEnum::Integer:
+          this->initial_value = malloc(sizeof(int));
+          *(int *)this->initial_value = *(int *)initial_value;
+          break;
+        case VarTypeEnum::Real:
+          this->initial_value = malloc(sizeof(double));
+          *(double *)this->initial_value = *(double *)initial_value;
+          break;
+        case VarTypeEnum::String:
+          this->initial_value = malloc(sizeof(char *));
+          *(const char **)this->initial_value = *(const char **)initial_value;
+          break;
+      }
     }
   }
 }

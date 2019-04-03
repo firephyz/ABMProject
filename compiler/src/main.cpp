@@ -63,6 +63,11 @@ void parseArgs(int argc, char *argv[])
     exit(-1);
   }
 
+  // Make sure user supplies model path
+  if(pargs.xml_model_path == NULL) {
+    pargs.print_help = true;
+  }
+
   if(pargs.print_help) {
     printUsage();
     exit(0);

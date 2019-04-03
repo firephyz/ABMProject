@@ -13,9 +13,14 @@ class StateInstance {
   std::vector<SymbolBinding> state_scope_vars;
   std::unique_ptr<SourceAST> source;
 public:
-  StateInstance(const std::string& name, std::vector<SymbolBinding> scope_vars, std::unique_ptr<SourceAST>& source);
+  StateInstance(const std::string& name);
   StateInstance(const StateInstance&) = delete;
   StateInstance(StateInstance&&) = default;
+
+  std::vector<SymbolBinding>& getStateScopeBindings();
+
+  // moves argument
+  void add_logic(std::unique_ptr<SourceAST>& source);
 };
 
 class AgentForm {
@@ -26,8 +31,11 @@ public:
   AgentForm(const std::string& name);
   AgentForm(const AgentForm&) = delete;
   AgentForm(AgentForm&&) = default;
+
+  std::vector<SymbolBinding>& getAgentScopeBindings();
  
-  void add_symbol_binding(const SymbolBinding& binding);
+  // moves arguments out info AgentForm
+  void add_state(StateInstance& state);
 };
 
 #endif

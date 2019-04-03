@@ -23,6 +23,11 @@ struct FPGATypeInfo {
 struct VariableType {
   VarTypeEnum type;
   struct FPGATypeInfo fpga_info;
+
+  VariableType()
+    : type(VarTypeEnum::Bool)
+    , fpga_info((struct FPGATypeInfo){-1, -1})
+  {}
 };
 
 class SymbolBinding {

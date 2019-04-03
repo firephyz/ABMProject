@@ -37,9 +37,9 @@ ABModel& parse_model(const char * xml_model_path)
     xmlNodePtr child = xmlFirstElementChild(root);   
 
     while (child != NULL) { 
-        if (xmlStrcmp(child->name, (const xmlChar*)"Enviroment") == 0){ 
-          parseEnviroment(child);
-        } else if(xmlStrcmp(child->name, (const xmlChar*)"AgentDefinitions") == 0){ 
+        if (xmlStrcmp(child->name, (const xmlChar*)"environment") == 0){ 
+//#          parseEnviroment(child);
+        } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){ 
           parseAgents(child);
         } else {
           std::cout << "OOPS" << std::endl;
@@ -92,94 +92,95 @@ void parseAgents(xmlNodePtr agentsChild) {
 }
 
 void newAgentDef(xmlNodePtr agent) {
-  xmlNodePtr curNode = NULL;
+  xmlNodePtr curNode = agent;
   std::string curAttr = "";  
   
   // Check that the first tag is Agent and go ahead and grab the name
-  if (xmlStrcmp(curNode->name, (const xmlChar*)"Agent") == 0) { 
-    std::string name = (const char*)(xmlGetAttribute(curNode, "type"));
+  if (xmlStrcmp(curNode->name, (const xmlChar*)"agent") == 0) { 
+    std::string name((const char*)(xmlGetAttribute(curNode, "type")->children->content));
     AgentForm toAdd(name); 
-  
 
     xmlNodePtr root = curNode; // Set the root to the first child of the agen definition  
     
     // Get Agent Vars
     curNode = xmlFirstElementChild(curNode); 
     xmlNodePtr placeHolder = curNode; // Set the placeholder to the first child of the agent definition      
-    if(!xmlStrcmp(curNode->name, (const xmlChar*)"agentScope")) { 
+    if(xmlStrcmp(curNode->name, (const xmlChar*)"agentScope")) { 
       std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl; 
       return; // Return error     
     }    
-    std::vector<SymbolBinding> scope_vars = parseBindings(curNode);
+    parseBindings(toAdd.getAgentScopeBindings(), curNode);
      
     // Get the agent states 
     curNode = placeHolder;
     curNode = xmlNextElementSibling(curNode);
     placeHolder = curNode;  
-    std::vector<StateInstance> states = getAgentStates(curNode);
+    parseAgentStates(toAdd, curNode);
 
+    abmodel.add_agent(toAdd);
   } else {
     std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
   }
 } 
 
-std::vector<StateInstance> getAgentStates(xmlNodePtr curNode) {
-  std::vector<StateInstance> states;
-
+void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
   while (curNode != NULL) {
-    if (xmlStrcmp(curNode->name, (const xmlChar*)"State")) {
+    if (xmlStrcmp(curNode->name, (const xmlChar*)"state")) {
       std::string name((const char*)xmlGetAttribute(curNode, "name")->children->content); 
       
-      std::vector<SymbolBinding> stateScopeVars;
       xmlNodePtr depthNode = xmlFirstElementChild(curNode);
-      std::unique_ptr<SourceAST> logic_element;
+
+      StateInstance newState(name);
       
       while(depthNode != NULL) {
         // Get the state variables  
         if(xmlStrcmp(depthNode->name, (const xmlChar*)"stateScope")) {
-          stateScopeVars = parseBindings(depthNode);   
-        } else if (xmlStrcmp(depthNode->name, (const xmlChar*)"logic")) {    
-            logic_element = parse_logic(curNode);
+          parseBindings(newState.getStateScopeBindings(), depthNode);   
+        } else if (xmlStrcmp(depthNode->name, (const xmlChar*)"logic")) {
+          std::unique_ptr<SourceAST> logic_ast = parse_logic(curNode);
+          newState.add_logic(logic_ast);
         }
+
+        agent.add_state(newState);
         
         depthNode = xmlNextElementSibling(depthNode);
-      }  
-      StateInstance newState(name, stateScopeVars, logic_element);
- 
+      }
     } else {
       std::cout << "Invalid State tag: " << curNode->name << std::endl;
     }
   }
 }
 
-std::vector<SymbolBinding> parseBindings(xmlNodePtr curNode) {
-   std::vector<SymbolBinding> scope_vars; 
+void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
    curNode = xmlFirstElementChild(curNode);
        
    while (curNode != NULL) {
-    struct VariableType* varType;
+    struct VariableType varType;
     void* val;
     bool is_constant;  
        
-    varType->type = strToEnum((const char*)(xmlGetAttribute(curNode, "type")->children->content));  
+    varType.type = strToEnum((const char*)(xmlGetAttribute(curNode, "type")->children->content));  
     std::string symName = (const char*)(xmlGetAttribute(curNode, "id")->children->content);
     
     // Check if the var has a val attribute and if so use that else set default
-    if (xmlGetAttribute(curNode, "val")->children->content != NULL) { 
-      val = xmlGetAttribute(curNode, "val")->children->content;
+    if (xmlGetAttribute(curNode, "val") != NULL) {
+      // TODO must parse data from attribute content
+      //val = xmlGetAttribute(curNode, "val")->children->content;
+      val = NULL;
     } else { 
       val = NULL;
     }
       
     // Check if the var has a is_constant attribute and if so use that else set default
-    if (xmlGetAttribute(curNode, "is_constant")->children->content != NULL) { 
+    if (xmlGetAttribute(curNode, "is_constant") != NULL) { 
       is_constant = stobool((const char*)(xmlGetAttribute(curNode, "is_constant")->children->content));
     } else {
       is_constant = false;
     }
-    scope_vars.push_back(SymbolBinding(symName, *varType, val, is_constant));
+    bindings.emplace_back(symName, varType, val, is_constant);
+
+    curNode = xmlNextElementSibling(curNode);
    }
-   return scope_vars;
 }
 
 xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name) {
