@@ -18,11 +18,22 @@ public:
   StateInstance(StateInstance&&) = default;
 };
 
+class Question {
+  const std::string question_name;
+  std::vector<SymbolBinding> answerVars;
+  std::unique_ptr<SourceAST> source;
+public:
+  Question(const std::string& name, std::vector<SymbolBinding> answerVars, std::unique_ptr<SourceAST>& source);
+  Question(const Question&) = delete;
+  Question(Question&&) = default;
+}
+
 class AgentForm {
   const std::string agent_name;
   std::vector<SymbolBinding> agent_scope_vars;
   std::vector<StateInstance> states;
 public:
+  std::string neighborhood;
   AgentForm(const std::string& name);
   AgentForm(const AgentForm&) = delete;
   AgentForm(AgentForm&&) = default;
