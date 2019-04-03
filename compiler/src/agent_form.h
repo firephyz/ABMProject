@@ -13,7 +13,7 @@ class StateInstance {
   std::vector<SymbolBinding> state_scope_vars;
   std::unique_ptr<SourceAST> source;
 public:
-  StateInstance(const std::string& name, std::unique_ptr<SourceAST>& source);
+  StateInstance(const std::string& name, std::vector<SymbolBinding> scope_vars, std::unique_ptr<SourceAST>& source);
   StateInstance(const StateInstance&) = delete;
   StateInstance(StateInstance&&) = default;
 };
