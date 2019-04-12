@@ -2,6 +2,8 @@
 #include "config.h"
 
 #include <string>
+#include <cstring>
+#include <algorithm>
 #include <iostream>
 
 extern struct program_args_t pargs;
@@ -41,22 +43,39 @@ SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, void *
   }
 }
 
-
-
 VarTypeEnum strToEnum(std::string str){
-   VarTypeEnum ret;
-   if (str == "int") 
+  if (str == "int") 
     return VarTypeEnum::Integer; 
-   if (str == "bool")
+  if (str == "bool")
     return VarTypeEnum::Bool;
-   if (str == "Real")
+  if (str == "Real")
     return VarTypeEnum::Real;
-   if (str == "String")
+  if (str == "String")
     return VarTypeEnum::String;
-   return VarTypeEnum::Integer;
+  return VarTypeEnum::Integer;
 }
 
 SymbolBinding::~SymbolBinding()
 {
   free(initial_value);
+}
+
+const SymbolBinding&
+ContextBindings::getBindingByName(const char * name) const
+{
+  for(auto& frame : frames) {
+    auto result = std::find_if(frame->begin(),
+      frame->end(),
+      [&] (const SymbolBinding& b) {
+        return strcmp(name, b.getName().c_str()) == 0;
+      }
+    );
+
+    if(result != frame->end()) {
+      return *result;
+    }
+  }
+
+  std::cerr << "Binding \'" << name << "\' not found in the given context." << std::endl;
+  exit(-1);
 }

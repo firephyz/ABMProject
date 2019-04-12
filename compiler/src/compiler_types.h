@@ -2,6 +2,7 @@
 #define COMPILER_TYPES_INCLUDED
 
 #include <string>
+#include <vector>
 
 enum class VarTypeEnum {
   Bool,
@@ -38,6 +39,14 @@ class SymbolBinding {
 public:
   SymbolBinding(std::string& name, struct VariableType type, void * initial_value, bool is_constant);
   ~SymbolBinding();
+
+  const std::string& getName() const { return name; }
+};
+
+class ContextBindings {
+public:
+  std::vector<std::vector<SymbolBinding> *> frames;
+  const SymbolBinding& getBindingByName(const char * name) const;
 };
 
 #endif

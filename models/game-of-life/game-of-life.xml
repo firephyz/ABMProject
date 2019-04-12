@@ -25,10 +25,10 @@
         <var type='bool' id='is-alive'/>
       </agentScope>
       <rules>
-        <stateScope>
-          <var type='int' id='neighbors-alive'/>
-        </stateScope>
         <state name='Alive'>
+          <stateScope>
+            <var type='int' id='neighbors-alive'/>
+          </stateScope>
           <logic>
             <assign>
               <var id='neighbors-alive'/>
@@ -41,18 +41,18 @@
               <then>
                 <if>
                   <predicate>
-                    <not>
-                      <or>
-                        <equal>
+                    <operator type='not'>
+                      <operator type='or'>
+                        <operator type='equal'>
                           <var id='neighbors-alive'/>
                           <constant type='int' value='2'/>
-                        </equal>
-                        <equal>
+                        </operator>
+                        <operator type='equal'>
                           <var id='neighbors-alive'/>
                           <constant type='int' value='3'/>
-                        </equal>
-                      </or>
-                    </not>
+                        </operator>
+                      </operator>
+                    </operator>
                   </predicate>
                   <then>
                     <assign>
@@ -65,10 +65,10 @@
               <else>
                 <if>
                   <predicate>
-                    <equal>
+                    <operator type='equal'>
                       <var id='neighbors-alive'/>
                       <constant type='int' value='3'/>
-                    </equal>
+                    </operator>
                   </predicate>
                   <then>
                     <assign>
@@ -89,18 +89,18 @@
             <iterate list='neighbors' param='response'>
               <if>
                 <predicate>
-                  <equal>
+                  <operator type='equal'>
                     <var id='response'/>
                     <constant type='bool' value='true'/>
-                  </equal>
+                  </operator>
                 </predicate>
                 <then>
                   <assign>
                     <var id='count'/>
-                    <add>
+                    <operator type='add'>
                       <var id='count'/>
                       <constant type='int' value='1'/>
-                    </add>
+                    </operator>
                   </assign>
                 </then>
               </if>

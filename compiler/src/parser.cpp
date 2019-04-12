@@ -99,56 +99,56 @@ void newAgentDef(xmlNodePtr agent) {
   if (xmlStrcmp(curNode->name, (const xmlChar*)"agent") == 0) { 
     std::string name((const char*)(xmlGetAttribute(curNode, "type")->children->content));
     AgentForm toAdd(name); 
-
-    xmlNodePtr root = curNode; // Set the root to the first child of the agen definition  
     
     // Get Agent Vars
-    curNode = xmlFirstElementChild(curNode); 
-    xmlNodePtr placeHolder = curNode; // Set the placeholder to the first child of the agent definition      
+    curNode = xmlFirstElementChild(curNode);     
     if(xmlStrcmp(curNode->name, (const xmlChar*)"agentScope")) { 
       std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl; 
       return; // Return error     
     }    
     parseBindings(toAdd.getAgentScopeBindings(), curNode);
      
-    // Get the agent states 
-    curNode = placeHolder;
+    // Get the agent states
     curNode = xmlNextElementSibling(curNode);
-    placeHolder = curNode;  
+    if(xmlStrcmp(curNode->name, (const xmlChar*)"rules") != 0) {
+      std::cerr << "Missing rules tag in agent definition" << std::endl;
+      exit(-1);
+    }
+    curNode = xmlFirstElementChild(curNode);
     parseAgentStates(toAdd, curNode);
 
     abmodel.add_agent(toAdd);
   } else {
     std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
+    exit(-1);
   }
 } 
 
 void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
-  while (curNode != NULL) {
-    if (xmlStrcmp(curNode->name, (const xmlChar*)"state")) {
-      std::string name((const char*)xmlGetAttribute(curNode, "name")->children->content); 
-      
-      xmlNodePtr depthNode = xmlFirstElementChild(curNode);
 
-      StateInstance newState(name);
-      
-      while(depthNode != NULL) {
-        // Get the state variables  
-        if(xmlStrcmp(depthNode->name, (const xmlChar*)"stateScope")) {
-          parseBindings(newState.getStateScopeBindings(), depthNode);   
-        } else if (xmlStrcmp(depthNode->name, (const xmlChar*)"logic")) {
-          std::unique_ptr<SourceAST> logic_ast = parse_logic(curNode);
-          newState.add_logic(logic_ast);
-        }
-
-        agent.add_state(newState);
-        
-        depthNode = xmlNextElementSibling(depthNode);
+  if (xmlStrcmp(curNode->name, (const xmlChar*)"state") == 0) {
+    std::string name((const char*)xmlGetAttribute(curNode, "name")->children->content);
+    StateInstance& newState = agent.add_state(StateInstance(name));
+    
+    curNode = xmlFirstElementChild(curNode);
+    while(curNode != NULL) {
+      // Get the state variables  
+      if(xmlStrcmp(curNode->name, (const xmlChar*)"stateScope") == 0) {
+        parseBindings(newState.getStateScopeBindings(), curNode);   
+      } else if (xmlStrcmp(curNode->name, (const xmlChar*)"logic") == 0) {
+        const ContextBindings ctxt = agent.genContextBindings(newState);
+        std::unique_ptr<SourceAST> logic_ast = parse_logic(ctxt, curNode);
+        newState.add_logic(std::move(logic_ast));
+        logic_ast.release();
       }
-    } else {
-      std::cout << "Invalid State tag: " << curNode->name << std::endl;
+      
+      curNode = xmlNextElementSibling(curNode);
     }
+  } else {
+    std::cout << "Invalid State tag: " << curNode->name << std::endl;
   }
+
+  curNode = xmlNextElementSibling(curNode);
 }
 
 void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
@@ -202,48 +202,72 @@ bool stobool(std::string str) {
     return b;
 }
 
-std::string xtos(xmlChar* toString) { 
-  std::string ret = (const char*)(*toString);
-  return ret; 
+std::string xtos(const xmlChar* toString) { 
+  return std::string((const char*)toString);
 }
 
 std::unique_ptr<SourceAST>
-dispatch_on_logic_tag(xmlNodePtr node)
+dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
 {
   if(xmlStrcmp(node->name, (const xmlChar*)"if") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_if_Verilog>(node);
+      return std::make_unique<SourceAST_if_Verilog>(ctxt, node);
     }
     else {
-      return std::make_unique<SourceAST_if_C>(node);
+      return std::make_unique<SourceAST_if_C>(ctxt, node);
     }
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"assign") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_assignment_Verilog>(node);
+      return std::make_unique<SourceAST_assignment_Verilog>(ctxt, node);
     }
     else {
-      return std::make_unique<SourceAST_assignment_C>(node);
+      return std::make_unique<SourceAST_assignment_C>(ctxt, node);
+    }
+  }
+  else if(xmlStrcmp(node->name, (const xmlChar*)"var") == 0) {
+    if(pargs.target == OutputTarget::FPGA) {
+      return std::make_unique<SourceAST_var_Verilog>(ctxt, node);
+    }
+    else {
+      return std::make_unique<SourceAST_var_C>(ctxt, node);
+    }
+  }
+  else if(xmlStrcmp(node->name, (const xmlChar*)"operator") == 0) {
+    if(pargs.target == OutputTarget::FPGA) {
+      return std::make_unique<SourceAST_operator_Verilog>(ctxt, node);
+    }
+    else {
+      return std::make_unique<SourceAST_operator_C>(ctxt, node);
+    }
+  }
+  else if(xmlStrcmp(node->name, (const xmlChar*)"constant") == 0) {
+    if(pargs.target == OutputTarget::FPGA) {
+      return std::make_unique<SourceAST_constant_Verilog>(node);
+    }
+    else {
+      return std::make_unique<SourceAST_constant_C>(node);
     }
   }
   else {
-    std::cerr << "Unknown xml tag in \'<logic>\' block.\n";
+    std::cerr << "Unknown xml tag \'" << node->name << "\' in \'<logic>\' block.\n";
     exit(-1);
   }
 }
 
 std::unique_ptr<SourceAST>
-parse_logic(xmlNodePtr node)
+parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
 {
   xmlNodePtr child = xmlFirstElementChild(node);
-  std::unique_ptr<SourceAST> result = dispatch_on_logic_tag(child);
+  std::unique_ptr<SourceAST> result = dispatch_on_logic_tag(ctxt, child);
   std::unique_ptr<SourceAST> * last_node = &result;
 
+  child = xmlNextElementSibling(child);
   while(child != NULL) {
-    (*last_node)->append_next(dispatch_on_logic_tag(child));
+    (*last_node)->append_next(dispatch_on_logic_tag(ctxt, child));
     last_node = &(*last_node)->next;
 
-    child = child->next;
+    child = xmlNextElementSibling(child);
   }
 
   return std::move(result);

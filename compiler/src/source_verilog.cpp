@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-SourceAST_if_Verilog::SourceAST_if_Verilog(xmlNodePtr node)
+SourceAST_if_Verilog::SourceAST_if_Verilog(const ContextBindings& ctxt, xmlNodePtr node)
 {
 
 }
@@ -14,7 +14,7 @@ SourceAST_if_Verilog::to_string()
   return std::string();
 }
 
-SourceAST_assignment_Verilog::SourceAST_assignment_Verilog(xmlNodePtr node)
+SourceAST_assignment_Verilog::SourceAST_assignment_Verilog(const ContextBindings& ctxt, xmlNodePtr node)
 {
 
 }
@@ -22,5 +22,36 @@ SourceAST_assignment_Verilog::SourceAST_assignment_Verilog(xmlNodePtr node)
 std::string
 SourceAST_assignment_Verilog::to_string()
 {
+  return std::string();
+}
+
+SourceAST_var_Verilog::SourceAST_var_Verilog(const ContextBindings& ctxt, xmlNodePtr node)
+{
+
+}
+
+std::string
+SourceAST_var_Verilog::to_string()
+{
+  return std::string();
+}
+
+SourceAST_constant_Verilog::SourceAST_constant_Verilog(xmlNodePtr node)
+{
+
+}
+
+std::string
+SourceAST_constant_Verilog::to_string() {
+  return std::string();
+}
+
+SourceAST_operator_Verilog::SourceAST_operator_Verilog(const ContextBindings& ctxt, xmlNodePtr node)
+{
+
+}
+
+std::string
+SourceAST_operator_Verilog::to_string() {
   return std::string();
 }

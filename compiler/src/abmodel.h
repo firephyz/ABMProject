@@ -2,12 +2,14 @@
 #define ABMODEL_INCLUDED
 
 #include "agent_form.h"
+#include "compiler_types.h"
 
 #include <vector>
 #include <sstream>
 
 struct EnvironmentParameters {
-  int test; // fill in real values
+public:
+  ContextBindings genEnvironmentContext();
 };
 
 class ABModel {

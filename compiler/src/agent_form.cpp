@@ -15,9 +15,9 @@ StateInstance::getStateScopeBindings()
 }
 
 void
-StateInstance::add_logic(std::unique_ptr<SourceAST>& source)
+StateInstance::add_logic(std::unique_ptr<SourceAST>&& source)
 {
-  source = std::move(source);
+  this->source = std::move(source);
 }
 
 AgentForm::AgentForm(const std::string& name)
@@ -30,8 +30,18 @@ AgentForm::getAgentScopeBindings()
   return agent_scope_vars;
 }
 
-void
-AgentForm::add_state(StateInstance& state)
+StateInstance&
+AgentForm::add_state(StateInstance&& state)
 {
   states.push_back(std::move(state));
+  return states[states.size() - 1];
+}
+
+ContextBindings
+AgentForm::genContextBindings(StateInstance& state)
+{
+  ContextBindings result;
+  result.frames.push_back(&state.getStateScopeBindings());
+  result.frames.push_back(&agent_scope_vars);
+  return result;
 }

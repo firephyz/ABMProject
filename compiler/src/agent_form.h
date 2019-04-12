@@ -20,7 +20,7 @@ public:
   std::vector<SymbolBinding>& getStateScopeBindings();
 
   // moves argument
-  void add_logic(std::unique_ptr<SourceAST>& source);
+  void add_logic(std::unique_ptr<SourceAST>&& source);
 };
 
 class AgentForm {
@@ -35,7 +35,11 @@ public:
   std::vector<SymbolBinding>& getAgentScopeBindings();
  
   // moves arguments out info AgentForm
-  void add_state(StateInstance& state);
+  StateInstance& add_state(StateInstance&& state);
+
+  // Generates a list of symbol bindings representing the bindings available from
+  // the agent scope and from the state scope.
+  ContextBindings genContextBindings(StateInstance& state);
 };
 
 #endif
