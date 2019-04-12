@@ -14,3 +14,8 @@ AgentForm::AgentForm(const std::string& name)
   : agent_name(name)
 {}
 
+Question::Question(const std::string& name, std::vector<SymbolBinding> scope_vars, std::unique_ptr<SourceAST>& source)
+  : question_name(name)
+  , answerVars(std::move(scope_vars))
+  , source(std::move(source))
+{}

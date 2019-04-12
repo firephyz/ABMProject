@@ -90,7 +90,7 @@ void newAgentDef(xmlNodePtr agent) {
   
   // Check that the first tag is Agent and go ahead and grab the name
   if (xmlStrcmp(curNode->name, (const xmlChar*)"Agent") == 0) { 
-    std::string name = xmlGetAttribute(curNode, "type")->children->content;
+    std::string name = (const char*)xmlGetAttribute(curNode, "type")->children->content;
     AgentForm toAdd(name); 
   
 
@@ -115,29 +115,22 @@ void newAgentDef(xmlNodePtr agent) {
     curNode = placeHolder;
     curNode = xmlNextElementSibling(curNode);
     placeHolder = curNode;
-    std::string neighborhood_t = xmlGetAttribute(curNode, "neigborhood")->childern->content; 
-    std::vector<Question> questions = getQuestions(curNode);   
+    std::string neighborhood_t = (const char*)xmlGetAttribute(curNode, "neigborhood")->children->content; 
+    std::vector<Question> questions;   
+    xmlNodePtr commsSearch = xmlFirstElementChild(curNode);  
 
-     
+    while (!xmlStrcmp(commsSearch->name, (const xmlChar*)"Question")) { 
+      std::string name = (const char*)xmlGetAttribute(commsSearch, "name")->children->content;
+      std::unique_ptr<SourceAST> curLogic = parse_logic(xmlFirstElementChild(commsSearch)); 
+      std::vector<SymbolBinding> answerVars = parseBindings(xmlNextElementSibling(commsSearch)); 
+      questions.emplace_back(name, answerVars, curLogic); 
+    } 
+ 
      
   } else {
     std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
   }
 } 
-
-std::vector<Question> getQuestions(xmlNodePtr curNode){
-  std::vector<Question> questions_ret;
-  xmlNodePtr commsSearch = xmlFirstElementChild(curNode);  
-
-  while (!xmlStrcmp(commsSearch->name, (const xmlChar*)"Question")) { 
-    std::string name = xmlGetAttribute(commsSearch, "name")->children->content;
-    std::unique_ptr curLogic = parse_logic(xmlFirstElementChild(commsSearch)); 
-    std::vector answerVars = parseBindings(xmlNextElementSibling(commsSearch)); 
-    Question q(name, answerVars, curLogic); 
-    questions_ret.push_back(q); 
-  } 
-  return questions_ret;
-}
 
 
 std::vector<StateInstance> getAgentStates(xmlNodePtr curNode) {
@@ -161,12 +154,13 @@ std::vector<StateInstance> getAgentStates(xmlNodePtr curNode) {
         
         depthNode = xmlNextElementSibling(depthNode);
       }  
-      StateInstance newState(name, stateScopeVars, logic_element);
- 
+      
+      states.emplace_back(name, stateScopeVars, logic_element); 
     } else {
       std::cout << "Invalid State tag: " << curNode->name << std::endl;
     }
   }
+  return states;
 }
 
 std::vector<SymbolBinding> parseBindings(xmlNodePtr curNode) {

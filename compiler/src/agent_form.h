@@ -26,7 +26,7 @@ public:
   Question(const std::string& name, std::vector<SymbolBinding> answerVars, std::unique_ptr<SourceAST>& source);
   Question(const Question&) = delete;
   Question(Question&&) = default;
-}
+};
 
 class AgentForm {
   const std::string agent_name;
