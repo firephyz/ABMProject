@@ -2,6 +2,9 @@
 #define COMPILER_TYPES_INCLUDED
 
 #include <string>
+#include <vector>
+#include <libxml2/libxml/parser.h>
+#include <memory>
 
 enum class VarTypeEnum {
   Bool,
@@ -11,8 +14,6 @@ enum class VarTypeEnum {
 };
 
  VarTypeEnum strToEnum(std::string str);
-  
-
 
 // Additional type info required on FPGA targets
 struct FPGATypeInfo {
@@ -23,6 +24,11 @@ struct FPGATypeInfo {
 struct VariableType {
   VarTypeEnum type;
   struct FPGATypeInfo fpga_info;
+
+  VariableType()
+    : type(VarTypeEnum::Bool)
+    , fpga_info((struct FPGATypeInfo){-1, -1})
+  {}
 };
 
 class SymbolBinding {
@@ -33,6 +39,29 @@ class SymbolBinding {
 public:
   SymbolBinding(std::string& name, struct VariableType type, void * initial_value, bool is_constant);
   ~SymbolBinding();
+
+  const std::string& getName() const { return name; }
+};
+
+class ContextBindings {
+public:
+  std::vector<std::vector<SymbolBinding> *> frames;
+  const SymbolBinding& getBindingByName(const char * name) const;
+  ContextBindings& extend(std::vector<SymbolBinding>& bindings);
+};
+
+#include "source_ast.h"
+
+class Question {
+  std::string question_name;
+  std::vector<SymbolBinding> question_scope;
+  std::unique_ptr<SourceAST> question_source;
+  std::unique_ptr<SourceAST> answer_source;
+public:
+  Question(ContextBindings& ctxt, xmlNodePtr node);
+  Question(ContextBindings&& ctxt, xmlNodePtr node);
+  Question(const Question&) = delete;
+  Question(Question&&) = default;
 };
 
 #endif

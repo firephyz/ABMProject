@@ -1,116 +1,119 @@
 <!-- Simulation provided getDistance(agentA, agentB) function -->
-<environment relationType="spatial">
-  <spatialRelation dimensions="2" wrap="true"/>
-  <rules>
-    <stateScope>
-      
-    </stateScope>
-    <state name = 'hold'>
-      
-      
-    </state>
-    <state name ='question'>
-      
-    </state>
-    <state name ='answer'>
-      
-    </state>
-    
-  </rules>
-</environment>
-<agentDefinitions>
-  <agent type='AgentType'>
-    <agentScope>
-      <var type='bool' id='is-alive'/>
-    </agentScope>
+<ABM>
+  <environment relationType="spatial">
+    <spatialRelation dimensions="2" wrap="true"/>
     <rules>
       <stateScope>
-        <var type='int' id='neighbors-alive'/>
+        
       </stateScope>
-      <state name='Alive'>
-        <logic>
-          <assign>
-            <var id='neighbors-alive'/>
-            <ask name='living-neighbors'/>
-          </assign>
-          <if>
-            <predicate>
-              <var id='is-alive'/>
-            </predicate>
-            <then>
-              <if>
-                <predicate>
-                  <not>
-                    <or>
-                      <equal>
-                        <var id='neighbors-alive'>
-                        <constant type='int' value='2'>
-                      </equal>
-                      <equal>
-                        <var id='neighbors-alive'>
-                        <constant type='int' value='3'>
-                      </equal>
-                    </or>
-                  </not>
-                </predicate>
-                <then>
-                  <assign>
-                    <var id='is-alive'>
-                    <constant type='bool' value='false'>
-                  </assign>
-                </then>
-              </if>
-            </then>
-            <else>
-              <if>
-                <predicate>
-                  <equal>
-                    <var id='neighbors-alive'>
-                    <constant type='int' value='3'>
-                  </equal>
-                </predicate>
-                <then>
-                  <assign>
-                    <var id='is-alive'/>
-                    <constant type='bool' value='true'/>
-                  </assign>
-                </then>
-              </if>
-            </else>
-          </if>
-        </logic>
+      <state name = 'hold'>
+        
+        
       </state>
+      <state name ='question'>
+        
+      </state>
+      <state name ='answer'>
+        
+      </state>
+      
     </rules>
-    <CommsInterface neighborhood="square_2">
-      <Question name='living-neighbors'>
-        <logic>
-          <var type='int' id='count'/>
-          <iterate list='neighbors' param='response'>
+  </environment>
+  <agentDefinitions>
+    <agent type='AgentType'>
+      <agentScope>
+        <var type='bool' id='is-alive'/>
+      </agentScope>
+      <rules>
+        <state name='Alive'>
+          <stateScope>
+            <var type='int' id='neighbors-alive'/>
+          </stateScope>
+          <logic>
+            <assign>
+              <var id='neighbors-alive'/>
+              <ask name='living-neighbors'/>
+            </assign>
             <if>
               <predicate>
-                <equal>
-                  <var id='response'/>
-                  <constant type='bool' value='true'/>
-                </equal>
+                <var id='is-alive'/>
               </predicate>
               <then>
-                <assign>
-                  <var id='count'/>
-                  <add>
-                    <var id='count'/>
-                    <constant type='int' value='1'>
-                  </add>
-                </assign>
+                <if>
+                  <predicate>
+                    <operator type='not'>
+                      <operator type='or'>
+                        <operator type='equal'>
+                          <var id='neighbors-alive'/>
+                          <constant type='int' value='2'/>
+                        </operator>
+                        <operator type='equal'>
+                          <var id='neighbors-alive'/>
+                          <constant type='int' value='3'/>
+                        </operator>
+                      </operator>
+                    </operator>
+                  </predicate>
+                  <then>
+                    <assign>
+                      <var id='is-alive'/>
+                      <constant type='bool' value='false'/>
+                    </assign>
+                  </then>
+                </if>
               </then>
-          </iterate>
-          <return id='count'/>
-        </logic>
-      </Question>
-      <Answers>
-        <response>
-          <var id='is-alive'/>
-        </response>
-      </Answers>
-    </CommsInterface>
-  </agent>
-</agentDefinitions>
+              <else>
+                <if>
+                  <predicate>
+                    <operator type='equal'>
+                      <var id='neighbors-alive'/>
+                      <constant type='int' value='3'/>
+                    </operator>
+                  </predicate>
+                  <then>
+                    <assign>
+                      <var id='is-alive'/>
+                      <constant type='bool' value='true'/>
+                    </assign>
+                  </then>
+                </if>
+              </else>
+            </if>
+          </logic>
+        </state>
+      </rules>
+      <CommsInterface neighborhood="square_2">
+        <Question name='living-neighbors'>
+          <logic>
+            <var type='int' id='count'/>
+            <iterate list='neighbors' param='response'>
+              <if>
+                <predicate>
+                  <operator type='equal'>
+                    <var id='response'/>
+                    <constant type='bool' value='true'/>
+                  </operator>
+                </predicate>
+                <then>
+                  <assign>
+                    <var id='count'/>
+                    <operator type='add'>
+                      <var id='count'/>
+                      <constant type='int' value='1'/>
+                    </operator>
+                  </assign>
+                </then>
+              </if>
+            </iterate>
+            <return id='count'/>
+          </logic>
+        </Question>
+        <Answers>
+          <response>
+            <var id='is-alive'/>
+          </response>
+        </Answers>
+      </CommsInterface>
+    </agent>
+  </agentDefinitions>
+</ABM>
