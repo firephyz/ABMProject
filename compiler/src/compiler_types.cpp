@@ -10,6 +10,7 @@
 #include <iostream>
 #include <libxml2/libxml/parser.h>
 #include <memory>
+#include <sstream>
 
 extern struct program_args_t pargs;
 

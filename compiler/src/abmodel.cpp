@@ -1,13 +1,36 @@
 #include "abmodel.h"
 
+#include <string>
 #include <sstream>
 
-std::stringstream
+std::string
 ABModel::to_c_source()
 {
   std::stringstream result;
 
-  return result;
+  // Include headers
+  result << "\u0023include \"agent_model.h\"\n";
+  result << "\u0023include \"communications.h\"\n";
+
+  // Declare spatial info
+
+  // Declare neighborhoods
+
+  // Construct model object
+
+  // Declare mlm_data structure
+
+  // Declare agent constructors
+
+  // Declare functions for asking questions
+
+  // Declare functions for receiving answers
+
+  // Declare functions for giving neighborhoods
+
+  // Declare functions for updating each agent
+
+  return result.str();
 }
 
 void
