@@ -7,8 +7,8 @@ int SourceAST::print_depth = 0;
 int SourceAST::start_depth = 0;
 
 SourceAST::~SourceAST() {
-  if(next.get() != nullptr) {
-    delete next.get();
+  if(next != nullptr) {
+    delete next.release();
   }
 }
 

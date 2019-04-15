@@ -38,6 +38,7 @@ public:
   AgentForm(AgentForm&&) = default;
 
   std::vector<SymbolBinding>& getAgentScopeBindings();
+  std::vector<StateInstance>& getStates() { return states; }
   std::vector<Question>& getQuestions() { return questions; }
  
   // moves arguments out info AgentForm

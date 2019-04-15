@@ -30,7 +30,6 @@ ABModel& parse_model(const char * xml_model_path)
                   << xml_model_path << "\'." << std::endl;
         exit(-1);
     }
-    std::cout << "File loaded in!" << std::endl; 
   
     xmlNodePtr root = xmlDocGetRootElement(inputDoc);
     xmlNodePtr child = xmlFirstElementChild(root);   

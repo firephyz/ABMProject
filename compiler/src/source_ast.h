@@ -23,8 +23,8 @@ public:
   };
 
   // for debug printing
-  static int print_depth;
-  static int start_depth;
+  static int print_depth; // records the tab depth of the current ast node while printing
+  static int start_depth; // records the start tab depth to print the entire ast tree. Set before first call to print_tree
   static void set_start_depth(int depth) { start_depth = depth; }
   static void to_string_fall() { ++print_depth; } // increase to_string print depth
   static void to_string_rise() { -- print_depth; } // decrease to_string print depth

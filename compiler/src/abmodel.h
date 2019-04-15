@@ -14,8 +14,9 @@ public:
 
 class ABModel {
   EnvironmentParameters environment;
-  std::vector<AgentForm> agents;
 public:
+  std::vector<AgentForm> agents;
+  
   ABModel() = default;
   ABModel(const ABModel& other) = delete;
   ABModel(ABModel&& other) = default;
