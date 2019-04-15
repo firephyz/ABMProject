@@ -40,12 +40,13 @@ class SourceAST_assignment : public SourceAST {
 public:
   enum class AssignmentValueType {
     NoInit,
-    Constant,
+    Expression,
     CommsAnswer,
   };
 
   SourceAST_assignment()
     : type(AssignmentValueType::NoInit)
+    , value_expr(nullptr)
   {}
   ~SourceAST_assignment() {}
 protected:
@@ -54,7 +55,7 @@ protected:
   union {
     // TODO adjust Q/A Answer element. Haven't 
     std::unique_ptr<SourceAST> value_answer;
-    std::unique_ptr<SourceAST> value_constant;
+    std::unique_ptr<SourceAST> value_expr;
   };
 };
 
@@ -133,5 +134,12 @@ protected:
   OperatorType type;
   std::vector<std::unique_ptr<SourceAST>> args;
 };
+
+class SourceAST_return : public SourceAST {
+protected:
+  std::unique_ptr<SourceAST> value;
+};
+
+class SourceAST_response : public SourceAST {};
 
 #endif

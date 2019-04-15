@@ -104,7 +104,7 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
 
   xmlNodePtr curNode = xmlFirstElementChild(node);
   while(curNode != NULL) {
-    if(xmlStrcmp(curNode->name, (const xmlChar *)"response") == 0) {
+    if(xmlStrcmp(curNode->name, (const xmlChar *)"answer") == 0) {
       answer_source = parse_logic(ctxt.extend(question_scope), xmlFirstElementChild(curNode));
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"questionScope") == 0) {

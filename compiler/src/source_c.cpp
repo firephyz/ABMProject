@@ -68,8 +68,12 @@ SourceAST_assignment_C::SourceAST_assignment_C(const ContextBindings& ctxt, xmlN
     value_answer = std::make_unique<SourceAST_ask_C>(curNode);
   }
   else if(xmlStrcmp(curNode->name, (const xmlChar *)"constant") == 0) {
-    type = AssignmentValueType::Constant;
-    value_constant = std::make_unique<SourceAST_constant_C>(curNode);
+    type = AssignmentValueType::Expression;
+    value_expr = std::make_unique<SourceAST_constant_C>(curNode);
+  }
+  else if(xmlStrcmp(curNode->name, (const xmlChar *)"operator") == 0) {
+    type = AssignmentValueType::Expression;
+    value_expr = std::move(dispatch_on_logic_tag(ctxt, curNode));
   }
   else {
     std::cerr << "Unrecognized assignment value type for variable \'" << symbol_name << "\'." << std::endl;
@@ -85,8 +89,8 @@ std::string
 SourceAST_assignment_C::to_string()
 {
   std::stringstream result;
-  std::string value_string = type == AssignmentValueType::Constant ? 
-    value_constant->to_string() :
+  std::string value_string = type == AssignmentValueType::Expression ? 
+    value_expr->to_string() :
     (type == AssignmentValueType::CommsAnswer ?
       (value_answer.get() == nullptr ?
         "ANSWER" :
@@ -259,6 +263,46 @@ SourceAST_operator_C::SourceAST_operator_C(const ContextBindings& ctxt, xmlNodeP
 
 std::string
 SourceAST_operator_C::to_string()
+{
+  return std::string();
+}
+
+SourceAST_return_C::SourceAST_return_C(const ContextBindings& ctxt, xmlNodePtr node)
+{
+  xmlNodePtr curNode = xmlFirstElementChild(node);
+  if(curNode == NULL) {
+    std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Return requires a value to return." << std::endl;
+    exit(-1);
+  }
+
+  value = dispatch_on_logic_tag(ctxt, curNode);
+
+  if(xmlNextElementSibling(curNode) != NULL) {
+    std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Return requires only a single value element to return." << std::endl;
+    exit(-1);
+  }
+
+  #ifdef VERBOSE_AST_GEN
+    std::cout << "Return" << std::endl;
+  #endif
+}
+
+std::string
+SourceAST_return_C::to_string()
+{
+  return std::string();
+}
+
+SourceAST_response_C::SourceAST_response_C(const ContextBindings& ctxt, xmlNodePtr node)
+{
+  #ifdef VERBOSE_AST_GEN
+    std::cout << "Response" << std::endl;
+  #endif
+}
+
+
+std::string
+SourceAST_response_C::to_string()
 {
   return std::string();
 }

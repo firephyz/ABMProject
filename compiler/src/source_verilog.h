@@ -35,4 +35,16 @@ public:
   std::string to_string();
 };
 
+class SourceAST_return_Verilog : public SourceAST_return {
+public:
+  SourceAST_return_Verilog(const ContextBindings& ctxt, xmlNodePtr node);
+  std::string to_string();
+};
+
+class SourceAST_response_Verilog : public SourceAST_response {
+public:
+  SourceAST_response_Verilog(const ContextBindings& ctxt, xmlNodePtr node);
+  std::string to_string();
+};
+
 #endif

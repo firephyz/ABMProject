@@ -84,13 +84,22 @@
       </rules>
       <CommsInterface neighborhood="square_2">
         <Question name='living-neighbors'>
-          <logic>
-            <var type='int' id='count'/>
-            <iterate list='neighbors' param='response'>
+          <questionScope>
+            <var type='int' id='count' value='0'/>
+          </questionScope>
+          <answer>
+            <logic>
+              <return>
+                <var id='is-alive'/>
+              </return>
+            </logic>
+          </answer>
+          <body>
+            <logic>
               <if>
                 <predicate>
                   <operator type='equal'>
-                    <var id='response'/>
+                    <response/>
                     <constant type='bool' value='true'/>
                   </operator>
                 </predicate>
@@ -104,15 +113,12 @@
                   </assign>
                 </then>
               </if>
-            </iterate>
-            <return id='count'/>
-          </logic>
+              <return>
+                <var id='count'/>
+              </return>
+            </logic>
+          </body>
         </Question>
-        <Answers>
-          <response>
-            <var id='is-alive'/>
-          </response>
-        </Answers>
       </CommsInterface>
     </agent>
   </agentDefinitions>

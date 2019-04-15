@@ -55,3 +55,25 @@ std::string
 SourceAST_operator_Verilog::to_string() {
   return std::string();
 }
+
+SourceAST_return_Verilog::SourceAST_return_Verilog(const ContextBindings& ctxt, xmlNodePtr node)
+{
+
+}
+
+std::string
+SourceAST_return_Verilog::to_string() {
+  return std::string();
+}
+
+SourceAST_response_Verilog::SourceAST_response_Verilog(const ContextBindings& ctxt, xmlNodePtr node)
+{
+
+}
+
+
+std::string
+SourceAST_response_Verilog::to_string()
+{
+  return std::string();
+}

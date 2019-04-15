@@ -85,7 +85,6 @@ void parseAgents(xmlNodePtr agentsChild) {
 
 void newAgentDef(xmlNodePtr agent) {
   xmlNodePtr curNode = agent;
-  std::string curAttr = "";  
   
   // Check that the first tag is Agent and go ahead and grab the name
   if (xmlStrcmp(curNode->name, (const xmlChar*)"agent") == 0) { 
@@ -106,8 +105,7 @@ void newAgentDef(xmlNodePtr agent) {
       std::cerr << "Missing rules tag in agent definition" << std::endl;
       exit(-1);
     }
-    curNode = xmlFirstElementChild(curNode);
-    parseAgentStates(toAdd, curNode);
+    parseAgentStates(toAdd, xmlFirstElementChild(curNode));
 
     // Get the Comms interface
     curNode = xmlNextElementSibling(curNode);
@@ -239,6 +237,22 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
     }
     else {
       return std::make_unique<SourceAST_constant_C>(node);
+    }
+  }
+  else if(xmlStrcmp(node->name, (const xmlChar*)"return") == 0) {
+    if(pargs.target == OutputTarget::FPGA) {
+      return std::make_unique<SourceAST_return_Verilog>(ctxt, node);
+    }
+    else {
+      return std::make_unique<SourceAST_return_C>(ctxt, node);
+    }
+  }
+  else if(xmlStrcmp(node->name, (const xmlChar*)"response") == 0) {
+    if(pargs.target == OutputTarget::FPGA) {
+      return std::make_unique<SourceAST_response_Verilog>(ctxt, node);
+    }
+    else {
+      return std::make_unique<SourceAST_response_C>(ctxt, node);
     }
   }
   else {

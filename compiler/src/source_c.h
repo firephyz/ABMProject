@@ -42,4 +42,16 @@ public:
   std::string to_string();
 };
 
+class SourceAST_return_C : public SourceAST_return {
+public:
+  SourceAST_return_C(const ContextBindings& ctxt, xmlNodePtr node);
+  std::string to_string();
+};
+
+class SourceAST_response_C : public SourceAST_response {
+public:
+  SourceAST_response_C(const ContextBindings& ctxt, xmlNodePtr node);
+  std::string to_string();
+};
+
 #endif
