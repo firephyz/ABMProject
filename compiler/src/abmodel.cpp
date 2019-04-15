@@ -15,3 +15,15 @@ ABModel::add_agent(AgentForm& agent)
 {
   agents.push_back(std::move(agent));
 }
+
+std::string
+ABModel::to_string()
+{
+  std::stringstream result;
+
+  for(auto& agent : agents) {
+    result << agent.to_string();
+  }
+
+  return result.str();
+}

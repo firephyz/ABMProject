@@ -5,7 +5,7 @@
 #define SOURCE_AST_INCLUDED
 
 // Uncomment to show the ast nodes being generated in stdout
-#define VERBOSE_AST_GEN
+//#define VERBOSE_AST_GEN
 
 #include <memory>
 #include <string>
@@ -14,15 +14,22 @@ class SourceAST {
 public:
   std::unique_ptr<SourceAST> next;
 
-  virtual ~SourceAST() {
-    if(next.get() != nullptr) {
-      delete next.get();
-    }
-  }
+  SourceAST() : next(nullptr) {}
+  virtual ~SourceAST();
+  virtual std::string to_source() = 0;
   virtual std::string to_string() = 0;
   void append_next(std::unique_ptr<SourceAST>&& next_node) {
     next = std::move(next_node);
   };
+
+  // for debug printing
+  static int print_depth;
+  static int start_depth;
+  static void set_start_depth(int depth) { start_depth = depth; }
+  static void to_string_fall() { ++print_depth; } // increase to_string print depth
+  static void to_string_rise() { -- print_depth; } // decrease to_string print depth
+  static std::string to_string_prefix();
+  std::string print_tree();
 };
 
 #include "compiler_types.h"

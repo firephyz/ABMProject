@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 
 SourceAST_if_C::SourceAST_if_C(const ContextBindings& ctxt, xmlNodePtr node)
 {
@@ -36,13 +37,28 @@ SourceAST_if_C::SourceAST_if_C(const ContextBindings& ctxt, xmlNodePtr node)
 }
 
 std::string
+SourceAST_if_C::to_source()
+{
+  std::stringstream result;
+  result << "if (" << predicate->to_source() << ") { " << then_clause->to_source() << " }";
+  if(else_clause != nullptr) {
+    result << " else { " << else_clause->to_source() << " }";
+  }
+  return result.str();
+}
+
+std::string
 SourceAST_if_C::to_string()
 {
   std::stringstream result;
-  result << "if (" << predicate->to_string() << ") { " << then_clause->to_string() << " }";
+
+  result << "IF" << std::endl;
+  result << predicate->print_tree();
+  result << then_clause->print_tree();
   if(else_clause != nullptr) {
-    result << " else { " << else_clause->to_string() << " }";
+    result << else_clause->print_tree();
   }
+
   return result.str();
 }
 
@@ -81,22 +97,42 @@ SourceAST_assignment_C::SourceAST_assignment_C(const ContextBindings& ctxt, xmlN
   }
 
   #ifdef VERBOSE_AST_GEN
-    std::cout << "Assignment: " << this->to_string() << std::endl;
+    std::cout << "Assignment: " << this->to_source() << std::endl;
   #endif
+}
+
+std::string
+SourceAST_assignment_C::to_source()
+{
+  std::stringstream result;
+  std::string value_string = type == AssignmentValueType::Expression ? 
+    value_expr->to_source() :
+    (type == AssignmentValueType::CommsAnswer ?
+      (value_answer.get() == nullptr ?
+        "ANSWER" :
+        value_answer->to_source()) :
+      "NoInit");
+  result << binding->getName() << " = " << value_string << ";";
+  return result.str();
 }
 
 std::string
 SourceAST_assignment_C::to_string()
 {
   std::stringstream result;
-  std::string value_string = type == AssignmentValueType::Expression ? 
-    value_expr->to_string() :
-    (type == AssignmentValueType::CommsAnswer ?
-      (value_answer.get() == nullptr ?
-        "ANSWER" :
-        value_answer->to_string()) :
-      "NoInit");
-  result << binding->getName() << " = " << value_string << ";";
+
+  result << "ASSIGN var=\'" << binding->getName() << "\'" << std::endl;
+  switch(type) {
+    case AssignmentValueType::NoInit:
+      break;
+    case AssignmentValueType::Expression:
+      result << value_expr->print_tree();
+      break;
+    case AssignmentValueType::CommsAnswer:
+      result << value_answer->print_tree();
+      break;
+  }
+
   return result.str();
 }
 
@@ -109,17 +145,17 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
   }
 
   const char * type_string = (const char *)xml_attr->children->content;
-  if(xmlStrcmp(xml_attr->children->content, (const xmlChar *)"int") == 0) {
+  if(strcmp(type_string, "int") == 0) {
     type = ConstantType::Integer;
   }
-  else if(xmlStrcmp(xml_attr->children->content, (const xmlChar *)"real") == 0) {
+  else if(strcmp(type_string, "real") == 0) {
     type = ConstantType::Real;
   }
-  else if(xmlStrcmp(xml_attr->children->content, (const xmlChar *)"bool") == 0) {
+  else if(strcmp(type_string, "bool") == 0) {
     type = ConstantType::Bool;
   }
   else {
-    std::cerr << "<" << xmlGetLineNo(node) << "> " << "Constant is of unknown type \'" << xml_attr->children->content << "\'" << std::endl;
+    std::cerr << "<" << xmlGetLineNo(node) << "> " << "Constant is of unknown type \'" << type_string << "\'" << std::endl;
     exit(-1);
   }
 
@@ -161,9 +197,33 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
 }
 
 std::string
-SourceAST_constant_C::to_string()
+SourceAST_constant_C::to_source()
 {
   return value;
+}
+
+std::string
+SourceAST_constant_C::to_string()
+{
+  std::stringstream result;
+
+  result << "CONSTANT type=\'";
+  switch(type) {
+    case ConstantType::NoInit:
+      break;
+    case ConstantType::Integer:
+      result << "int";
+      break;
+    case ConstantType::Real:
+      result << "real";
+      break;
+    case ConstantType::Bool:
+      result << "bool";
+      break;
+  }
+  result << "\' value=\'" << value << "\'" << std::endl;
+
+  return result.str();
 }
 
 SourceAST_var_C::SourceAST_var_C(const ContextBindings& ctxt, xmlNodePtr node)
@@ -182,9 +242,19 @@ SourceAST_var_C::SourceAST_var_C(const ContextBindings& ctxt, xmlNodePtr node)
 }
 
 std::string
-SourceAST_var_C::to_string()
+SourceAST_var_C::to_source()
 {
   return binding->getName();
+}
+
+std::string
+SourceAST_var_C::to_string()
+{
+  std::stringstream result;
+
+  result << "VAR name=\'" << binding->getName() << "\'" << std::endl;
+
+  return result.str();
 }
 
 SourceAST_ask_C::SourceAST_ask_C(xmlNodePtr node)
@@ -204,10 +274,20 @@ SourceAST_ask_C::SourceAST_ask_C(xmlNodePtr node)
 }
 
 std::string
-SourceAST_ask_C::to_string()
+SourceAST_ask_C::to_source()
 {
   // TODO finish
   return std::string();
+}
+
+std::string
+SourceAST_ask_C::to_string()
+{
+  std::stringstream result;
+
+  result << "ASK" << std::endl;
+
+  return result.str();
 }
 
 SourceAST_operator_C::SourceAST_operator_C(const ContextBindings& ctxt, xmlNodePtr node)
@@ -262,9 +342,22 @@ SourceAST_operator_C::SourceAST_operator_C(const ContextBindings& ctxt, xmlNodeP
 }
 
 std::string
-SourceAST_operator_C::to_string()
+SourceAST_operator_C::to_source()
 {
   return std::string();
+}
+
+std::string
+SourceAST_operator_C::to_string()
+{
+  std::stringstream result;
+
+  result << "OPERATOR type=\'" << type.to_string() << "\'" << std::endl;
+  for(auto& arg : args) {
+    result << arg->print_tree();
+  }
+
+  return result.str();
 }
 
 SourceAST_return_C::SourceAST_return_C(const ContextBindings& ctxt, xmlNodePtr node)
@@ -288,9 +381,20 @@ SourceAST_return_C::SourceAST_return_C(const ContextBindings& ctxt, xmlNodePtr n
 }
 
 std::string
-SourceAST_return_C::to_string()
+SourceAST_return_C::to_source()
 {
   return std::string();
+}
+
+std::string
+SourceAST_return_C::to_string()
+{
+  std::stringstream result;
+
+  result << "RETURN" << std::endl;
+  result << value->print_tree();
+
+  return result.str();
 }
 
 SourceAST_response_C::SourceAST_response_C(const ContextBindings& ctxt, xmlNodePtr node)
@@ -302,7 +406,17 @@ SourceAST_response_C::SourceAST_response_C(const ContextBindings& ctxt, xmlNodeP
 
 
 std::string
-SourceAST_response_C::to_string()
+SourceAST_response_C::to_source()
 {
   return std::string();
+}
+
+std::string
+SourceAST_response_C::to_string()
+{
+  std::stringstream result;
+
+  result << "RESPONSE" << std::endl;
+
+  return result.str();
 }

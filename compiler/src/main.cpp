@@ -81,6 +81,8 @@ int main(int argc, char *argv[])
   // load and parse input model
   ABModel& model = parse_model(pargs.xml_model_path);
 
+  std::cout << model.to_string();
+
   // build model library with g++
   std::stringstream model_source = model.to_c_source();
   

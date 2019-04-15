@@ -36,7 +36,10 @@
             </assign>
             <if>
               <predicate>
-                <var id='is-alive'/>
+                <operator type='equal'>
+                  <var id='is-alive'/>
+                  <constant type='bool' value='true'/>
+                </operator>
               </predicate>
               <then>
                 <if>

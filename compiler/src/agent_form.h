@@ -21,6 +21,8 @@ public:
 
   // moves argument
   void add_logic(std::unique_ptr<SourceAST>&& source);
+
+  std::string to_string();
 };
 
 class AgentForm {
@@ -45,6 +47,8 @@ public:
   // the agent scope and from the state scope.
   ContextBindings genContextBindings();
   ContextBindings genContextBindings(StateInstance& state);
+
+  std::string to_string();
 };
 
 #endif

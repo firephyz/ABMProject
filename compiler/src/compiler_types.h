@@ -29,6 +29,21 @@ struct VariableType {
     : type(VarTypeEnum::Bool)
     , fpga_info((struct FPGATypeInfo){-1, -1})
   {}
+
+  std::string to_string() {
+    switch(type) {
+      case VarTypeEnum::Bool:
+        return std::string("bool");
+      case VarTypeEnum::Integer:
+        return std::string("int");
+      case VarTypeEnum::Real:
+        return std::string("real");
+      case VarTypeEnum::String:
+        return std::string("string");
+    }
+
+    return std::string();
+  };
 };
 
 class SymbolBinding {
@@ -41,6 +56,7 @@ public:
   ~SymbolBinding();
 
   const std::string& getName() const { return name; }
+  std::string to_string();
 };
 
 class ContextBindings {
@@ -54,7 +70,7 @@ public:
 
 class Question {
   std::string question_name;
-  std::vector<SymbolBinding> question_scope;
+  std::vector<SymbolBinding> question_scope_vars;
   std::unique_ptr<SourceAST> question_source;
   std::unique_ptr<SourceAST> answer_source;
 public:
@@ -62,6 +78,8 @@ public:
   Question(ContextBindings&& ctxt, xmlNodePtr node);
   Question(const Question&) = delete;
   Question(Question&&) = default;
+
+  std::string to_string();
 };
 
 #endif

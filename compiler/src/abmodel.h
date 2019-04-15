@@ -22,6 +22,8 @@ public:
 
   std::stringstream to_c_source();
   void add_agent(AgentForm& agent);
+
+  std::string to_string();
 };
 
 #endif

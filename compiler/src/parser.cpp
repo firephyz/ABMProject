@@ -201,7 +201,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
 {
   if(xmlStrcmp(node->name, (const xmlChar*)"if") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_if_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_if_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_if_C>(ctxt, node);
@@ -209,7 +209,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"assign") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_assignment_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_assignment_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_assignment_C>(ctxt, node);
@@ -217,7 +217,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"var") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_var_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_var_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_var_C>(ctxt, node);
@@ -225,7 +225,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"operator") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_operator_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_operator_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_operator_C>(ctxt, node);
@@ -233,7 +233,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"constant") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_constant_Verilog>(node);
+//      return std::make_unique<SourceAST_constant_Verilog>(node);
     }
     else {
       return std::make_unique<SourceAST_constant_C>(node);
@@ -241,7 +241,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"return") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_return_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_return_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_return_C>(ctxt, node);
@@ -249,7 +249,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"response") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_response_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_response_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_response_C>(ctxt, node);
@@ -259,6 +259,9 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
     std::cerr << "Unknown xml tag \'" << node->name << "\' in \'<logic>\' block.\n";
     exit(-1);
   }
+
+  // shouldn't get here
+  return std::unique_ptr<SourceAST>(nullptr);
 }
 
 std::unique_ptr<SourceAST>
@@ -275,6 +278,7 @@ parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
 
     child = xmlNextElementSibling(child);
   }
+  (*last_node)->append_next(std::unique_ptr<SourceAST>(nullptr));
 
   return std::move(result);
 }

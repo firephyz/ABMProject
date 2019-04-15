@@ -65,6 +65,16 @@ SymbolBinding::~SymbolBinding()
   free(initial_value);
 }
 
+std::string
+SymbolBinding::to_string()
+{
+  std::stringstream result;
+
+  result << "Symbol Binding name: \'" << name << "\' type: \'" << type.to_string() << "\'" << std::endl;
+
+  return result.str();
+}
+
 const SymbolBinding&
 ContextBindings::getBindingByName(const char * name) const
 {
@@ -105,13 +115,13 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
   xmlNodePtr curNode = xmlFirstElementChild(node);
   while(curNode != NULL) {
     if(xmlStrcmp(curNode->name, (const xmlChar *)"answer") == 0) {
-      answer_source = parse_logic(ctxt.extend(question_scope), xmlFirstElementChild(curNode));
+      answer_source = parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"questionScope") == 0) {
-      parseBindings(question_scope, curNode);
+      parseBindings(question_scope_vars, curNode);
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"body") == 0) {
-      question_source = parse_logic(ctxt.extend(question_scope), xmlFirstElementChild(curNode));
+      question_source = parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
     }
     else {
       std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Unrecognized tag in question \'" << question_name << "\'." << std::endl;
@@ -134,3 +144,23 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
 Question::Question(ContextBindings&& ctxt, xmlNodePtr node)
   : Question(ctxt, node)
 {}
+
+std::string
+Question::to_string()
+{
+  std::stringstream result;
+
+  result << "\tQuestion name: " << question_name << std::endl;
+  result << "\t\t\t------ Vars ------" << std::endl;
+  for(auto& binding : question_scope_vars) {
+    result << "\t\t\t\t" << binding.to_string();
+  }
+  result << "\t\t\t------ Question Source ------" << std::endl;
+  SourceAST::set_start_depth(4);
+  result << question_source->print_tree();
+  result << "\t\t\t------ Answer Source -------" << std::endl;
+  SourceAST::set_start_depth(4);
+  result << answer_source->print_tree();
+
+  return result.str();
+}
