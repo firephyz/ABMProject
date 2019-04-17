@@ -4,6 +4,8 @@
 #include "communications.h"
 #include "spatial.h"
 
+#include <vector>
+
 // Forward declare to avoid circular dependency
 typedef struct comms_neighborhood_t CommsNeighborhood;
 class AgentModel;
@@ -16,6 +18,13 @@ extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, voi
 extern CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data);
 extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data);
 
+// holds data for initial agents in the simulation
+class SimAgent {
+  size_t * position;
+public:
+  bool is_at_position(AgentModel& model, void * position);
+};
+
 class AgentModel {
 public:
 /***********************************************************************
@@ -24,6 +33,7 @@ public:
   SpatialType space_type;
   int num_dimensions;
   size_t * dimensions;
+  std::vector<SimAgent> initial_agents;
 
   // Model makers must implement functions below
   void * modelNewAgent(void * position);

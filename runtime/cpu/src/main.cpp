@@ -130,6 +130,19 @@ void * loadModel(const char * model_path) {
   return model_handle;
 }
 
+bool
+SimAgent::is_at_position(AgentModel& model, void * query_position)
+{
+  size_t * query_position_array = (size_t *)query_position;
+  for(int i = 0; i < model.num_dimensions; ++i) {
+    if(query_position_array[i] != position[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 int main() {
 
   void * model_handle = loadModel("../../models/test/test_model.so");
