@@ -7,13 +7,13 @@
 #include <vector>
 #include <string>
 
-struct EnvironmentParameters {
+struct ABM_Environment {
 public:
   ContextBindings genEnvironmentContext();
 };
 
 class ABModel {
-  EnvironmentParameters environment;
+  ABM_Environment environment;
 public:
   std::vector<AgentForm> agents;
 

@@ -12,7 +12,7 @@ extern AgentModel * loaded_model;
 
 SimCell::SimCell(SimSpace& space, int position_index)
   : position(new size_t[space.num_dimensions])
-  , mlm_data(loaded_model->newAgent())
+  , mlm_data(NULL)
 {
   size_t mod_amount = 1;
   for(int dim = 0; dim < space.num_dimensions; ++dim) {
@@ -24,6 +24,9 @@ SimCell::SimCell(SimSpace& space, int position_index)
     position[dim] = position_index / mod_amount;
     position_index = position_index % mod_amount;
   }
+
+  // create agent data if one is present. Keep NULL otherwise
+  mlm_data = loaded_model->newAgent(position);
 }
 
 SimCell::SimCell(SimCell&& other) noexcept

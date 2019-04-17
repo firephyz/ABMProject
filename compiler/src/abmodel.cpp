@@ -11,8 +11,10 @@ ABModel::to_c_source()
   // Include headers
   result << "\u0023include \"agent_model.h\"\n";
   result << "\u0023include \"communications.h\"\n";
+  result << "\n";
 
   // Declare spatial info
+  result << "size_t dimensions[] = {2, 3};\n";
 
   // Declare neighborhoods
 

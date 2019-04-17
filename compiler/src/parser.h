@@ -13,6 +13,7 @@ public:
 };
 
 ABModel& parse_model(const char * xml_model_path);
+void parseInitialState(xmlNodePtr node);
 void parseEnviroment(xmlNodePtr envChild);
 void parseAgents(xmlNodePtr agentsChild);
 void newAgentDef(xmlNodePtr agent);

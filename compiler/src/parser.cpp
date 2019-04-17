@@ -39,6 +39,8 @@ ABModel& parse_model(const char * xml_model_path)
 //#          parseEnviroment(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){ 
           parseAgents(child);
+        } else if(xmlStrcmp(child->name, (const xmlChar*)"initialState") == 0) {
+          parseInitialState(child);
         } else {
           std::cout << "OOPS" << std::endl;
         }
@@ -47,6 +49,11 @@ ABModel& parse_model(const char * xml_model_path)
     }
     
     return abmodel;
+}
+
+void parseInitialState(xmlNodePtr node)
+{
+  return; // TODO finish
 }
 
 void parseEnviroment(xmlNodePtr envChild) { 
@@ -108,7 +115,7 @@ void newAgentDef(xmlNodePtr agent) {
 
     // Get the Comms interface
     curNode = xmlNextElementSibling(curNode);
-    if(xmlStrcmp(curNode->name, (const xmlChar *)"CommsInterface") != 0) {
+    if(xmlStrcmp(curNode->name, (const xmlChar *)"commsInterface") != 0) {
       std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Agent is missing its \'CommsInterface\' tag." << std::endl;
       exit(-1);
     }
