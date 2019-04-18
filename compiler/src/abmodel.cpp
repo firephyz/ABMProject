@@ -13,16 +13,22 @@ ABModel::to_c_source()
   result << "\u0023include \"communications.h\"\n";
   result << "\n";
 
-  // Declare spatial info
+  // Declare spatial info and model
   result << "size_t dimensions[] = {2, 3};\n";
+  result << "AgentModel loaded_model(Spatial::D2_Cartesian, 2, dimensions);\n";
 
-  // Declare neighborhoods
-
-  // Construct model object
+  // Declare neighborhoods. Must get types from agents
+  for(auto& agent : agents) {
+    result << agent.neighborhood_to_c_source() << "\n";
+  }
+  result << "\n";
 
   // Declare mlm_data structure
+  result << create_mlm_data_struct() << "\n";
+  result << "\n";
 
   // Declare agent constructors
+  //result << "void * AgentModel::modelNewAgent"
 
   // Declare functions for asking questions
 

@@ -19,7 +19,7 @@ SimCell::SimCell(SimSpace& space, int position_index)
     mod_amount *= space.dimensions[dim];
   }
 
-  for(int dim = space.num_dimensions - 1; dim >= 0; --dim) {
+  for(int dim = 0; dim < space.num_dimensions; ++dim) {
     mod_amount /= space.dimensions[dim];
     position[dim] = position_index / mod_amount;
     position_index = position_index % mod_amount;
@@ -32,8 +32,7 @@ SimCell::SimCell(SimSpace& space, int position_index)
 SimCell::SimCell(SimCell&& other) noexcept
   : position(std::move(other.position))
   , mlm_data(other.mlm_data)
-{
-}
+{}
 
 bool SimCell::operator!=(SimCell& other)
 {

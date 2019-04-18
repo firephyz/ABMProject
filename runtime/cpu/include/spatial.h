@@ -24,6 +24,7 @@ public:
   SimCell(SimCell&& other) noexcept;
 
   bool operator!=(SimCell& other);
+  bool is_empty() { return mlm_data == NULL; }
 };
 
 // Forward declare

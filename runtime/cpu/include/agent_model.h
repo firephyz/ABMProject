@@ -5,6 +5,7 @@
 #include "spatial.h"
 
 #include <vector>
+#include <string.h>
 
 // Forward declare to avoid circular dependency
 typedef struct comms_neighborhood_t CommsNeighborhood;
@@ -18,11 +19,37 @@ extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, voi
 extern CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data);
 extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data);
 
+/**********************************************************
+ * The following class is only constructed in the MLM cpp files.
+ * Not intended to be used by runtime
+ **********************************************************/
 // holds data for initial agents in the simulation
+// template and constexpr strangeness is so we can construct
+// arrays of initial agents in the MLM binary with no runtime overhead
+template<int N_DIM>
 class SimAgent {
-  size_t * position;
 public:
-  bool is_at_position(AgentModel& model, void * position);
+  static const int num_dimensions = N_DIM;
+
+  constexpr SimAgent(const std::initializer_list<size_t>& position)
+  {
+    std::copy(position.begin(), position.end(), this->position);
+  }
+
+  bool is_at_position(void * query_position) const
+  {
+    size_t * query_position_array = (size_t *)query_position;
+    for(int i = 0; i < num_dimensions; ++i) {
+      if(query_position_array[i] != position[i]) {
+        return false;
+      }
+    }
+  
+    return true;
+  }
+
+private:
+  size_t position[num_dimensions];
 };
 
 class AgentModel {
@@ -30,10 +57,9 @@ public:
 /***********************************************************************
  * Models must specify these elements                                  *
  ***********************************************************************/
-  SpatialType space_type;
-  int num_dimensions;
-  size_t * dimensions;
-  std::vector<SimAgent> initial_agents;
+  const SpatialType space_type;
+  const int num_dimensions;
+  const size_t * dimensions;
 
   // Model makers must implement functions below
   void * modelNewAgent(void * position);
@@ -46,8 +72,8 @@ public:
  ***********************************************************************/
 
 
-
-  AgentModel(SpatialType space_type, int num_dimensions, size_t * dimensions)
+  // constexpr so it is constructed in place in the library at compile time
+  constexpr AgentModel(SpatialType space_type, int num_dimensions, const size_t * dimensions)
     : space_type(space_type)
     , num_dimensions(num_dimensions)
     , dimensions(dimensions)
