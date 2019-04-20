@@ -18,7 +18,7 @@ public enum Color {
   frameRate(5.0);
   size(1000, 1000); 
   currentSims = new ArrayList<VisualSim>();
-  parseSimLogFile("test.txt");
+  parseSimLogFile("./testGen/test2.txt");
   textSize(25);
 }
 
@@ -34,9 +34,11 @@ public enum Color {
       // Diplay Agents and their locations
      fill(255);
      String agentDisplay = "Agent Positions: "; 
-     text(agentDisplay, 700, 100);
+     textSize(25);
+     text(agentDisplay, 700, 25);
+     textSize(12);
      for (Agent a : sim.agents) {
-       text(a.ID + ":(" + (int)a.curPos.x * gridSpaceSize + "," + (int)a.curPos.y * gridSpaceSize + ")", 700, 125 + (i * 25));
+       text(a.ID + ":(" + (int)a.curPos.x * gridSpaceSize + "," + (int)a.curPos.y * gridSpaceSize + ")", 700, 50 + (i * 25));
        i++;
      }
      i = 0;
@@ -103,6 +105,12 @@ void parseSimLogFile(String filename) {
      if (keyCode == UP) {
        for (VisualSim sim : currentSims) {
          sim.updateSim();
+       }
+     }
+   } else {
+     if (key == BACKSPACE) { // RESET
+       for (VisualSim sim : currentSims) {
+         sim.curStep = 0;
        }
      }
    }
