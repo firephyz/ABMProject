@@ -77,6 +77,76 @@ void parseEnviroment(xmlNodePtr envChild) {
       }
 		} 
 	} 
+
+	for (curNode; curNode; curNode = xmlNextElementSibling) {
+		//curNode = xmlNextElementSibling(curNode);
+		if (curNode->name == "GlobalParameter") {
+			xmlNodePtr temp = xmlNextElementChild(curNode);
+			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
+				char *tnm = xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
+				char *tvl = xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
+				char *tty = xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
+				bool cns = true; // temp
+				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
+					xmlNodePtr rule = xmlFirstElementChild(curNode); 
+					if (rule != NULL) {
+						cns = false;
+						parseEnvRule(rule);
+					}
+					abmodel.add_to_econtext(1, tnm, tvl,tty, cns);
+				}
+				else {
+					std::cout << "INVALID GLOBAL ENVIRONMENT VARIABLE" << std::endl;
+				}
+			}
+		} //
+		else if (curNode->name == "localParameters") {
+			xmlNodePtr temp = xmlNextElementChild(curNode);
+			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
+				char* tnm = xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
+				char* tvl = xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
+				char* tty = xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
+				bool cns = true;
+				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
+					xmlNodePtr rule = xmlFirstElementChild(curNode);
+					if (rule != NULL) {
+						cns = false;
+						parseEnvRule(rule);
+					}
+					abmodel.add_to_econtext(1, tnm, tvl, tty, cns);
+				}
+				else {
+					std::cout << "INVALID LOCAL ENVIRONMENT VARIABLE" << std::endl;
+				}
+			}
+		}
+		/*
+		else if (curNode->name == "parameterRules") { // parameter rule logic parsing
+			xmlNodePtr temp = xmlNextElementChild(curNode);
+			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
+			  // char* vrn = xmlGetAttribute(temp, (const char *) "name")->children->content;
+				if (strcomp(temp->name, "varRule")) { // checking variable validity
+					xmlNodePtr rule_parse = xmlElementChild(temp);
+
+
+				}
+				
+				else {
+					std::cout << "INVALID LOCAL ENVIRONMENT RULE" << std::endl;
+				}
+			}
+		}
+		*/
+
+
+
+
+	}//
+}
+// manages code parsing for env variables
+void parseEnvRule(xmlNodePtr varRule) {
+
+
 }
 
 void parseAgents(xmlNodePtr agentsChild) { 

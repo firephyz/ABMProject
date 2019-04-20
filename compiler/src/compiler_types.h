@@ -34,10 +34,10 @@ struct VariableType {
 class SymbolBinding {
   std::string name;
   struct VariableType type;
-  void * initial_value;
+  std::string initial_value;
   bool is_constant;
 public:
-  SymbolBinding(std::string& name, struct VariableType type, void * initial_value, bool is_constant);
+  SymbolBinding(std::string& name, struct VariableType type, std::string initial_value, bool is_constant);
   ~SymbolBinding();
 
   const std::string& getName() const { return name; }
@@ -45,6 +45,7 @@ public:
 
 class ContextBindings {
 public:
+	ContextBindings(int frameCount);
   std::vector<std::vector<SymbolBinding> *> frames;
   const SymbolBinding& getBindingByName(const char * name) const;
 };

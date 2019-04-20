@@ -8,7 +8,7 @@
 
 extern struct program_args_t pargs;
 
-SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, void * initial_value, bool is_constant)
+SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::string initial_value, bool is_constant)
   : name(name)
   , type(type)
   , initial_value(NULL)
@@ -78,4 +78,12 @@ ContextBindings::getBindingByName(const char * name) const
 
   std::cerr << "Binding \'" << name << "\' not found in the given context." << std::endl;
   exit(-1);
+}
+
+
+ContextBindings::ContextBindings(int frameCount) {
+	for (int i = 0; i < frameCount; i++) {
+		ContextBindings::frames.push_back(std::vector<SymbolBinding> SB);
+	}
+
 }
