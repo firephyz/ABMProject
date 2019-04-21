@@ -53,7 +53,59 @@ ABModel& parse_model(const char * xml_model_path)
 
 void parseInitialState(xmlNodePtr node)
 {
-  return; // TODO finish
+  xmlNodePtr curNode = xmlFirstElementChild(node);
+  while(curNode != NULL) {
+    if(xmlStrcmp(curNode->name, (const xmlChar *)"dimensions") == 0) {
+      parse_dimensions(curNode);
+    }
+    else if(xmlStrcmp(curNode->name, (const xmlChar *)"agent") == 0) {
+      parse_init_agent(curNode);
+    }
+    else {
+      std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Unrecognized xml tag \'" << (const char *)curNode->name << "\'." << std::endl;
+      exit(-1);
+    }
+
+    curNode = xmlNextElementSibling(curNode);
+  }
+
+  // sort initial_agents by position so they are processed in the correct order
+  std::sort(abmodel.init.agents.begin(), abmodel.init.agents.end());
+}
+
+void parse_init_agent(xmlNodePtr node)
+{
+  abmodel.init.agents.emplace_back(node);
+}
+
+void parse_dimensions(xmlNodePtr curNode)
+{
+  static bool parsed_dimensions = false;
+
+  if(parsed_dimensions) {
+    std::cerr << "Only put one \'dimensions\' tag in an \'initialState\' tag." << std::endl;
+    exit(-1);
+  }
+  else {
+    parsed_dimensions = true;
+    xmlAttrPtr xml_attr = xmlGetAttribute(curNode, "sizes");
+    if(xml_attr == NULL) {
+      std::cerr << "\'dimensions\' tag is missing the \'sizes\' attribute." << std::endl;
+      exit(-1);
+    }
+
+    std::string dim_sizes_str((const char *)xml_attr->children->content);
+    size_t str_pos = 0;
+    while(str_pos < dim_sizes_str.length()) {
+      size_t new_str_pos = dim_sizes_str.find(" ", str_pos);
+      std::string dim_size_str = dim_sizes_str.substr(str_pos, new_str_pos - str_pos);
+      abmodel.init.dimension_sizes.push_back(std::stoi(dim_size_str));
+
+      str_pos = new_str_pos;
+    }
+
+    // TODO make sure number of dimension sizes matches the number of dimensions
+  }
 }
 
 void parseEnviroment(xmlNodePtr envChild) { 
@@ -182,12 +234,11 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
     std::string symName = (const char*)(xmlGetAttribute(curNode, "id")->children->content);
     
     // Check if the var has a val attribute and if so use that else set default
-    if (xmlGetAttribute(curNode, "val") != NULL) {
-      // TODO must parse data from attribute content
-      //val = xmlGetAttribute(curNode, "val")->children->content;
-      val = NULL;
+    xmlAttrPtr xml_attr = xmlGetAttribute(curNode, "value")
+    if (xml_attr == NULL) {
+      val = std::string(); // empty so code-gen assumes default
     } else { 
-      val = NULL;
+      val = std::string(xml_attr->children->content);
     }
       
     // Check if the var has a is_constant attribute and if so use that else set default

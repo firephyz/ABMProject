@@ -2,6 +2,9 @@
 <ABM>
   <initialState>
     <dimensions sizes='100 100'/>
+    <!-- fill space with default agents -->
+    <agent location='all' type='AgentType'/>
+    <!-- specify other agents with different values -->
     <agent location='50 50' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent>

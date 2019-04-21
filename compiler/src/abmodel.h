@@ -3,25 +3,36 @@
 
 #include "agent_form.h"
 #include "compiler_types.h"
+#include "initial_agent.h"
 
 #include <vector>
 #include <string>
 
 struct ABM_Environment {
-public:
   ContextBindings genEnvironmentContext();
 };
 
-class ABModel {
+struct InitialState {
+  std::vector<int> dimension_sizes;
+  std::vector<InitialAgent> agents;
+};
+
+struct ABModel {
   ABM_Environment environment;
-public:
+  InitialState init;
   std::vector<AgentForm> agents;
 
   ABModel() = default;
   ABModel(const ABModel& other) = delete;
   ABModel(ABModel&& other) = default;
 
+  // for code gen
   std::string to_c_source();
+  std::vector<std::string> gen_initial_agent_defs();
+  std::string gen_spatial_enum();
+  std::string gen_space_dims();
+  std::string gen_space_size();
+
   void add_agent(AgentForm& agent);
 
   std::string to_string();

@@ -49,6 +49,7 @@ public:
   ContextBindings genContextBindings();
   ContextBindings genContextBindings(StateInstance& state);
 
+  std::string neighborhood_to_c_source(); // TODO make neighborhood class and implement c_source method
   std::string to_string();
 };
 

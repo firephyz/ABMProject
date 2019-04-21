@@ -49,7 +49,7 @@ struct VariableType {
 class SymbolBinding {
   std::string name;
   struct VariableType type;
-  void * initial_value;
+  std::string value;
   bool is_constant;
 public:
   SymbolBinding(std::string& name, struct VariableType type, void * initial_value, bool is_constant);
