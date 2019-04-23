@@ -55,7 +55,8 @@ class VisualSim {
   
   void updateSim() {
     System.out.println(curStep);
-    if (this.curStep >= (this.simSize)) { // End of simulation
+    if (this.curStep >= (this.simSize - 1)) { // End of simulation
+      this.curStep = this.simSize - 1;
       return;  
     } else if (this.curStep < 0) {
       this.curStep = 0;

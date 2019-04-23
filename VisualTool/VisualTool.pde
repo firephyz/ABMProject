@@ -17,7 +17,7 @@ public enum Color {
  void setup() {
   size(1000, 1000); 
   currentSims = new ArrayList<VisualSim>();
-  parseSimLogFile("./testFiles/test3.txt");
+  parseSimLogFile("./testFiles/test2.txt");
   textSize(25);
 }
 
@@ -96,8 +96,20 @@ void parseSimLogFile(String filename) {
      agents.add(a);
    }
    
+   // Set Agent initial positions
+   String[] initialPos = split(simFileLines.get(7), ':');
+   int curAgent = 1; // Used to iterate through intialPos array, skipping the first entry
+   for (Agent a : agents) {                
+     String pos = split(initialPos[curAgent],  "\\")[1]; //Gets the string in the form of :Agent_x\x,y
+     String xCoordinate = split(pos, ",")[0];
+     String yCoordinate = split(pos, ",")[1];
+     a.curPos.x = Float.parseFloat(xCoordinate);
+     a.curPos.y = Float.parseFloat(yCoordinate);
+     curAgent++;
+   }
+   
    // Process Timesteps to get a list of each agent and their movement
-   for (int i = 7; i < simFileLines.size(); i++) { // Start at the first TimeStamp Line
+   for (int i = 8; i < simFileLines.size(); i++) { // Start at the first TimeStamp Line
      TimeStamp curTimeStamp = new TimeStamp(simFileLines.get(i));
      timeStamps.add(curTimeStamp);
    }
