@@ -24,19 +24,32 @@ struct AgentPosition {
     LT,
     GT,
     // Binary relational operators
+    LTLT,
     LTGT,
     GTLT,
+    GTGT,
   };
   struct dimension {
     enum class type_t {
+      None,
       Absolute_Position,
       Relational_Position,
       All,
     };
 
     dimension(const std::string& str);
-    bool overlaps(const dimension& other);
-    bool is_binary() {
+    bool overlaps(const struct dimension& other) const;
+    bool operator<(const struct dimension& other) const;\
+    bool operator>(const struct dimension& other) const {
+      return !((*this < other) || (*this == other));
+    }
+    bool operator==(const struct dimension& other) const {
+      return (first_value == other.first_value) &&
+        (second_value == other.second_value) &&
+        (relation == other.relation) &&
+        (position_type == other.position_type);
+    }
+    bool is_binary() const {
       switch(relation) {
         case relation_t::LT:
         case relation_t::GT:
@@ -48,15 +61,15 @@ struct AgentPosition {
 
     // 'or equal to' is captured by incrementing or decrementing the value given in the XML model.
     // i.e. we are using exclusive relations. >=5,<10 stores 5 and 9
-    int first_value;
+    int first_value = -1;
     int second_value = -1; // only present if relation is a binary one
     relation_t relation {relation_t::None};
-    type_t position_type;
+    type_t position_type {dimension::type_t::None};
   };
 
-  AgentPosition(const std::string& str);
-  bool overlaps(const AgentPosition& other);
-  bool operator<(const AgentPosition& other);
+  AgentPosition() = default;
+  AgentPosition(xmlNodePtr node, const std::string& str);
+  bool overlaps(const AgentPosition& other) const;
 
   std::vector<dimension> position;
 };
@@ -64,6 +77,13 @@ struct AgentPosition {
 // stores location information and variable overrides for the starting start of an agent
 struct InitialAgent {
   InitialAgent(xmlNodePtr node);
+  bool operator<(const InitialAgent& other) const {
+    auto other_iter = other.position.position.begin();
+    for(auto& dim : position.position) {
+      if(dim > *other_iter) return false;
+    }
+    return true;
+  }
 
   AgentPosition position;
   std::string agent_type;

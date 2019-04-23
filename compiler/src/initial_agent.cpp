@@ -3,6 +3,7 @@
 
 #include <libxml2/libxml/parser.h>
 #include <string>
+#include <iostream>
 
 std::pair<AgentPosition::relation_t, int>
 parse_relation(const std::string str)
@@ -72,7 +73,7 @@ AgentPosition::dimension::dimension(const std::string& str)
 
 // TODO fix possible edge cases when first or second value is on a dimension boundary
 bool
-AgentPosition::dimension::overlaps(const AgentPosition::dimension& other)
+AgentPosition::dimension::overlaps(const AgentPosition::dimension& other) const
 {
   if(is_binary()) {
     if(other.is_binary()) {
@@ -89,7 +90,7 @@ AgentPosition::dimension::overlaps(const AgentPosition::dimension& other)
   }
   else {
     if(other.is_binary()) {
-      if(other.relation == relation::LTGT) {
+      if(other.relation == relation_t::LTGT) {
         return true;
       }
       else {
@@ -102,8 +103,8 @@ AgentPosition::dimension::overlaps(const AgentPosition::dimension& other)
       }
     }
     else {
-      if(relation == relation_t::LT && other.relation == relation_t::LT
-        || relation == relation_t::GT && other.relation == relation_t::GT) {
+      if((relation == relation_t::LT && other.relation == relation_t::LT)
+        || (relation == relation_t::GT && other.relation == relation_t::GT)) {
         return true;
       }
       else {
@@ -118,38 +119,30 @@ AgentPosition::dimension::overlaps(const AgentPosition::dimension& other)
   }
 }
 
-bool
-AgentPosition::overlaps(const AgentPosition& other)
-{
-  for(auto& dim : position) {
-    auto dim_index = (uintptr_t)(&dim - position.begin()) / sizeof(data_t);
-    if(!dim.overlap(other.position[dim_index])) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // sorts according to initial_agent position relation type.
 // So we know which initial agents to process first
 bool
-AgentPosition::operator<(const AgentPosition& other)
+AgentPosition::dimension::operator<(const struct dimension& other) const
 {
   switch(position_type) {
+    case type_t::None:
+      return false; // error
     case type_t::Absolute_Position:
       if(other.position_type == type_t::Absolute_Position) {
-        if(position == other.position) {
+        if(overlaps(other)) {
           std::cerr << "Multiple initial agents declared with the same location." << std::endl;
           exit(-1);
         }
       }
-      return true;
+      return false;
     case type_t::Relational_Position:
       switch(other.position_type) {
+        case type_t::None:
+          return false; // error
         case type_t::Absolute_Position:
           return false;
         case type_t::Relational_Position:
-          if(overlaps(other.position)) {
+          if(overlaps(other)) {
             std::cerr << "Multiple initial agents declared with an overlapping location." << std::endl;
             exit(-1);
           }
@@ -164,17 +157,32 @@ AgentPosition::operator<(const AgentPosition& other)
       }
       return false;
   }
+
+  return false;
+}
+
+bool
+AgentPosition::overlaps(const AgentPosition& other) const
+{
+  uintptr_t dim_index = 0;
+  for(auto& dim : position) {
+    if(!dim.overlaps(other.position[dim_index])) {
+      return false;
+    }
+    ++dim_index;
+  }
+  return true;
 }
 
 AgentPosition::AgentPosition(xmlNodePtr node, const std::string& str)
 {
   if(str.length() == 0) {
-    std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "\'location\' attribute expects a non-empty string." << std::endl;
+    std::cerr << "<" << xmlGetLineNo(node) << "> " << "\'location\' attribute expects a non-empty string." << std::endl;
     exit(-1);
   }
 
-  auto pos = str.begin();
-  auto next_pos = str.find(" ", pos);
+  size_t pos = 0;
+  size_t next_pos = str.find(" ", 0);
   do {
     position.emplace_back(str.substr(pos, next_pos));
     pos = next_pos;
@@ -186,7 +194,7 @@ VarValueOverride::VarValueOverride(xmlNodePtr node)
 {
   xmlAttrPtr xml_attr = xmlGetAttribute(node, "id");
   if(xml_attr == NULL) {
-    std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Var override tag is missing its \'id\' attribute." << std::endl;
+    std::cerr << "<" << xmlGetLineNo(node) << "> " << "Var override tag is missing its \'id\' attribute." << std::endl;
     exit(-1);
   }
 
@@ -194,7 +202,7 @@ VarValueOverride::VarValueOverride(xmlNodePtr node)
 
   xml_attr = xmlGetAttribute(node, "value");
   if(xml_attr == NULL) {
-    std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Var override tag is missing its \'value\' attribute." << std::endl;
+    std::cerr << "<" << xmlGetLineNo(node) << "> " << "Var override tag is missing its \'value\' attribute." << std::endl;
     exit(-1);
   }
 
@@ -205,7 +213,7 @@ InitialAgent::InitialAgent(xmlNodePtr node)
 {
   xmlAttrPtr xml_attr = xmlGetAttribute(node, "location");
   if(xml_attr == NULL) {
-    std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Initial agent declaration is missing its \'location\' attribute." << std::endl;
+    std::cerr << "<" << xmlGetLineNo(node) << "> " << "Initial agent declaration is missing its \'location\' attribute." << std::endl;
     exit(-1);
   }
 
@@ -213,7 +221,7 @@ InitialAgent::InitialAgent(xmlNodePtr node)
 
   xml_attr = xmlGetAttribute(node, "type");
   if(xml_attr == NULL) {
-    std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Initial agent declaration is missing its \'type\' attribute." << std::endl;
+    std::cerr << "<" << xmlGetLineNo(node) << "> " << "Initial agent declaration is missing its \'type\' attribute." << std::endl;
     exit(-1);
   }
 

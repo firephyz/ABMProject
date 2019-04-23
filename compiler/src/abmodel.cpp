@@ -23,13 +23,13 @@ ABModel::to_c_source()
   result << "using InitAgent = SimAgent<num_dimensions>;\n";
   std::vector<std::string> initial_agent_defs = gen_initial_agent_defs();
   result << "const std::array<InitAgent, " << initial_agent_defs.size() << "> initial_agents {";
-  for(uint index = 0; index < initial_agent_defs.size(), ++index) {
-    auto & agent = initial_agent_defs[index];
-    result << agent;
-    if(index != initial_agent_defs.size() - 1) {
-      result << ", ";
-    }
-  }
+  // for(uint index = 0; index < initial_agent_defs.size(), ++index) {
+  //   auto & agent = initial_agent_defs[index];
+  //   result << agent;
+  //   if(index != initial_agent_defs.size() - 1) {
+  //     result << ", ";
+  //   }
+  // }
   result << "};\n";
   result << "\n";
 
@@ -39,13 +39,13 @@ ABModel::to_c_source()
 
   // Declare neighborhoods. Must get types from agents
   for(auto& agent : agents) {
-    result << agent.neighborhood_to_c_source() << "\n";
+    result << agent.getNeighborhood().to_c_source() << "\n";
   }
   result << "\n";
 
   // Declare mlm_data structure
-  result << create_mlm_data_struct() << "\n";
-  result << "\n";
+  //result << create_mlm_data_struct() << "\n";
+  //result << "\n";
 
   // Declare agent constructors
   //result << "void * AgentModel::modelNewAgent"
@@ -59,6 +59,31 @@ ABModel::to_c_source()
   // Declare functions for updating each agent
 
   return result.str();
+}
+
+std::vector<std::string>
+ABModel::gen_initial_agent_defs()
+{
+  std::vector<std::string> result;
+  return result;
+}
+
+std::string
+ABModel::gen_spatial_enum()
+{
+  return std::string();
+}
+
+std::string
+ABModel::gen_space_dims()
+{
+  return std::string();
+}
+
+std::string
+ABModel::gen_space_size()
+{
+  return std::string();
 }
 
 void

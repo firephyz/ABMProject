@@ -143,7 +143,7 @@ void parseArgs(int argc, char *argv[])
   }
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
   parseArgs(argc, argv);
 
@@ -178,10 +178,10 @@ int main(int argc, char *argv[])
 
     // cleanup
     remove(object_file_name.c_str());
-  }  
+  }
 
   // cleanup
   remove(source_file_name.c_str());
-  
+
   return 0;
 }
