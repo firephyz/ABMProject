@@ -1,0 +1,11 @@
+Game_of_Life
+Num_of_Agents:2
+Enviroment_Size:64
+Grid_Space:10
+Grid_Lines:1
+Sim_Size:4
+Agents:Agent_1:Agent_2
+0:Agent_1\23,16:Agent_2\61,2
+1:Agent_1\23,17:Agent_2\62,1
+2:Agent_1\22,17:Agent_2\63,0
+3:Agent_1\23,16:Agent_2\63,1

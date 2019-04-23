@@ -7,8 +7,9 @@ class VisualSim {
   int curStep;
   int simSize;
   String simName;
+  boolean noGridLines;
   
-  VisualSim(String simName, int envSize, int stepSize, int simSize,  ArrayList<TimeStamp> timeStamps, 
+  VisualSim(String simName, int envSize, int stepSize, int simSize, int gridLines,  ArrayList<TimeStamp> timeStamps, 
           ArrayList<Agent> agents) {
     this.simName = simName;
     this.envSize = envSize;
@@ -16,6 +17,14 @@ class VisualSim {
     this.curStep = 0;
     this.simSize = simSize;
     
+    // Set whether the simualtion should show gridlines or not (Really only needed for boids)
+    if (gridLines == 0) {
+      this.noGridLines = true;
+    } else {
+      this.noGridLines = false;  
+    }
+   
+    // Construct the Grid rows of the visual simulation 
     gridRows = new ArrayList<GridRow>();
     for (int i = 0; i < envSize; i++) {
       gridRows.add(new GridRow(envSize, String.valueOf(i)));
@@ -45,9 +54,12 @@ class VisualSim {
   }
   
   void updateSim() {
-    if (this.curStep == (this.simSize - 1)) { // End of simulation
-      // this.curStep = 0; repeat?
+    System.out.println(curStep);
+    if (this.curStep >= (this.simSize)) { // End of simulation
       return;  
+    } else if (this.curStep < 0) {
+      this.curStep = 0;
+      return;
     }
     
     // Update all the agents based on the current simualtion timestamp
@@ -56,30 +68,29 @@ class VisualSim {
       moveAgent(a, stampLog.get(curStep).moves.get(curAgent)); 
       curAgent++;
     }
-    this.curStep++;
   }
   
   void moveAgent(Agent a, PVector heading) {
     // Get the current gridspace the Agent was in previously and Remove the agent from that spaces's arrayList
     a.curSpace.agents.remove(a);
     
-    // Update the Agents position and then add to the new relavant grideSpace
-    a.curPos = a.curPos.add(heading);
+    // Update the Agents position
+    a.curPos = heading;
 
-    // Enable #wrap ?
-    // Set Hard Limits to prevent array access errors
+    // Set Hard Limits to prevent array access errors as well as wrap
     if (a.curPos.x <= 0) {
-      a.curPos.x = a.curPos.x + 1;  
-    } else if (a.curPos.x >= envSize) {
-      a.curPos.x = a.curPos.x - 1;
+      a.curPos.x = envSize - 1; 
+    } else if (a.curPos.x >= (envSize - 1)) {
+      a.curPos.x = 0;
     }
     
     if (a.curPos.y <= 0) {
-      a.curPos.y = a.curPos.y + 1;  
-    } else if (a.curPos.y >= envSize) {
-      a.curPos.y = a.curPos.y - 1; 
+      a.curPos.y = (envSize - 1);  
+    } else if (a.curPos.y >= (envSize - 1)) {
+      a.curPos.y = 0; 
     }
     
+    // Add to new gridSpace, and update the agents internal gridspace
     this.gridRows.get((int)a.curPos.y).row.get((int)a.curPos.x).agents.add(a);
     a.curSpace = this.gridRows.get((int)a.curPos.y).row.get((int)a.curPos.x);
   }
