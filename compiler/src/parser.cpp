@@ -9,7 +9,7 @@
 #include "source_verilog.h"
 
 using namespace std;
-#include <libxml2/libxml/parser.h>
+#include "libxml/parser.h"
 #include <istream>
 #include <string>
 
@@ -60,7 +60,9 @@ ABModel& parse_model(const char * xml_model_path)
 
 void parseEnviroment(xmlNodePtr envChild) { 
   const char * value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
-  xmlNodePtr curNode = NULL;    		
+  xmlNodePtr curNode = NULL; 
+  vector<xmlNodePtr> localRules;
+  vector<xmlNodePtr> globalRules;
   int numOfDim = 0;
 	bool wrap = 0;
 
@@ -77,21 +79,22 @@ void parseEnviroment(xmlNodePtr envChild) {
       }
 		} 
 	} 
-
-	for (curNode; curNode; curNode = xmlNextElementSibling) {
+	
+	for (curNode; curNode; curNode = xmlNextElementSibling(curNode)) {
 		//curNode = xmlNextElementSibling(curNode);
 		if (curNode->name == "GlobalParameter") {
-			xmlNodePtr temp = xmlNextElementChild(curNode);
+			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child in global tag 
 			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
-				char *tnm = xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
-				char *tvl = xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
-				char *tty = xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
+				char *tnm = (char*)xmlGetAttribute(temp, (const char *) "name")->children->content;           //->children->content; // temp name
+				char *tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
+				char *tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
 				bool cns = true; // temp
 				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
 					xmlNodePtr rule = xmlFirstElementChild(curNode); 
 					if (rule != NULL) {
 						cns = false;
-						parseEnvRule(rule);
+						globalRules.push_back(rule);
+
 					}
 					abmodel.add_to_econtext(1, tnm, tvl,tty, cns);
 				}
@@ -101,51 +104,39 @@ void parseEnviroment(xmlNodePtr envChild) {
 			}
 		} //
 		else if (curNode->name == "localParameters") {
-			xmlNodePtr temp = xmlNextElementChild(curNode);
+			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child of the local paramters
 			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
-				char* tnm = xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
-				char* tvl = xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
-				char* tty = xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
+				char* tnm =(char*) xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
+				char* tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
+				char* tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
 				bool cns = true;
 				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
 					xmlNodePtr rule = xmlFirstElementChild(curNode);
 					if (rule != NULL) {
 						cns = false;
-						parseEnvRule(rule);
+						localRules.push_back(rule);
 					}
-					abmodel.add_to_econtext(1, tnm, tvl, tty, cns);
+					abmodel.add_to_econtext(0, tnm, tvl, tty, cns);
 				}
 				else {
 					std::cout << "INVALID LOCAL ENVIRONMENT VARIABLE" << std::endl;
 				}
 			}
 		}
-		/*
-		else if (curNode->name == "parameterRules") { // parameter rule logic parsing
-			xmlNodePtr temp = xmlNextElementChild(curNode);
-			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
-			  // char* vrn = xmlGetAttribute(temp, (const char *) "name")->children->content;
-				if (strcomp(temp->name, "varRule")) { // checking variable validity
-					xmlNodePtr rule_parse = xmlElementChild(temp);
-
-
-				}
-				
-				else {
-					std::cout << "INVALID LOCAL ENVIRONMENT RULE" << std::endl;
-				}
-			}
-		}
-		*/
-
-
-
-
-	}//
+		
+	}
+	// parse rules after context is generated 
+	for (vector<xmlNodePtr>::iterator git = globalRules.begin(); git != globalRules.end(); ++git) {
+		parseEnvRule(*git);
+	}
+	for (vector<xmlNodePtr>::iterator lit = localRules.begin(); lit != globalRules.end(); ++lit) {
+		parseEnvRule(*lit);
+	}
 }
 // manages code parsing for env variables
+// fairly sure that the full context is required to allow intra set referencing, so whole context goes through
 void parseEnvRule(xmlNodePtr varRule) {
-
+	parse_logic(abmodel.get_env_context, varRule);
 
 }
 

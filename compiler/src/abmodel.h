@@ -24,7 +24,7 @@ public:
   std::stringstream to_c_source();
   void add_agent(AgentForm& agent);
   void add_to_econtext(int frameSelect, char *name, char*value, char*type, bool cnst);
-
+  ContextBindings get_env_context();
 };
 
 #endif

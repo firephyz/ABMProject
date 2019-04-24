@@ -1,2 +1,8 @@
 */build/
 .vs/
+/packages
+/ABMProject.sln
+/packages.config
+/ABMProject.vcxproj.user
+/ABMProject.vcxproj.filters
+/ABMProject.vcxproj

@@ -1,5 +1,5 @@
 #include "abmodel.h"
-
+#include <string>
 #include <sstream>
 
 std::stringstream
@@ -17,9 +17,14 @@ void ABModel::add_agent(AgentForm& agent)
 
 void ABModel::add_to_econtext(int frameSelect, char * name, char * value, char * type, bool cnst) // check on symbolbinding definition
 {
+	
+	SymbolBinding temp = SymbolBinding(std::string(name), strToEnum(std::string(type)), std::string(value) , cnst);
+	this->environment.env.frames.at(frameSelect)->push_back(temp);
+}
 
-	SymbolBinding temp = SymbolBinding(std::string(name), strToEnum(type), std::string(value) , cnst);
-	ABModel::environment.env.frames.at(frameSelect)->push_back(temp);
+ContextBindings ABModel::get_env_context()
+{
+	return this->environment.env;
 }
 
 /*void ABModel::add_to_econtext(int frameSelect, std::string& name, struct VariableType type, void * initial_value, bool is_constant) {
@@ -29,6 +34,7 @@ void ABModel::add_to_econtext(int frameSelect, char * name, char * value, char *
 */
 ContextBindings EnvironmentParameters::genEnvironmentContext() {
 	
-	EnvironmentParameters::env = ContextBindings(2); // frame 0 = local, frame 1 = global
+	 // frame 0 = local, frame 1 = global
+	this->env = ContextBindings(2);
 }
 
