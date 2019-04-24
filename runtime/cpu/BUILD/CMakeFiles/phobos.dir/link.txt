@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/phobos.dir/src/spatial.cpp.o CMakeFiles/phobos.dir/src/communications.cpp.o CMakeFiles/phobos.dir/src/main.cpp.o  -o phobos -ldl 

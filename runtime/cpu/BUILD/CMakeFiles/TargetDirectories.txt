@@ -1,3 +1,0 @@
-/home/ub/Desktop/ABMProject/runtime/cpu/BUILD/CMakeFiles/edit_cache.dir
-/home/ub/Desktop/ABMProject/runtime/cpu/BUILD/CMakeFiles/rebuild_cache.dir
-/home/ub/Desktop/ABMProject/runtime/cpu/BUILD/CMakeFiles/phobos.dir
