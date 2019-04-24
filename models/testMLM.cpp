@@ -92,6 +92,7 @@ void stateMachine() {
 
 }
 
-void log(void* mlm_data) {
+void Log(void* mlm_data) {
+	
 	
 }

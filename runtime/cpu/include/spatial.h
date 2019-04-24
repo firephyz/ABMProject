@@ -2,6 +2,7 @@
 #define SPATIAL_INCLUDED
 
 #include <vector>
+#include <cstdlib>
 
 typedef enum {
   D1_Cartesian,

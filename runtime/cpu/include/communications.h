@@ -2,6 +2,7 @@
 #define COMMUNICATIONS_INCLUDED
 
 #include "spatial.h"
+#include <cstdlib>
 
 // Forward declaration
 class SimSpace;
