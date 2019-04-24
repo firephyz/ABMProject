@@ -21,8 +21,11 @@ public:
   ABModel(const ABModel& other) = delete;
   ABModel(ABModel&& other) = default;
 
+  
   std::string to_c_source();
   void add_agent(AgentForm& agent);
+	
+  
 
   std::string to_string();
 };

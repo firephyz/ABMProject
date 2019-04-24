@@ -136,9 +136,6 @@ int main() {
 
   SimSpace space(*loaded_model);
 
-  // Write Logging file Headers
-
-
   while(true) {
     // Ask every agent's question
     for(auto& sender : space.cells) {
@@ -159,9 +156,11 @@ int main() {
     }
 
     // Logging Extension stufffff
-    for(auto& agent : space.cells) {
-    	agent.log();
-    }
+    // for(auto& agent : space.getAgents()) {
+    //     agent.log();
+    // }
+
+    break;
   }
 
   // Close the model library

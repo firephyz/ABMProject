@@ -90,7 +90,7 @@ void parseSimLogFile(String filename) {
    // Get Agents
    ArrayList<Agent> agents = new ArrayList<Agent>();
    String[] agentsList = split(simFileLines.get(6), ':');
-   for (int i = 1; i < agentsList.length; i++) {  // Skip "Agents:"
+   for (int i = 1; i < numOfAgents; i++) {  // Skip "Agents:"
      String curName = agentsList[i];
      Agent a = new Agent(curName, new PVector(Math.round(random(0, 63)), Math.round(random(0, 63))), Color.RED);
      agents.add(a);

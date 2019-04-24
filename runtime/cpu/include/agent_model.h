@@ -31,6 +31,7 @@ public:
   void modelReceiveAnswer(void * mlm_data, void * answer);
   CommsNeighborhood& modelGiveNeighborhood(void * mlm_data);
   void modelUpdateAgent(void * mlm_data);
+  void log(void * mlm_data);
 /***********************************************************************
  * Model specifc elements done                                         *
  ***********************************************************************/
