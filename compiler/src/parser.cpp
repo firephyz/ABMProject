@@ -63,6 +63,8 @@ void parseEnviroment(xmlNodePtr envChild) {
   xmlNodePtr curNode = NULL; 
   vector<xmlNodePtr> localRules;
   vector<xmlNodePtr> globalRules;
+  vector<std::unique_ptr<SourceAST>> LR_AST;
+  vector<std::unique_ptr<SourceAST>> GR_AST;
   int numOfDim = 0;
 	bool wrap = 0;
 
@@ -127,16 +129,16 @@ void parseEnviroment(xmlNodePtr envChild) {
 	}
 	// parse rules after context is generated 
 	for (vector<xmlNodePtr>::iterator git = globalRules.begin(); git != globalRules.end(); ++git) {
-		parseEnvRule(*git);
+		LR_AST.push_back(parseEnvRule(*git));
 	}
 	for (vector<xmlNodePtr>::iterator lit = localRules.begin(); lit != globalRules.end(); ++lit) {
-		parseEnvRule(*lit);
+		GR_AST.push_back(parseEnvRule(*lit));
 	}
 }
 // manages code parsing for env variables
 // fairly sure that the full context is required to allow intra set referencing, so whole context goes through
-void parseEnvRule(xmlNodePtr varRule) {
-	parse_logic(abmodel.get_env_context, varRule);
+std::unique_ptr<SourceAST> parseEnvRule(xmlNodePtr varRule) {
+	return parse_logic(abmodel.get_env_context, varRule);
 
 }
 
@@ -256,7 +258,7 @@ xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name) {
 }
 
 bool stobool(std::string str) {
-    std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+    std::transform(str.begin(), str.end(), str.begin(), tolower);
     std::istringstream is(str);
     bool b;
     is >> std::boolalpha >> b;
