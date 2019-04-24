@@ -17,8 +17,9 @@ void ABModel::add_agent(AgentForm& agent)
 
 void ABModel::add_to_econtext(int frameSelect, char * name, char * value, char * type, bool cnst) // check on symbolbinding definition
 {
-	
-	SymbolBinding temp = SymbolBinding(std::string(name), strToEnum(std::string(type)), std::string(value) , cnst);
+	VariableType TYP;
+	TYP.type = strToEnum(std::string((const char*)type));
+	SymbolBinding temp = SymbolBinding(std::string(name), TYP, std::string(value) , cnst);
 	this->environment.env.frames.at(frameSelect)->push_back(temp);
 }
 
