@@ -87,7 +87,16 @@ ABModel::gen_spatial_enum()
 std::string
 ABModel::gen_space_dims()
 {
-  return std::string();
+  std::stringstream result;
+  result << "{";
+  for(uint dim_index = 0; dim_index < init.dimension_sizes.size(); ++dim_index) {
+    result << init.dimension_sizes[dim_index];
+    if(dim_index != init.dimension_sizes.size() - 1) {
+      result << ", ";
+    }
+  }
+  result << "}";
+  return result.str();
 }
 
 std::string
