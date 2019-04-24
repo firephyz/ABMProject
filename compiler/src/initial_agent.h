@@ -1,5 +1,5 @@
 #ifndef INITIAL_AGENT_INCLUDED
-#define INITIAL_AGENT_INCLDUED
+#define INITIAL_AGENT_INCLUDED
 
 #include <libxml2/libxml/parser.h>
 #include <vector>
@@ -49,6 +49,7 @@ struct AgentPosition {
         (relation == other.relation) &&
         (position_type == other.position_type);
     }
+    bool operator!=(const struct dimension& other) const { return !(*this == other); }
     bool is_binary() const {
       switch(relation) {
         case relation_t::LT:
@@ -58,6 +59,16 @@ struct AgentPosition {
           return true;
       }
     }
+    dimension& operator=(const dimension& other) {
+      first_value = other.first_value;
+      second_value = other.second_value;
+      relation = other.relation;
+      position_type = other.position_type;
+      return *this;
+    }
+    dimension begin() const;
+    dimension end(int dim_index) const;
+    dimension next(const dimension& region_dim) const;
 
     // 'or equal to' is captured by incrementing or decrementing the value given in the XML model.
     // i.e. we are using exclusive relations. >=5,<10 stores 5 and 9
@@ -68,24 +79,67 @@ struct AgentPosition {
   };
 
   AgentPosition() = default;
+  AgentPosition(std::vector<dimension> pos)
+    : dimensions(pos)
+    , is_region_value(false)
+  {}
   AgentPosition(xmlNodePtr node, const std::string& str);
+  AgentPosition& operator=(const AgentPosition& other) {
+    dimensions = other.dimensions;
+    is_region_value = other.is_region_value;
+    return *this;
+  }
   bool overlaps(const AgentPosition& other) const;
+  bool is_region() const {
+    return is_region_value; // pre-computed at construction time
+  }
+  AgentPosition begin() const;
+  AgentPosition end() const;
 
-  std::vector<dimension> position;
+  std::vector<dimension> dimensions;
+  bool is_region_value = false;
 };
 
 // stores location information and variable overrides for the starting start of an agent
 struct InitialAgent {
-  InitialAgent(xmlNodePtr node);
-  bool operator<(const InitialAgent& other) const {
-    auto other_iter = other.position.position.begin();
-    for(auto& dim : position.position) {
-      if(dim > *other_iter) return false;
-    }
-    return true;
-  }
+  std::string gen_constructor() const;
+  bool operator<(const InitialAgent& other) const;
+  bool operator!=(const InitialAgent& other) const;
 
   AgentPosition position;
+};
+
+struct ConcreteInitialAgent;
+
+// Holds only an absolute position and a reference to an actual concrete initial agent
+// whose position region contains this agent
+struct LogicalInitialAgent : public InitialAgent {
+  LogicalInitialAgent(const ConcreteInitialAgent& agent);
+  void next(); // increments position to next in the concrete agent region
+  bool operator!=(const LogicalInitialAgent& other) const;
+
+  const ConcreteInitialAgent& actual;
+};
+
+class InitialAgentIterator {
+  LogicalInitialAgent agent; // filled during enumeration of regions
+public:
+  InitialAgentIterator(const ConcreteInitialAgent& agent) : agent(agent) {}
+  InitialAgentIterator& begin();
+  InitialAgentIterator& end();
+
+  bool operator!=(const InitialAgentIterator& other) const;
+  InitialAgentIterator& operator++();
+  LogicalInitialAgent& operator*();
+};
+
+// Holds the important data required when describing an initial agent like
+// the var overrides and agent type
+struct ConcreteInitialAgent : public InitialAgent {
+  ConcreteInitialAgent(xmlNodePtr node);
+  InitialAgentIterator enumerate() const;
+  bool operator!=(const ConcreteInitialAgent& other) const;
+
   std::string agent_type;
   std::vector<VarValueOverride> vars;
 };

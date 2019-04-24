@@ -99,10 +99,11 @@ void parse_dimensions(xmlNodePtr curNode)
     size_t str_pos = 0;
     while(str_pos < dim_sizes_str.length()) {
       size_t new_str_pos = dim_sizes_str.find(" ", str_pos);
+      if(new_str_pos == std::string::npos) new_str_pos = dim_sizes_str.length();
       std::string dim_size_str = dim_sizes_str.substr(str_pos, new_str_pos - str_pos);
       abmodel.init.dimension_sizes.push_back(std::stoi(dim_size_str));
 
-      str_pos = new_str_pos;
+      str_pos = new_str_pos + 1;
     }
 
     // TODO make sure number of dimension sizes matches the number of dimensions

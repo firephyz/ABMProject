@@ -14,7 +14,7 @@ struct ABM_Environment {
 
 struct InitialState {
   std::vector<int> dimension_sizes;
-  std::vector<InitialAgent> agents;
+  std::vector<ConcreteInitialAgent> agents;
 };
 
 struct ABModel {

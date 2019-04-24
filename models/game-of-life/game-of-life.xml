@@ -1,20 +1,17 @@
 <!-- Simulation provided getDistance(agentA, agentB) function -->
 <ABM>
   <initialState>
-    <dimensions sizes='100 100'/>
+    <dimensions sizes='5 5'/>
     <!-- fill space with default agents -->
-    <agent location='all' type='AgentType'/>
+    <agent location='all all' type='AgentType'/>
     <!-- specify other agents with different values -->
-    <agent location='50 50' type='AgentType'>
+    <agent location='&gt;=0,&lt;2 &gt;=0,&lt;=2' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent>
-    <agent location='51 50' type='AgentType'>
+    <agent location='4 &lt;=1,&gt;2' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent>
-    <agent location='51 51' type='AgentType'>
-      <var id='is-alive' value='true'/>
-    </agent>
-    <agent location='50 51' type='AgentType'>
+    <agent location='0 4' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent>
   </initialState>
@@ -22,7 +19,7 @@
     <spatialRelation dimensions="2" wrap="true"/>
   </environment>
   <agentDefinitions>
-    <agent type='AgentType'/>
+    <agent type='AgentType'>
       <agentScope>
         <var type='state' id='state' value='Alive'/>
         <var type='bool' id='is-alive' value='false'/>
@@ -88,7 +85,7 @@
           </logic>
         </state>
       </rules>
-      <CommsInterface neighborhood='square_2'>
+      <commsInterface neighborhood='square_2'>
         <Question name='living-neighbors'>
           <questionScope>
             <var type='int' id='count' value='0'/>
@@ -125,7 +122,7 @@
             </logic>
           </body>
         </Question>
-      </CommsInterface>
+      </commsInterface>
     </agent>
   </agentDefinitions>
 </ABM>

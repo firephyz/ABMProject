@@ -23,13 +23,13 @@ ABModel::to_c_source()
   result << "using InitAgent = SimAgent<num_dimensions>;\n";
   std::vector<std::string> initial_agent_defs = gen_initial_agent_defs();
   result << "const std::array<InitAgent, " << initial_agent_defs.size() << "> initial_agents {";
-  // for(uint index = 0; index < initial_agent_defs.size(), ++index) {
-  //   auto & agent = initial_agent_defs[index];
-  //   result << agent;
-  //   if(index != initial_agent_defs.size() - 1) {
-  //     result << ", ";
-  //   }
-  // }
+  for(uint index = 0; index < initial_agent_defs.size(); index++) {
+     auto & agent = initial_agent_defs[index];
+     result << agent;
+     if(index != initial_agent_defs.size() - 1) {
+       result << ", ";
+     }
+  }
   result << "};\n";
   result << "\n";
 
@@ -65,6 +65,16 @@ std::vector<std::string>
 ABModel::gen_initial_agent_defs()
 {
   std::vector<std::string> result;
+  for(auto& agent : init.agents) {
+    if(agent.position.is_region()) {
+      for(auto& single_agent : agent.enumerate()) {
+        result.push_back(single_agent.gen_constructor());
+      }
+    }
+    else {
+      result.push_back(agent.gen_constructor());
+    }
+  }
   return result;
 }
 
