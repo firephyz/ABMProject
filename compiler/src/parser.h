@@ -13,9 +13,12 @@ public:
 };
 
 ABModel& parse_model(const char * xml_model_path);
+void parseInitialState(xmlNodePtr node);
 void parseEnviroment(xmlNodePtr envChild);
 void parseAgents(xmlNodePtr agentsChild);
 void newAgentDef(xmlNodePtr agent);
+void parse_dimensions(xmlNodePtr curNode);
+void parse_init_agent(xmlNodePtr node);
 
 std::unique_ptr<SourceAST> parse_logic(const ContextBindings& ctxt, xmlNodePtr node);
 std::unique_ptr<SourceAST> dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node);

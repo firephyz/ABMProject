@@ -1,5 +1,6 @@
 // TODO Compilation steps currently are only for cpu and clusters. Needs tweeking to support hdl as well.
 // TODO output-lib-name program argument is only required if the target is cpu or cluster.
+// TODO Fix initial agent region enumeration bug where all regions are missing the last one that should be enumerated
 
 #include <iostream>
 #include <cstring>
@@ -112,6 +113,7 @@ void parseArgs(int argc, char *argv[])
   // Make sure user supplies model path
   if(pargs.xml_model_path.length() == 0) {
     std::cerr << "Must supply the input xml file path as the last argument.\n";
+    std::cerr << argv[0] << std::endl;
     exit(-1);
   }
 
@@ -139,11 +141,12 @@ void parseArgs(int argc, char *argv[])
 
   if(!check_runtime_sources()) {
     std::cerr << "Runtime path \'" << pargs.runtime_path << "\' does not contain runtime sources needed for model compilation." << std::endl;
+    std::cerr << argv[0] << std::endl;
     exit(-1);
   }
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
   parseArgs(argc, argv);
 
@@ -178,10 +181,10 @@ int main(int argc, char *argv[])
 
     // cleanup
     remove(object_file_name.c_str());
-  }  
+  }
 
   // cleanup
   remove(source_file_name.c_str());
-  
+
   return 0;
 }

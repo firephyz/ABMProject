@@ -3,6 +3,7 @@
 
 #include "compiler_types.h"
 #include "source_ast.h"
+#include "comms.h"
 
 #include <vector>
 #include <string>
@@ -30,9 +31,9 @@ class AgentForm {
   std::vector<SymbolBinding> agent_scope_vars;
   std::vector<StateInstance> states;
   std::vector<Question> questions;
+  CommsNeighborhood neighborhood;
 
 public:
-  std::string neighborhood;
   AgentForm(const std::string& name);
   AgentForm(const AgentForm&) = delete;
   AgentForm(AgentForm&&) = default;
@@ -40,7 +41,7 @@ public:
   std::vector<SymbolBinding>& getAgentScopeBindings();
   std::vector<StateInstance>& getStates() { return states; }
   std::vector<Question>& getQuestions() { return questions; }
- 
+
   // moves arguments out info AgentForm
   StateInstance& add_state(StateInstance&& state);
 
@@ -48,6 +49,7 @@ public:
   // the agent scope and from the state scope.
   ContextBindings genContextBindings();
   ContextBindings genContextBindings(StateInstance& state);
+  const CommsNeighborhood& getNeighborhood() const { return neighborhood; }
 
   std::string to_string();
 };

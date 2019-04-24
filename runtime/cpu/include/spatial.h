@@ -2,6 +2,7 @@
 #define SPATIAL_INCLUDED
 
 #include <vector>
+#include <cstddef>
 
 typedef enum {
   D1_Cartesian,
@@ -24,6 +25,7 @@ public:
   SimCell(SimCell&& other) noexcept;
 
   bool operator!=(SimCell& other);
+  bool is_empty() { return mlm_data == NULL; }
 };
 
 // Forward declare

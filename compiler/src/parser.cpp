@@ -1,5 +1,5 @@
 /*
- * GAMP PARSER 
+ * GAMP PARSER
  * 3.9.19
  */
 #include "parser.h"
@@ -18,6 +18,7 @@ using namespace std;
 #include <vector>
 #include <iostream>
 #include <stdlib.h>
+#include <algorithm>
 
 ABModel abmodel;
 extern struct program_args_t pargs;
@@ -26,32 +27,92 @@ ABModel& parse_model(const char * xml_model_path)
 {
     xmlDocPtr inputDoc = xmlReadFile(xml_model_path, NULL, 0x0);
     if (inputDoc == NULL) {
-        std::cerr << "Couldn't read input file! \'" 
+        std::cerr << "Couldn't read input file! \'"
                   << xml_model_path << "\'." << std::endl;
         exit(-1);
     }
-  
-    xmlNodePtr root = xmlDocGetRootElement(inputDoc);
-    xmlNodePtr child = xmlFirstElementChild(root);   
 
-    while (child != NULL) { 
-        if (xmlStrcmp(child->name, (const xmlChar*)"environment") == 0){ 
+    xmlNodePtr root = xmlDocGetRootElement(inputDoc);
+    xmlNodePtr child = xmlFirstElementChild(root);
+
+    while (child != NULL) {
+        if (xmlStrcmp(child->name, (const xmlChar*)"environment") == 0){
 //#          parseEnviroment(child);
-        } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){ 
+        } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){
           parseAgents(child);
+        } else if(xmlStrcmp(child->name, (const xmlChar*)"initialState") == 0) {
+          parseInitialState(child);
         } else {
           std::cout << "OOPS" << std::endl;
         }
 
-       child = xmlNextElementSibling(child);      
+       child = xmlNextElementSibling(child);
     }
-    
+
     return abmodel;
 }
 
-void parseEnviroment(xmlNodePtr envChild) { 
+void parseInitialState(xmlNodePtr node)
+{
+  xmlNodePtr curNode = xmlFirstElementChild(node);
+  while(curNode != NULL) {
+    if(xmlStrcmp(curNode->name, (const xmlChar *)"dimensions") == 0) {
+      parse_dimensions(curNode);
+    }
+    else if(xmlStrcmp(curNode->name, (const xmlChar *)"agent") == 0) {
+      parse_init_agent(curNode);
+    }
+    else {
+      std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Unrecognized xml tag \'" << (const char *)curNode->name << "\'." << std::endl;
+      exit(-1);
+    }
+
+    curNode = xmlNextElementSibling(curNode);
+  }
+
+  // sort initial_agents by position so they are processed in the correct order
+  std::sort(abmodel.init.agents.begin(), abmodel.init.agents.end());
+}
+
+void parse_init_agent(xmlNodePtr node)
+{
+  abmodel.init.agents.emplace_back(node);
+}
+
+void parse_dimensions(xmlNodePtr curNode)
+{
+  static bool parsed_dimensions = false;
+
+  if(parsed_dimensions) {
+    std::cerr << "Only put one \'dimensions\' tag in an \'initialState\' tag." << std::endl;
+    exit(-1);
+  }
+  else {
+    parsed_dimensions = true;
+    xmlAttrPtr xml_attr = xmlGetAttribute(curNode, "sizes");
+    if(xml_attr == NULL) {
+      std::cerr << "\'dimensions\' tag is missing the \'sizes\' attribute." << std::endl;
+      exit(-1);
+    }
+
+    std::string dim_sizes_str((const char *)xml_attr->children->content);
+    size_t str_pos = 0;
+    while(str_pos < dim_sizes_str.length()) {
+      size_t new_str_pos = dim_sizes_str.find(" ", str_pos);
+      if(new_str_pos == std::string::npos) new_str_pos = dim_sizes_str.length();
+      std::string dim_size_str = dim_sizes_str.substr(str_pos, new_str_pos - str_pos);
+      abmodel.init.dimension_sizes.push_back(std::stoi(dim_size_str));
+
+      str_pos = new_str_pos + 1;
+    }
+
+    // TODO make sure number of dimension sizes matches the number of dimensions
+  }
+}
+
+void parseEnviroment(xmlNodePtr envChild) {
   const char * value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
-  xmlNodePtr curNode = NULL;    		
+  xmlNodePtr curNode = NULL;
   int numOfDim = 0;
 	bool wrap = 0;
 
@@ -61,43 +122,43 @@ void parseEnviroment(xmlNodePtr envChild) {
 		  curNode = xmlFirstElementChild(envChild);
 			if (xmlStrcmp(curNode->name, (const xmlChar*)"spatialRelation") == 0){
                      	numOfDim = std::stoi((const char*)xmlGetAttribute(curNode, "dimensions")->children->content, NULL, 10);
-				wrap = stobool((const char*)(xmlGetAttribute(curNode, "wrap")->children->content)); // <====8	
-				std::cout << numOfDim << "\n" << wrap << std::endl;  
+				wrap = stobool((const char*)(xmlGetAttribute(curNode, "wrap")->children->content)); // <====8
+				std::cout << numOfDim << "\n" << wrap << std::endl;
 			} else {
 				std::cout << "Invalid Enviroment Definiton" << std::endl;
       }
-		} 
-	} 
+		}
+	}
 }
 
-void parseAgents(xmlNodePtr agentsChild) { 
+void parseAgents(xmlNodePtr agentsChild) {
   xmlNodePtr curNode = NULL;
-  
+
   curNode = xmlFirstElementChild(agentsChild);
- 
+
   // While there are more agents to parse keep calling newAgentDef();
   while (curNode  != NULL) {
-    newAgentDef(curNode);  
-    curNode = xmlNextElementSibling(curNode); 
-  }    
+    newAgentDef(curNode);
+    curNode = xmlNextElementSibling(curNode);
+  }
 }
 
 void newAgentDef(xmlNodePtr agent) {
   xmlNodePtr curNode = agent;
-  
+
   // Check that the first tag is Agent and go ahead and grab the name
-  if (xmlStrcmp(curNode->name, (const xmlChar*)"agent") == 0) { 
+  if (xmlStrcmp(curNode->name, (const xmlChar*)"agent") == 0) {
     std::string name((const char*)(xmlGetAttribute(curNode, "type")->children->content));
-    AgentForm toAdd(name); 
-    
+    AgentForm toAdd(name);
+
     // Get Agent Vars
-    curNode = xmlFirstElementChild(curNode);     
-    if(xmlStrcmp(curNode->name, (const xmlChar*)"agentScope")) { 
-      std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl; 
-      return; // Return error     
-    }    
+    curNode = xmlFirstElementChild(curNode);
+    if(xmlStrcmp(curNode->name, (const xmlChar*)"agentScope")) {
+      std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl;
+      return; // Return error
+    }
     parseBindings(toAdd.getAgentScopeBindings(), curNode);
-     
+
     // Get the agent states
     curNode = xmlNextElementSibling(curNode);
     if(xmlStrcmp(curNode->name, (const xmlChar*)"rules") != 0) {
@@ -108,7 +169,7 @@ void newAgentDef(xmlNodePtr agent) {
 
     // Get the Comms interface
     curNode = xmlNextElementSibling(curNode);
-    if(xmlStrcmp(curNode->name, (const xmlChar *)"CommsInterface") != 0) {
+    if(xmlStrcmp(curNode->name, (const xmlChar *)"commsInterface") != 0) {
       std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Agent is missing its \'CommsInterface\' tag." << std::endl;
       exit(-1);
     }
@@ -119,43 +180,43 @@ void newAgentDef(xmlNodePtr agent) {
     }
     // TODO do something with neighborhood type
 
-    xmlNodePtr commsSearch = xmlFirstElementChild(curNode);  
+    xmlNodePtr commsSearch = xmlFirstElementChild(curNode);
     while (commsSearch != NULL) {
       if(xmlStrcmp(commsSearch->name, (const xmlChar*)"Question") != 0) {
         std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Expecting a \'Question\' tag node but received a \'" << commsSearch->name << "\' tag node." << std::endl;
         exit(-1);
       }
- 
-      toAdd.getQuestions().push_back(Question(toAdd.genContextBindings(), commsSearch)); 
+
+      toAdd.getQuestions().push_back(Question(toAdd.genContextBindings(), commsSearch));
 
       commsSearch = xmlNextElementSibling(commsSearch);
-    } 
+    }
 
     abmodel.add_agent(toAdd);
   } else {
     std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
     exit(-1);
   }
-} 
+}
 
 void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
 
   if (xmlStrcmp(curNode->name, (const xmlChar*)"state") == 0) {
     std::string name((const char*)xmlGetAttribute(curNode, "name")->children->content);
     StateInstance& newState = agent.add_state(StateInstance(name));
-    
+
     curNode = xmlFirstElementChild(curNode);
     while(curNode != NULL) {
-      // Get the state variables  
+      // Get the state variables
       if(xmlStrcmp(curNode->name, (const xmlChar*)"stateScope") == 0) {
-        parseBindings(newState.getStateScopeBindings(), curNode);   
+        parseBindings(newState.getStateScopeBindings(), curNode);
       } else if (xmlStrcmp(curNode->name, (const xmlChar*)"logic") == 0) {
         const ContextBindings ctxt = agent.genContextBindings(newState);
         std::unique_ptr<SourceAST> logic_ast = parse_logic(ctxt, curNode);
         newState.add_logic(std::move(logic_ast));
         logic_ast.release();
       }
-      
+
       curNode = xmlNextElementSibling(curNode);
     }
   } else {
@@ -165,26 +226,25 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
 
 void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
    curNode = xmlFirstElementChild(curNode);
-       
+
    while (curNode != NULL) {
     struct VariableType varType;
-    void* val;
-    bool is_constant;  
-       
-    varType.type = strToEnum((const char*)(xmlGetAttribute(curNode, "type")->children->content));  
+    std::string val;
+    bool is_constant;
+
+    varType.type = strToEnum((const char*)(xmlGetAttribute(curNode, "type")->children->content));
     std::string symName = (const char*)(xmlGetAttribute(curNode, "id")->children->content);
-    
+
     // Check if the var has a val attribute and if so use that else set default
-    if (xmlGetAttribute(curNode, "val") != NULL) {
-      // TODO must parse data from attribute content
-      //val = xmlGetAttribute(curNode, "val")->children->content;
-      val = NULL;
-    } else { 
-      val = NULL;
+    xmlAttrPtr xml_attr = xmlGetAttribute(curNode, "value");
+    if (xml_attr == NULL) {
+      val = std::string(); // empty so code-gen assumes default
+    } else {
+      val = std::string((const char *)xml_attr->children->content);
     }
-      
+
     // Check if the var has a is_constant attribute and if so use that else set default
-    if (xmlGetAttribute(curNode, "is_constant") != NULL) { 
+    if (xmlGetAttribute(curNode, "is_constant") != NULL) {
       is_constant = stobool((const char*)(xmlGetAttribute(curNode, "is_constant")->children->content));
     } else {
       is_constant = false;
@@ -281,4 +341,3 @@ parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
 
   return std::move(result);
 }
-
