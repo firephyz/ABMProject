@@ -32,6 +32,8 @@ void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_da
 void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer)     = NULL;
 CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data)                 = NULL;
 void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data)                      = NULL;
+void                (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
+
 
 // Output mangled symbols to temporary file to read in later
 // TODO Make this better so we for sure only grab the symbols we need.
@@ -48,7 +50,8 @@ extractMangledSymbols(const char * model_path) {
     "modelNewAgent",
     "modelGiveNeighborhood",
     "modelUpdateAgent",
-    "modelReceiveAnswer"
+    "modelReceiveAnswer",
+    "modelLog"
   };
   const char * sed_part = "sed \'s/.*T //g\'";
   const char * grep_part = "grep -E \"_ZN10AgentModel.*(";
@@ -117,6 +120,9 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
     modelUpdateAgentPtr = (void (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelUpdateAgentPtr, symbol);
   }
+  else if(symbol.find("modelLog") != std::string::npos) {
+    modelLogPtr = (void (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+  }
   else {
     std::cerr << "Could not match symbol \'" << symbol << "\' in the mangled symbols list." << std::endl;
     exit(-1);
@@ -155,6 +161,9 @@ int main() {
 
   SimSpace space(*loaded_model);
 
+  // Write Logging file Headers
+
+
   while(true) {
     // Ask every agent's question
     for(auto& sender : space.cells) {
@@ -178,11 +187,10 @@ int main() {
     }
 
     // Logging Extension stufffff
-    // for(auto& agent : space.getAgents()) {
-    //     agent.log();
-    // }
+    for(auto& agent : space.cells) {
+   	loaded_model->Log(agent.mlm_data);
 
-    break;
+    }
   }
 
   // Close the model library

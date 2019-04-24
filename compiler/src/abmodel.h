@@ -26,7 +26,7 @@ struct ABModel {
   ABModel(const ABModel& other) = delete;
   ABModel(ABModel&& other) = default;
 
-  // for code gen
+  // for code gen  
   std::string to_c_source();
   std::vector<std::string> gen_initial_agent_defs();
   std::string gen_spatial_enum();
@@ -34,6 +34,8 @@ struct ABModel {
   std::string gen_space_size();
 
   void add_agent(AgentForm& agent);
+	
+  
 
   std::string to_string();
 };
