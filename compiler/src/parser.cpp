@@ -63,14 +63,12 @@ void parseEnviroment(xmlNodePtr envChild) {
   xmlNodePtr curNode = NULL; 
   vector<xmlNodePtr> localRules;
   vector<xmlNodePtr> globalRules;
-  vector<std::unique_ptr<SourceAST>> LR_AST;
-  vector<std::unique_ptr<SourceAST>> GR_AST;
   int numOfDim = 0;
-	bool wrap = 0;
+  bool wrap = 0;
 
 	if (value_str != NULL) {
     std::string relationType(value_str);
-    if(relationType == "spatial") {
+       if(relationType == "spatial") {
 		  curNode = xmlFirstElementChild(envChild);
 			if (xmlStrcmp(curNode->name, (const xmlChar*)"spatialRelation") == 0){
                      	numOfDim = std::stoi((const char*)xmlGetAttribute(curNode, "dimensions")->children->content, NULL, 10);
@@ -78,8 +76,8 @@ void parseEnviroment(xmlNodePtr envChild) {
 				std::cout << numOfDim << "\n" << wrap << std::endl;  
 			} else {
 				std::cout << "Invalid Enviroment Definiton" << std::endl;
-      }
-		} 
+              }
+	   } 
 	} 
 	
 	for (curNode; curNode; curNode = xmlNextElementSibling(curNode)) {
@@ -129,10 +127,10 @@ void parseEnviroment(xmlNodePtr envChild) {
 	}
 	// parse rules after context is generated 
 	for (vector<xmlNodePtr>::iterator git = globalRules.begin(); git != globalRules.end(); ++git) {
-		LR_AST.push_back(parseEnvRule(*git));
+		abmodel.add_GRAST(parseEnvRule(*git));
 	}
 	for (vector<xmlNodePtr>::iterator lit = localRules.begin(); lit != globalRules.end(); ++lit) {
-		GR_AST.push_back(parseEnvRule(*lit));
+		abmodel.add_LRAST(parseEnvRule(*lit));
 	}
 }
 // manages code parsing for env variables

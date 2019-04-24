@@ -9,8 +9,12 @@
 
 struct EnvironmentParameters {
 	ContextBindings env;
+	std::vector<std::unique_ptr<SourceAST>> LR_AST;
+	std::vector<std::unique_ptr<SourceAST>> GR_AST;
 public:
   ContextBindings genEnvironmentContext();
+ 
+
 };
 
 class ABModel {
@@ -25,6 +29,11 @@ public:
   void add_agent(AgentForm& agent);
   void add_to_econtext(int frameSelect, char *name, char*value, char*type, bool cnst);
   ContextBindings get_env_context();
+  void add_LRAST(std::unique_ptr<SourceAST> tempLR);
+  void add_GRAST(std::unique_ptr<SourceAST> tempGR);
+  std::vector<std::unique_ptr<SourceAST>> get_LRAST();
+  std::vector<std::unique_ptr<SourceAST>> get_GRAST();
+
 };
 
 #endif
