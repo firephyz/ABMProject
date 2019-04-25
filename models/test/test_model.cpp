@@ -63,3 +63,9 @@ AgentModel::modelUpdateAgent(void * mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
   std::cout << "Agent " << data->id << ": Updating..." << std::endl;
 }
+
+void 
+AgentModel::modelLog(void * mlm_data) {
+  struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
+  std::cout << "Agent " << data->id << " Logging..." << std::endl;
+}

@@ -22,8 +22,9 @@ if(varName == NULL) {\
 //int SimAgent::num_dimensions = -1; // placeholder for actual number
 
 // TODO Allow setting these with command line arguments
-const char * model_lib_path = "../../../models/test/test_model.so";
-const char * init_file_path = "../../../models/test/init.txt";
+//const char * model_lib_path = "../../../models/test/test_model.so";
+//const char * init_file_path = "../../../models/test/init.txt";
+const char * model_lib_path;
 
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;
@@ -88,7 +89,7 @@ extractMangledSymbols(const char * model_path) {
 
   // Without this, the program will load symbols it doesn't actually need
   if(result.size() != (sizeof(symbols) / sizeof(const char *))) {
-    std::cerr << "Error: Extracted more mangled symbols than necessary. nm grep needs adjusted." << std::endl;
+    std::cerr << "Error: One or more symbols are missing in model file!" << std::endl;
     exit(-1);
   }
 
@@ -152,8 +153,9 @@ void * loadModel(const char * model_path) {
   return model_handle;
 }
 
-int main() {
+int main(int argc, char** argv) {
 
+  model_lib_path = *(argv + 1);
   void * model_handle = loadModel(model_lib_path);
 
   // set dimensions used by SimAgents
@@ -187,9 +189,9 @@ int main() {
     }
 
     // Logging Extension stufffff
-    for(auto& agent : space.cells) {
-   	loaded_model->Log(agent.mlm_data);
-
+    for(auto& cell : space.cells) {
+      if(cell.is_empty()) continue; // skip empty cells
+      loaded_model->Log(cell.mlm_data);
     }
   }
 
