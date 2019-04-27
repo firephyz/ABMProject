@@ -19,15 +19,24 @@ if(varName == NULL) {\
   exit(-1);\
 }
 
+//int SimAgent::num_dimensions = -1; // placeholder for actual number
+
+// TODO Allow setting these with command line arguments
+const char * model_lib_path = "../../../models/test/test_model.so";
+const char * init_file_path = "../../../models/test/init.txt";
+
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;
-void *              (*modelNewAgentPtr)(AgentModel * this_class)                                          = NULL;
+void *              (*modelNewAgentPtr)(AgentModel * this_class, void *)                                  = NULL;
 void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_data)                       = NULL;
 void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer)     = NULL;
 CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data)                 = NULL;
 void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data)                      = NULL;
 
 // Output mangled symbols to temporary file to read in later
+// TODO Make this better so we for sure only grab the symbols we need.
+// Then nm grep won't need occassional adjusting (as mentioned below
+// in the if statement before the return)
 std::vector<std::string>
 extractMangledSymbols(const char * model_path) {
 
@@ -42,7 +51,7 @@ extractMangledSymbols(const char * model_path) {
     "modelReceiveAnswer"
   };
   const char * sed_part = "sed \'s/.*T //g\'";
-  const char * grep_part = "grep -E \"_ZN.*(";
+  const char * grep_part = "grep -E \"_ZN10AgentModel.*(";
   const char * grep_end = ")\"";
   const char * output_part = " > _phobos_symbols.txt";
   command << "nm " << model_path << " | " << grep_part;
@@ -53,7 +62,8 @@ extractMangledSymbols(const char * model_path) {
     }
   }
   command << grep_end << " | " << sed_part << output_part;
-  //command << grep_end;
+  // This command parses the model library to find the mangled symbol names
+  // of the symbols we need to load in
   std::system(command.str().c_str());
 
   // Read in mangled symbols
@@ -73,6 +83,12 @@ extractMangledSymbols(const char * model_path) {
   }
   std::system("rm _phobos_symbols.txt");
 
+  // Without this, the program will load symbols it doesn't actually need
+  if(result.size() != (sizeof(symbols) / sizeof(const char *))) {
+    std::cerr << "Error: Extracted more mangled symbols than necessary. nm grep needs adjusted." << std::endl;
+    exit(-1);
+  }
+
   return result;
 }
 
@@ -86,7 +102,7 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
     DLSYM_ERROR_CHECK(modelGiveAnswerPtr, symbol);
   }
   else if(symbol.find("modelNewAgent") != std::string::npos) {
-    modelNewAgentPtr = (void * (*)(AgentModel *))dlsym(model_handle, symbol.c_str());
+    modelNewAgentPtr = (void * (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelNewAgentPtr, symbol);
   }
   else if(symbol.find("modelGiveNeighborhood") != std::string::npos) {
@@ -132,16 +148,21 @@ void * loadModel(const char * model_path) {
 
 int main() {
 
-  void * model_handle = loadModel("../../models/test/test_model.so");
+  void * model_handle = loadModel(model_lib_path);
+
+  // set dimensions used by SimAgents
+  //SimAgent::num_dimensions = loaded_model->num_dimensions;
 
   SimSpace space(*loaded_model);
 
   while(true) {
     // Ask every agent's question
     for(auto& sender : space.cells) {
+      if(sender.is_empty()) continue; // skip if no agent is present
       void * agent_answer = loaded_model->giveAnswer(sender.mlm_data);
       for(auto& receiver : space.cells) {
         if(sender != receiver) {
+          if(receiver.is_empty()) continue; // skip if no agent is present
           CommsNeighborhood& n = loaded_model->giveNeighborhood(receiver.mlm_data);
           auto commsPredicate = getCommsPredicate(n.type);
           if(commsPredicate(space, receiver, sender, n.size)) {
@@ -152,6 +173,7 @@ int main() {
     }
 
     for(auto& cell : space.cells) {
+      if(cell.is_empty()) continue; // skip empty cells
       loaded_model->updateAgent(cell.mlm_data);
     }
 

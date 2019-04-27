@@ -5,9 +5,7 @@
 #define SOURCE_AST_INCLUDED
 
 // Uncomment to show the ast nodes being generated in stdout
-#define VERBOSE_AST_GEN
-
-#include "compiler_types.h"
+//#define VERBOSE_AST_GEN
 
 #include <memory>
 #include <string>
@@ -16,16 +14,25 @@ class SourceAST {
 public:
   std::unique_ptr<SourceAST> next;
 
-  virtual ~SourceAST() {
-    if(next.get() != nullptr) {
-      delete next.get();
-    }
-  }
+  SourceAST() : next(nullptr) {}
+  virtual ~SourceAST();
+  virtual std::string to_source() = 0;
   virtual std::string to_string() = 0;
   void append_next(std::unique_ptr<SourceAST>&& next_node) {
     next = std::move(next_node);
   };
+
+  // for debug printing
+  static int print_depth; // records the tab depth of the current ast node while printing
+  static int start_depth; // records the start tab depth to print the entire ast tree. Set before first call to print_tree
+  static void set_start_depth(int depth) { start_depth = depth; }
+  static void to_string_fall() { ++print_depth; } // increase to_string print depth
+  static void to_string_rise() { -- print_depth; } // decrease to_string print depth
+  static std::string to_string_prefix();
+  std::string print_tree();
 };
+
+#include "compiler_types.h"
 
 class SourceAST_if : public SourceAST {
 public:
@@ -40,12 +47,13 @@ class SourceAST_assignment : public SourceAST {
 public:
   enum class AssignmentValueType {
     NoInit,
-    Constant,
+    Expression,
     CommsAnswer,
   };
 
   SourceAST_assignment()
     : type(AssignmentValueType::NoInit)
+    , value_expr(nullptr)
   {}
   ~SourceAST_assignment() {}
 protected:
@@ -54,7 +62,7 @@ protected:
   union {
     // TODO adjust Q/A Answer element. Haven't 
     std::unique_ptr<SourceAST> value_answer;
-    std::unique_ptr<SourceAST> value_constant;
+    std::unique_ptr<SourceAST> value_expr;
   };
 };
 
@@ -133,5 +141,12 @@ protected:
   OperatorType type;
   std::vector<std::unique_ptr<SourceAST>> args;
 };
+
+class SourceAST_return : public SourceAST {
+protected:
+  std::unique_ptr<SourceAST> value;
+};
+
+class SourceAST_response : public SourceAST {};
 
 #endif

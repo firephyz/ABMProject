@@ -3,9 +3,10 @@
 
 #include "agent_form.h"
 #include "compiler_types.h"
+#include "initial_agent.h"
 
 #include <vector>
-#include <sstream>
+#include <string>
 
 struct EnvironmentParameters {
 	ContextBindings env;
@@ -16,16 +17,26 @@ public:
  
 
 };
-
+struct InitialState {
+	std::vector<int> dimension_sizes;
+	std::vector<ConcreteInitialAgent> agents;
+};
 class ABModel {
   EnvironmentParameters environment;
+  InitialState init;
   std::vector<AgentForm> agents;
-public:
+
   ABModel() = default;
   ABModel(const ABModel& other) = delete;
   ABModel(ABModel&& other) = default;
 
-  std::stringstream to_c_source();
+  // for code gen
+  std::string to_c_source();
+  std::vector<std::string> gen_initial_agent_defs();
+  std::string gen_spatial_enum();
+  std::string gen_space_dims();
+  std::string gen_space_size();
+
   void add_agent(AgentForm& agent);
   void add_to_econtext(int frameSelect, char *name, char*value, char*type, bool cnst);
   ContextBindings get_env_context();
@@ -34,6 +45,8 @@ public:
   std::vector<std::unique_ptr<SourceAST>> get_LRAST();
   std::vector<std::unique_ptr<SourceAST>> get_GRAST();
 
+
+  std::string to_string();
 };
 
 #endif

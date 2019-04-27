@@ -3,6 +3,8 @@
 
 #include "spatial.h"
 
+#include <string>
+
 // Forward declaration
 class SimSpace;
 class SimCell;
