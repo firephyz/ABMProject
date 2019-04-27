@@ -36,6 +36,7 @@ ABModel::to_c_source()
   // Declare spatial info and model
   result << "size_t dimensions[] = " << gen_space_dims() << ";\n";
   result << "AgentModel loaded_model(" << gen_spatial_enum() << ", " << gen_space_size() << ", dimensions);\n";
+  result << "\n";
 
   // Declare neighborhoods. Must get types from agents
   for(auto& agent : agents) {
@@ -43,9 +44,27 @@ ABModel::to_c_source()
   }
   result << "\n";
 
-  // Declare mlm_data structure
-  //result << create_mlm_data_struct() << "\n";
-  //result << "\n";
+  // Declare agent types enum
+  result << "enum class AgentType {\n";
+  for(auto& agent : agents) {
+    result << "\t" << agent.gen_enum_type_name() << ",\n";
+  }
+  result << "}\n\n";
+
+  // TODO split this following enum into multiple ones for each agent
+  // Declare agent state enum
+  result << "enum class AgentState {\n";
+  for(auto& agent : agents) {
+    for(auto& state : agent.getStates()) {
+      result << "\t" << state.gen_state_enum_name(agent.getName()) << ",\n";
+    }
+  }
+  result << "}\n";
+  result << "\n";
+
+  // Declare mlm_data structure and the derived ones for each agents
+  result << gen_mlm_data_struct() << "\n";
+  result << "\n";
 
   // Declare agent constructors
   //result << "void * AgentModel::modelNewAgent"
@@ -63,6 +82,28 @@ ABModel::to_c_source()
   //AgentModel::modelLog(void * mlm_data) {
   //struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
   //std::cout << "Agent " << data->id << " Logging..." << std::endl;
+
+  return result.str();
+}
+
+std::string
+ABModel::gen_mlm_data_struct()
+{
+  std::stringstream result;
+  result <<"\
+struct mlm_data {\n\
+  const SimCell& sim_cell;\n\
+  const AgentType type;\n\
+  AgentState state;\
+\n\
+  mlm_data(const AgentType type)\n\
+    : type(type)\n\
+  {}\n\
+}\n" << "\n";
+
+  for(auto& agent : agents) {
+    result << agent.gen_mlm_data_struct() << "\n";
+  }
 
   return result.str();
 }

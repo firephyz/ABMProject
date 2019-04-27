@@ -3,6 +3,7 @@
 
 #include "abmodel.h"
 #include "compiler_types.h"
+#include "comms.h"
 
 #include <libxml2/libxml/parser.h>
 #include <vector>
@@ -19,6 +20,7 @@ void parseAgents(xmlNodePtr agentsChild);
 void newAgentDef(xmlNodePtr agent);
 void parse_dimensions(xmlNodePtr curNode);
 void parse_init_agent(xmlNodePtr node);
+std::unique_ptr<CommsNeighborhood> parse_neighborhood(const size_t agent_index, const char * n);
 
 std::unique_ptr<SourceAST> parse_logic(const ContextBindings& ctxt, xmlNodePtr node);
 std::unique_ptr<SourceAST> dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node);

@@ -15,6 +15,7 @@
 #include "parser.h"
 
 struct program_args_t pargs;
+ABModel abmodel;
 
 void printUsage()
 {
@@ -184,7 +185,7 @@ int main(int argc, char *argv[])
   }
 
   // cleanup
-  remove(source_file_name.c_str());
+  //remove(source_file_name.c_str());
 
   return 0;
 }

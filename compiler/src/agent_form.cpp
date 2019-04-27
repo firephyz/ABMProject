@@ -1,5 +1,6 @@
 #include "agent_form.h"
 #include "source_ast.h"
+#include "comms.h"
 
 #include <memory>
 #include <string>
@@ -38,9 +39,24 @@ StateInstance::to_string()
   return result.str();
 }
 
+std::string
+StateInstance::gen_state_enum_name(const std::string& agent_name) const
+{
+  std::stringstream result;
+  result << "STATE_" << agent_name << "_" << state_name;
+  return result.str();
+}
+
 AgentForm::AgentForm(const std::string& name)
   : agent_name(name)
+  , neighborhood(nullptr)
 {}
+
+void
+AgentForm::set_neighborhood(std::unique_ptr<CommsNeighborhood>&& n)
+{
+  neighborhood = std::move(n);
+}
 
 std::vector<SymbolBinding>&
 AgentForm::getAgentScopeBindings()
@@ -94,5 +110,25 @@ AgentForm::to_string()
   // reset SourceAST printer
   SourceAST::set_start_depth(0);
 
+  return result.str();
+}
+
+std::string
+AgentForm::gen_enum_type_name() const
+{
+  return std::string("AGENT_") + agent_name;
+}
+
+std::string
+AgentForm::gen_mlm_data_struct() const
+{
+  std::stringstream result;
+  result << "\
+struct mlm_data_" << agent_name << " : public mlm_data {\n";
+  for(auto& variable : agent_scope_vars) {
+    result << "\t" << variable.gen_declaration() << "\n";
+  }
+  // TODO place state variable union
+  result << "}\n";
   return result.str();
 }

@@ -49,6 +49,21 @@ SymbolBinding::to_string()
   return result.str();
 }
 
+std::string
+SymbolBinding::gen_declaration() const
+{
+  std::string type_part = type.to_c_source();
+  std::stringstream result;
+  result << type_part << " " << name;
+  if(!initial_value.empty()) {
+    result << " = " << initial_value << ";";
+  }
+  else {
+    result << ";";
+  }
+  return result.str();
+}
+
 const SymbolBinding&
 ContextBindings::getBindingByName(const char * name) const
 {

@@ -85,7 +85,7 @@
           </logic>
         </state>
       </rules>
-      <commsInterface neighborhood='square_2'>
+      <commsInterface neighborhood='ncube_2'>
         <Question name='living-neighbors'>
           <questionScope>
             <var type='int' id='count' value='0'/>

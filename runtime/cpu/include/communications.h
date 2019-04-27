@@ -15,7 +15,7 @@ class SimCell;
  ***********************************************************************/
 // Models select one of these. Each has a corresponding predicate function called by runtime
 enum class NeighborhoodType {
-  Square
+  NCube
 };
 
 // Models construct this when the runtime requests the neighborhood
@@ -29,7 +29,7 @@ typedef struct comms_neighborhood_t {
  ***********************************************************************/
 
 // These are the available neighborhood predicates
-bool is_in_square(SimSpace& space, SimCell& receiver, SimCell& sender, int size);
+bool is_in_ncube(SimSpace& space, SimCell& receiver, SimCell& sender, int size);
 
 bool (*getCommsPredicate(NeighborhoodType type))(SimSpace& space, SimCell& receiver, SimCell& sender, int size);
 
