@@ -3,6 +3,7 @@
 
 #include "communications.h"
 #include "spatial.h"
+#include <cstdlib>
 
 #include <vector>
 #include <string.h>
@@ -18,6 +19,7 @@ extern void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void *
 extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer);
 extern CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data);
 extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data);
+extern void                (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
 
 /**********************************************************
  * The following class is only constructed in the MLM cpp files.
@@ -67,6 +69,7 @@ public:
   void modelReceiveAnswer(void * mlm_data, void * answer);
   CommsNeighborhood& modelGiveNeighborhood(void * mlm_data);
   void modelUpdateAgent(void * mlm_data);
+  void modelLog(void * mlm_data);
 /***********************************************************************
  * Model specifc elements done                                         *
  ***********************************************************************/
@@ -85,6 +88,7 @@ public:
   inline void receiveAnswer(void * mlm_data, void * answer) { return (*modelReceiveAnswerPtr)(this, mlm_data, answer); }
   inline CommsNeighborhood& giveNeighborhood(void * mlm_data) { return (*modelGiveNeighborhoodPtr)(this, mlm_data); }
   inline void updateAgent(void * mlm_data) { return (*modelUpdateAgentPtr)(this, mlm_data); }
+  inline void Log(void * mlm_data) { return (*modelLogPtr)(this, mlm_data); }
 };
 
 #endif

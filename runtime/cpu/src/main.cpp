@@ -21,8 +21,8 @@ if(varName == NULL) {\
 
 //int SimAgent::num_dimensions = -1; // placeholder for actual number
 
-// TODO Allow setting these with command line arguments
-const char * model_lib_path = "../../../models/test/test_model.so";
+// TODO Allow setting this with command line arguments
+//const char * model_lib_path = "../../../models/test/test_model.so";
 
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;
@@ -31,6 +31,8 @@ void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_da
 void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer)     = NULL;
 CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data)                 = NULL;
 void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data)                      = NULL;
+void                (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
+
 
 // Output mangled symbols to temporary file to read in later
 // TODO Make this better so we for sure only grab the symbols we need.
@@ -47,7 +49,8 @@ extractMangledSymbols(const char * model_path) {
     "modelNewAgent",
     "modelGiveNeighborhood",
     "modelUpdateAgent",
-    "modelReceiveAnswer"
+    "modelReceiveAnswer",
+    "modelLog"
   };
   const char * sed_part = "sed \'s/.*T //g\'";
   const char * grep_part = "grep -E \"_ZN10AgentModel.*(";
@@ -84,7 +87,7 @@ extractMangledSymbols(const char * model_path) {
 
   // Without this, the program will load symbols it doesn't actually need
   if(result.size() != (sizeof(symbols) / sizeof(const char *))) {
-    std::cerr << "Error: Extracted more mangled symbols than necessary. nm grep needs adjusted." << std::endl;
+    std::cerr << "Error: One or more symbols are missing in model file!" << std::endl;
     exit(-1);
   }
 
@@ -116,6 +119,9 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
     modelUpdateAgentPtr = (void (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelUpdateAgentPtr, symbol);
   }
+  else if(symbol.find("modelLog") != std::string::npos) {
+    modelLogPtr = (void (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+  }
   else {
     std::cerr << "Could not match symbol \'" << symbol << "\' in the mangled symbols list." << std::endl;
     exit(-1);
@@ -145,14 +151,18 @@ void * loadModel(const char * model_path) {
   return model_handle;
 }
 
-int main() {
+int main(int argc, char** argv) {
 
+  model_lib_path = *(argv + 1);
   void * model_handle = loadModel(model_lib_path);
 
   // set dimensions used by SimAgents
   //SimAgent::num_dimensions = loaded_model->num_dimensions;
 
   SimSpace space(*loaded_model);
+
+  // Write Logging file Headers
+
 
   while(true) {
     // Ask every agent's question
@@ -177,11 +187,10 @@ int main() {
     }
 
     // Logging Extension stufffff
-    // for(auto& agent : space.getAgents()) {
-    //     agent.log();
-    // }
-
-    break;
+    for(auto& cell : space.cells) {
+      if(cell.is_empty()) continue; // skip empty cells
+      loaded_model->Log(cell.mlm_data);
+    }
   }
 
   // Close the model library
