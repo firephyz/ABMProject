@@ -172,10 +172,17 @@ AgentPosition::dimension::operator<(const struct dimension& other) const
   return false;
 }
 
+AgentPosition::dimension&
+AgentPosition::dimension::operator-(int value) {
+  first_value -= value;
+  return *this;
+}
+
 AgentPosition::dimension
 AgentPosition::dimension::begin() const
 {
   dimension result(*this);
+  result.second_value = -1;
   result.position_type = dimension::type_t::Absolute_Position;
   result.relation = relation_t::None;
   switch(position_type) {
@@ -215,8 +222,9 @@ AgentPosition::dimension::begin() const
 AgentPosition::dimension
 AgentPosition::dimension::end(int dim_index) const
 {
-  int max_value = abmodel.init.dimension_sizes[dim_index] - 1;
+  int max_value = abmodel.init.dimension_sizes[dim_index];
   dimension result(*this);
+  result.second_value = -1;
   result.position_type = dimension::type_t::Absolute_Position;
   result.relation = relation_t::None;
   switch(position_type) {
@@ -348,10 +356,14 @@ AgentPosition
 AgentPosition::end() const
 {
   std::vector<dimension> end_pos;
-  int dim_index = 0;
-  for(auto& dim : dimensions) {
-    end_pos.push_back(dim.end(dim_index));
-    ++dim_index;
+  for(uint dim_index = 0; dim_index < dimensions.size(); ++dim_index) {
+    auto& dim = dimensions[dim_index];
+    if(dim_index == dimensions.size() - 1) {
+      end_pos.push_back(dim.end(dim_index));
+    }
+    else {
+      end_pos.push_back(dim.end(dim_index));
+    }
   }
   return AgentPosition(end_pos);
 }
@@ -471,7 +483,8 @@ LogicalInitialAgent::next()
   for(uint dim_index = 0; dim_index < position.dimensions.size(); ++dim_index) {
     auto& dim = position.dimensions[dim_index];
     auto& region_dim = actual.position.dimensions[dim_index];
-    if(dim == region_dim.end(dim_index)) {
+    // Let the last dimension roll over so we can encounter the region.end()
+    if(dim == region_dim.end(dim_index) && dim_index != position.dimensions.size() - 1) {
       dim = region_dim.begin();
     }
     else {
