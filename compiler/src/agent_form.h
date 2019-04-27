@@ -3,7 +3,6 @@
 
 #include "compiler_types.h"
 #include "source_ast.h"
-#include "comms.h"
 
 #include <vector>
 #include <string>
@@ -23,15 +22,20 @@ public:
   // moves argument
   void add_logic(std::unique_ptr<SourceAST>&& source);
 
+  std::string gen_state_enum_name(const std::string& str) const;
+
   std::string to_string();
 };
+
+// forward declare
+struct CommsNeighborhood;
 
 class AgentForm {
   const std::string agent_name;
   std::vector<SymbolBinding> agent_scope_vars;
   std::vector<StateInstance> states;
   std::vector<Question> questions;
-  CommsNeighborhood neighborhood;
+  std::unique_ptr<CommsNeighborhood> neighborhood;
 
 public:
   AgentForm(const std::string& name);
@@ -41,17 +45,25 @@ public:
   std::vector<SymbolBinding>& getAgentScopeBindings();
   std::vector<StateInstance>& getStates() { return states; }
   std::vector<Question>& getQuestions() { return questions; }
+  const std::vector<StateInstance>& getStates() const { return states; }
+  const std::string& getName() const { return agent_name; }
 
-  // moves arguments out info AgentForm
   StateInstance& add_state(StateInstance&& state);
+  void set_neighborhood(std::unique_ptr<CommsNeighborhood>&& n);
 
   // Generates a list of symbol bindings representing the bindings available from
   // the agent scope and from the state scope.
   ContextBindings genContextBindings();
   ContextBindings genContextBindings(StateInstance& state);
-  const CommsNeighborhood& getNeighborhood() const { return neighborhood; }
+  const CommsNeighborhood& getNeighborhood() const { return *(neighborhood.get()); }
+
+  std::string gen_enum_type_name() const;
+  std::string gen_mlm_data_struct() const;
 
   std::string to_string();
 };
+
+// Include after so comms.h gets the AgentForm declaration
+#include "comms.h"
 
 #endif

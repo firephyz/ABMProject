@@ -13,7 +13,7 @@ using InitAgent = SimAgent<num_dimensions>;
 const std::array<InitAgent, 3> initial_agents {InitAgent({0, 0}), InitAgent({0, 1}), InitAgent({2, 1})};
 
 AgentModel loaded_model(SpatialType::D2_Cartesian, num_dimensions, dimensions);
-CommsNeighborhood neighborhood = {NeighborhoodType::Square, 1};
+CommsNeighborhood neighborhood = {NeighborhoodType::NCube, 1};
 
 struct mlm_data_t {
   int id;

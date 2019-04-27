@@ -8,6 +8,7 @@
 #include "source_c.h"
 #include "source_verilog.h"
 #include "util.h"
+#include "comms.h"
 
 using namespace std;
 #include <libxml2/libxml/parser.h>
@@ -20,7 +21,7 @@ using namespace std;
 #include <stdlib.h>
 #include <algorithm>
 
-ABModel abmodel;
+extern ABModel abmodel;
 extern struct program_args_t pargs;
 
 ABModel& parse_model(const char * xml_model_path)
@@ -178,7 +179,7 @@ void newAgentDef(xmlNodePtr agent) {
       std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Comms interface does not have a neighborhood type." << std::endl;
       exit(-1);
     }
-    // TODO do something with neighborhood type
+    toAdd.set_neighborhood(parse_neighborhood(abmodel.num_agents(), (const char *)xml_attr->children->content));
 
     xmlNodePtr commsSearch = xmlFirstElementChild(curNode);
     while (commsSearch != NULL) {
@@ -197,6 +198,30 @@ void newAgentDef(xmlNodePtr agent) {
     std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
     exit(-1);
   }
+}
+
+std::unique_ptr<CommsNeighborhood>
+parse_neighborhood(const size_t agent_index, const char * n)
+{
+  std::string str(n);
+
+  size_t underscore_loc = str.find("_", 0);
+
+  if(underscore_loc == str.npos) {
+
+  }
+  else {
+    std::string first = str.substr(0, underscore_loc);
+    std::string second = str.substr(underscore_loc + 1);
+
+    if(first == "ncube") {
+      int size = std::stoi(second);
+      return std::make_unique<Comms::NCube>(agent_index, size);
+    }
+  }
+
+  // shouldn't get here
+  return std::unique_ptr<CommsNeighborhood>(nullptr);
 }
 
 void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {

@@ -178,6 +178,12 @@ AgentPosition::dimension::operator-(int value) {
   return *this;
 }
 
+AgentPosition::dimension&
+AgentPosition::dimension::operator+(int value) {
+  first_value += value;
+  return *this;
+}
+
 AgentPosition::dimension
 AgentPosition::dimension::begin() const
 {
@@ -237,7 +243,7 @@ AgentPosition::dimension::end(int dim_index) const
         case relation_t::None:
           break;
         case relation_t::LT:
-          result.first_value = first_value;
+          result.first_value = first_value + 1;
           break;
         case relation_t::GT:
           result.first_value = max_value;
@@ -248,7 +254,7 @@ AgentPosition::dimension::end(int dim_index) const
           result.first_value = max_value;
           break;
         case relation_t::GTLT:
-          result.first_value = second_value;
+          result.first_value = second_value + 1;
           break;
         case relation_t::GTGT:
           break;
@@ -362,7 +368,7 @@ AgentPosition::end() const
       end_pos.push_back(dim.end(dim_index));
     }
     else {
-      end_pos.push_back(dim.end(dim_index));
+      end_pos.push_back(dim.begin());
     }
   }
   return AgentPosition(end_pos);

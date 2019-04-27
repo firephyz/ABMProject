@@ -68,6 +68,7 @@ struct AgentPosition {
     }
     // only defined on Absolute_Position types
     dimension& operator-(int a);
+    dimension& operator+(int a);
     dimension begin() const;
     dimension end(int dim_index) const;
     dimension next(const dimension& region_dim) const;

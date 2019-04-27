@@ -6,15 +6,15 @@
 bool (*getCommsPredicate(NeighborhoodType type))(SimSpace& space, SimCell& receiver, SimCell& sender, int size)
 {
   switch(type) {
-    case NeighborhoodType::Square:
-      return &is_in_square;
+    case NeighborhoodType::NCube:
+      return &is_in_ncube;
   }
 
   // Quiet the compiler
   return NULL;
 }
 
-bool is_in_square(SimSpace& space, SimCell& receiver, SimCell& sender, int size)
+bool is_in_ncube(SimSpace& space, SimCell& receiver, SimCell& sender, int size)
 {
 
   for(int i = 0; i < space.num_dimensions; ++i) {

@@ -44,6 +44,21 @@ struct VariableType {
 
     return std::string();
   };
+
+  std::string to_c_source() const {
+    switch(type) {
+      case VarTypeEnum::Bool:
+        return std::string("bool");
+      case VarTypeEnum::Integer:
+        return std::string("int");
+      case VarTypeEnum::Real:
+        return std::string("double");
+      case VarTypeEnum::String:
+        return std::string("const char *");
+    }
+
+    return std::string();
+  }
 };
 
 class SymbolBinding {
@@ -56,6 +71,7 @@ public:
 
   const std::string& getName() const { return name; }
   std::string to_string();
+  std::string gen_declaration() const;
 };
 
 class ContextBindings {
@@ -79,6 +95,8 @@ public:
   Question(Question&&) = default;
 
   std::string to_string();
+
+  const std::string& get_name() const { return question_name; }
 };
 
 #endif

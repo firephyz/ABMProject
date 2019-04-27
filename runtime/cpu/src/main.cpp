@@ -23,7 +23,6 @@ if(varName == NULL) {\
 
 // TODO Allow setting these with command line arguments
 const char * model_lib_path = "../../../models/test/test_model.so";
-const char * init_file_path = "../../../models/test/init.txt";
 
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;

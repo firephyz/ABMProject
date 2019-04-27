@@ -32,8 +32,11 @@ struct ABModel {
   std::string gen_spatial_enum();
   std::string gen_space_dims();
   std::string gen_space_size();
+  std::string gen_mlm_data_struct();
 
   void add_agent(AgentForm& agent);
+  size_t num_agents() const { return agents.size(); }
+  AgentForm& get_agent_by_index(const size_t index) { return agents[index]; }
 
   std::string to_string();
 };
