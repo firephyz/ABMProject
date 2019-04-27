@@ -234,7 +234,23 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
 
     varType.type = strToEnum((const char*)(xmlGetAttribute(curNode, "type")->children->content));
     std::string symName = (const char*)(xmlGetAttribute(curNode, "id")->children->content);
-
+    
+		auto xml_log_attr = xmlGetAttribute(curNode, "log");
+		if(xml_log_attr == NULL) {
+		 varType.log_en = false;
+		} else {
+ 			std::string log_en((const char*)xml_log_attr->children->content);
+	
+  	  if (log_en == "true") {
+    		varType.log_en = true;
+   	  } else if (log_en == "false") {
+    	 	varType.log_en = false;
+			} else {
+				// error
+			std::cerr << "Improper logging attr type" << std::endl;
+		  }
+    }
+	
     // Check if the var has a val attribute and if so use that else set default
     xmlAttrPtr xml_attr = xmlGetAttribute(curNode, "value");
     if (xml_attr == NULL) {

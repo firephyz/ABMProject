@@ -24,10 +24,12 @@ struct FPGATypeInfo {
 struct VariableType {
   VarTypeEnum type;
   struct FPGATypeInfo fpga_info;
+	bool log_en;
 
   VariableType()
     : type(VarTypeEnum::Bool)
     , fpga_info((struct FPGATypeInfo){-1, -1})
+    , log_en((false))
   {}
 
   std::string to_string() {
