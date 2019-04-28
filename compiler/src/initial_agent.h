@@ -1,7 +1,8 @@
 #ifndef INITIAL_AGENT_INCLUDED
 #define INITIAL_AGENT_INCLUDED
 
-#include <libxml2/libxml/parser.h>
+//#include <libxml2/libxml/parser.h>
+#include <libxml/parser.h>
 #include <vector>
 #include <string>
 

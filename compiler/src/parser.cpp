@@ -11,6 +11,7 @@
 
 using namespace std;
 #include <libxml2/libxml/parser.h>
+//#include <libxml/parser.h>
 #include <string>
 
 #include <iomanip>
@@ -131,6 +132,8 @@ void parseEnviroment(xmlNodePtr envChild) {
               }
 	   } 
 	} 
+	abmodel.setDim(numOfDim);
+	abmodel.setWrap(wrap);
 	
 	for (curNode; curNode; curNode = xmlNextElementSibling(curNode)) {
 		//curNode = xmlNextElementSibling(curNode);
@@ -169,6 +172,7 @@ void parseEnviroment(xmlNodePtr envChild) {
 						localRules.push_back(rule);
 					}
 					abmodel.add_to_econtext(0, tnm, tvl, tty, cns);
+					abmodel.get_env_context().frames.at(1)->front()
 				}
 				else {
 					std::cout << "INVALID LOCAL ENVIRONMENT VARIABLE" << std::endl;
@@ -179,10 +183,11 @@ void parseEnviroment(xmlNodePtr envChild) {
 	}
 	// parse rules after context is generated 
 	for (vector<xmlNodePtr>::iterator git = globalRules.begin(); git != globalRules.end(); ++git) {
-		abmodel.add_GRAST(parseEnvRule(*git));
+		//abmodel.add_GRAST(parseEnvRule(*git));
+		
 	}
 	for (vector<xmlNodePtr>::iterator lit = localRules.begin(); lit != globalRules.end(); ++lit) {
-		abmodel.add_LRAST(parseEnvRule(*lit));
+		//abmodel.add_LRAST(parseEnvRule(*lit));
 	}
 }
 // manages code parsing for env variables
