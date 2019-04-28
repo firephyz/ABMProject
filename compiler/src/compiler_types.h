@@ -6,14 +6,17 @@
 #include <libxml2/libxml/parser.h>
 #include <memory>
 
+class AgentForm;
+
 enum class VarTypeEnum {
   Bool,
   Integer,
   Real, // fixed-point on FPGA
   String,
+  State,
 };
 
- VarTypeEnum strToEnum(std::string str);
+ VarTypeEnum strToEnum(std::string& str);
 
 // Additional type info required on FPGA targets
 struct FPGATypeInfo {
@@ -25,6 +28,7 @@ struct VariableType {
   VarTypeEnum type;
   struct FPGATypeInfo fpga_info;
 	bool log_en;
+
 
   VariableType()
     : type(VarTypeEnum::Bool)
@@ -42,6 +46,8 @@ struct VariableType {
         return std::string("real");
       case VarTypeEnum::String:
         return std::string("string");
+      case VarTypeEnum::State:
+        return std::string("AgentState");
     }
 
     return std::string();
@@ -57,6 +63,8 @@ struct VariableType {
         return std::string("double");
       case VarTypeEnum::String:
         return std::string("const char *");
+      case VarTypeEnum::State:
+        return std::string("AgentState");
     }
 
     return std::string();
@@ -73,12 +81,12 @@ public:
 
   const std::string& getName() const { return name; }
   std::string to_string();
-  std::string gen_declaration() const;
+  std::string gen_declaration(const AgentForm& agent) const;
 };
 
 class ContextBindings {
 public:
-  std::vector<std::vector<SymbolBinding> *> frames;
+  std::vector<const std::vector<SymbolBinding> *> frames;
   const SymbolBinding& getBindingByName(const char * name) const;
   ContextBindings& extend(std::vector<SymbolBinding>& bindings);
 };

@@ -8,4 +8,8 @@ xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name);
 bool stobool(std::string str);
 std::string xtos(const xmlChar* toString);
 
+namespace util {
+  std::ostream& error(xmlNodePtr node);
+}
+
 #endif

@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 
 std::string
 ABModel::to_c_source()
@@ -14,11 +15,13 @@ ABModel::to_c_source()
   result << "\u0023include \"communications.h\"\n";
   result << "\u0023include <algorithm>\n";
   result << "\u0023include <array>\n";
+  result << "\u0023include <iostream>\n";
   result << "\n";
 
   // Declare space for initial agents.
   // This does not fill in the initial values for each agent specified. It only notifies the runtime
   // which simulation cells need to have agents in them at the start of the simulation
+  result << "constexpr int num_dimensions = " << gen_space_size() << ";\n";
   result << "template class SimAgent<num_dimensions>;\n";
   result << "using InitAgent = SimAgent<num_dimensions>;\n";
   std::vector<std::string> initial_agent_defs = gen_initial_agent_defs();
@@ -35,7 +38,7 @@ ABModel::to_c_source()
 
   // Declare spatial info and model
   result << "size_t dimensions[] = " << gen_space_dims() << ";\n";
-  result << "AgentModel loaded_model(" << gen_spatial_enum() << ", " << gen_space_size() << ", dimensions);\n";
+  result << "AgentModel loaded_model(" << gen_spatial_enum() << ", num_dimensions, dimensions);\n";
   result << "\n";
 
   // Declare neighborhoods. Must get types from agents
@@ -49,17 +52,18 @@ ABModel::to_c_source()
   for(auto& agent : agents) {
     result << "\t" << agent.gen_enum_type_name() << ",\n";
   }
-  result << "}\n\n";
+  result << "};\n\n";
 
   // TODO split this following enum into multiple ones for each agent
   // Declare agent state enum
   result << "enum class AgentState {\n";
+  result << "\tSTATE_NONE,\n";
   for(auto& agent : agents) {
     for(auto& state : agent.getStates()) {
       result << "\t" << state.gen_state_enum_name(agent.getName()) << ",\n";
     }
   }
-  result << "}\n";
+  result << "};\n";
   result << "\n";
 
   // Declare mlm_data structure and the derived ones for each agents
@@ -67,7 +71,8 @@ ABModel::to_c_source()
   result << "\n";
 
   // Declare agent constructors
-  //result << "void * AgentModel::modelNewAgent"
+  result << gen_new_agent_func() << "\n";
+  result << "\n";
 
   // Declare functions for asking questions
 
@@ -87,19 +92,60 @@ ABModel::to_c_source()
 }
 
 std::string
+ABModel::gen_new_agent_func()
+{
+  std::stringstream result;
+
+  // function for figuring out how much space the agent needs
+  result << "\
+mlm_data *\n\
+allocate_agent_space(const uint type, const SimCell * cell)\n\
+{\n\
+  switch(type) {\n";
+  for(auto& agent : agents) {
+    result << "\t\tcase " << agent_to_uint(agent) << \
+      ": return new " << agent.gen_mlm_data_string() << "(cell);\n";
+  }
+  result << "\t\tdefault:\n\t\t\tstd::cerr << \"Runtime failure. Unknown agent uint id.\" << std::endl;\n";
+  result << "\t\t\texit(-1);\n";
+  result << "\t}\n";
+  result << "\treturn NULL;\n";
+  result << "}\n";
+  result << "\n";
+
+  // Function that creates all the new agents
+  result << "\
+void *\n\
+AgentModel::modelNewAgent(void * position, const SimCell * cell) {\n\
+  auto agent_iter = std::find_if(initial_agents.begin(), initial_agents.end(),\n\
+    [&](const auto& agent){\n\
+      return agent.is_at_position(position);\n\
+    });\n\
+  if(agent_iter != initial_agents.end()) {\n\
+    struct mlm_data * data = allocate_agent_space(agent_iter->getAgentType(), cell);\n\
+    return data;\n\
+  }\n\
+\n\
+  return NULL;\n\
+}";
+
+  return result.str();
+}
+
+std::string
 ABModel::gen_mlm_data_struct()
 {
   std::stringstream result;
   result <<"\
 struct mlm_data {\n\
-  const SimCell& sim_cell;\n\
+  const SimCell * sim_cell;\n\
   const AgentType type;\n\
-  AgentState state;\
 \n\
-  mlm_data(const AgentType type)\n\
-    : type(type)\n\
+  mlm_data(const SimCell * sim_cell, const AgentType type)\n\
+    : sim_cell(sim_cell)\n\
+    , type(type)\n\
   {}\n\
-}\n" << "\n";
+};\n" << "\n";
 
   for(auto& agent : agents) {
     result << agent.gen_mlm_data_struct() << "\n";
@@ -128,7 +174,7 @@ ABModel::gen_initial_agent_defs()
 std::string
 ABModel::gen_spatial_enum()
 {
-  return std::string();
+  return std::string("SpatialType::D2_Cartesian");
 }
 
 std::string
@@ -149,13 +195,43 @@ ABModel::gen_space_dims()
 std::string
 ABModel::gen_space_size()
 {
-  return std::string();
+  return std::string("2");
 }
 
 void
 ABModel::add_agent(AgentForm& agent)
 {
   agents.push_back(std::move(agent));
+}
+
+uint
+ABModel::agent_to_uint(const AgentForm& agent) const
+{
+  uint id = 0;
+  for(auto& other : agents) {
+    if(&other == &agent) {
+      return id;
+    }
+    ++id;
+  }
+
+  std::cerr << "Could not locate agent \'" << agent.getName() << "\' for turning into uints in during code-gen." << std::endl;
+  exit(-1);
+}
+
+uint
+ABModel::agent_to_uint_by_name(const std::string& name) const
+{
+  auto agent_iter = std::find_if(agents.begin(), agents.end(),
+    [&](const AgentForm& agent) {
+      return agent.getName() == name;
+    });
+  if(agent_iter == agents.end()) {
+    std::cerr << "Failed to convert agent name \'" << name << "\' into uint.";
+    std::cerr << " Could not find corresponding agent." << std::endl;
+    exit(-1);
+  }
+  return agent_to_uint(*agent_iter);
 }
 
 std::string

@@ -398,7 +398,7 @@ std::string
 InitialAgent::gen_constructor() const
 {
   std::stringstream result;
-  result << "InitAgent({";
+  result << "InitAgent(" << abmodel.agent_to_uint_by_name(getAgentName()) << ", {";
 
   uint index = 0;
   for(auto& dim : position.dimensions) {
@@ -413,9 +413,9 @@ InitialAgent::gen_constructor() const
 }
 
 bool
-InitialAgent::operator!=(const InitialAgent& other) const {
-  for(uint dim_index = 0; dim_index < position.dimensions.size(); ++dim_index) {
-    if(position.dimensions[dim_index] != other.position.dimensions[dim_index]) return true;
+InitialAgent::base_neq(const InitialAgent& a, const InitialAgent& other) {
+  for(uint dim_index = 0; dim_index < a.position.dimensions.size(); ++dim_index) {
+    if(a.position.dimensions[dim_index] != other.position.dimensions[dim_index]) return true;
   }
   return false;
 }
@@ -503,8 +503,14 @@ LogicalInitialAgent::next()
 bool
 LogicalInitialAgent::operator!=(const LogicalInitialAgent& other) const {
   if(actual != other.actual) return true;
-  if(static_cast<InitialAgent>(*this) != static_cast<InitialAgent>(other)) return true;
+  if(InitialAgent::base_neq(*this,other)) return true;
   return false;
+}
+
+const std::string&
+LogicalInitialAgent::getAgentName() const
+{
+  return actual.getAgentName();
 }
 
 /************************************************************

@@ -4,6 +4,7 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include <iostream>
 
 xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name) {
   xmlAttrPtr result = node->properties;
@@ -26,4 +27,11 @@ bool stobool(std::string str) {
 
 std::string xtos(const xmlChar* toString) { 
   return std::string((const char*)toString);
+}
+
+std::ostream&
+util::error(xmlNodePtr node)
+{
+  std::cerr << "<" << xmlGetLineNo(node) << "> ";
+  return std::cerr;
 }

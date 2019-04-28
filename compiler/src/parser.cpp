@@ -160,7 +160,7 @@ void newAgentDef(xmlNodePtr agent) {
       std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl;
       return; // Return error
     }
-    parseBindings(toAdd.getAgentScopeBindings(), curNode);
+    parseBindings(toAdd.getAgentScopeBindingsMut(), curNode);
 
     // Get the agent states
     parser.set_state(ParserState::States);
@@ -179,7 +179,7 @@ void newAgentDef(xmlNodePtr agent) {
     }
     auto xml_attr = xmlGetAttribute(curNode, "neighborhood");
     if(xml_attr == NULL) {
-      std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Comms interface does not have a neighborhood type." << std::endl;
+      util::error(curNode) << "Comms interface does not have a neighborhood type." << std::endl;
       exit(-1);
     }
     toAdd.set_neighborhood(parse_neighborhood(abmodel.num_agents(), (const char *)xml_attr->children->content));
@@ -256,7 +256,7 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
     while(curNode != NULL) {
       // Get the state variables
       if(xmlStrcmp(curNode->name, (const xmlChar*)"stateScope") == 0) {
-        parseBindings(newState.getStateScopeBindings(), curNode);
+        parseBindings(newState.getStateScopeBindingsMut(), curNode);
       } else if (xmlStrcmp(curNode->name, (const xmlChar*)"logic") == 0) {
         const ContextBindings ctxt = agent.genContextBindings(newState);
         std::unique_ptr<SourceAST> logic_ast = parser.parse_logic(ctxt, curNode);
@@ -279,8 +279,19 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
     std::string val;
     bool is_constant;
 
-    varType.type = strToEnum((const char*)(xmlGetAttribute(curNode, "type")->children->content));
+    auto xml_attr = xmlGetAttribute(curNode, "type");
+    if(xml_attr == NULL) {
+      util::error(curNode) << "Variable declaration is missing its \'type\' attribute." << std::endl;
+      exit(-1);
+    }
+
+    std::string type_str = std::string((const char*)(xml_attr->children->content));
+    varType.type = strToEnum(type_str);
     std::string symName = (const char*)(xmlGetAttribute(curNode, "id")->children->content);
+    if(symName.find("-") != std::string::npos) {
+      util::error(curNode) << "Variables cannot use the dash \'-\' in their \'id\' attribute." << std::endl;
+      exit(-1);
+    }
     
 		auto xml_log_attr = xmlGetAttribute(curNode, "log");
 		if(xml_log_attr == NULL) {
@@ -299,7 +310,7 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
     }
 	
     // Check if the var has a val attribute and if so use that else set default
-    xmlAttrPtr xml_attr = xmlGetAttribute(curNode, "value");
+    xml_attr = xmlGetAttribute(curNode, "value");
     if (xml_attr == NULL) {
       val = std::string(); // empty so code-gen assumes default
     } else {

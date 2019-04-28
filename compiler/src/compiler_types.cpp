@@ -3,6 +3,7 @@
 #include "source_ast.h"
 #include "util.h"
 #include "parser.h"
+#include "agent_form.h"
 
 #include <string>
 #include <cstring>
@@ -27,16 +28,20 @@ SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::s
   }
 }
 
-VarTypeEnum strToEnum(std::string str){
+VarTypeEnum strToEnum(std::string& str){
   if (str == "int")
     return VarTypeEnum::Integer;
   if (str == "bool")
     return VarTypeEnum::Bool;
-  if (str == "Real")
+  if (str == "real")
     return VarTypeEnum::Real;
   if (str == "String")
     return VarTypeEnum::String;
-  return VarTypeEnum::Integer;
+  if (str == "state")
+    return VarTypeEnum::State;
+  
+  std::cerr << "Unknown type string \'" << str <<"\'." << std::endl;
+  exit(-1);
 }
 
 std::string
@@ -50,13 +55,20 @@ SymbolBinding::to_string()
 }
 
 std::string
-SymbolBinding::gen_declaration() const
+SymbolBinding::gen_declaration(const AgentForm& agent) const
 {
   std::string type_part = type.to_c_source();
   std::stringstream result;
   result << type_part << " " << name;
   if(!initial_value.empty()) {
-    result << " = " << initial_value << ";";
+    std::string init_str;
+    if(type.type == VarTypeEnum::State) {
+      init_str = std::string("AgentState::STATE_") + agent.getName() + "_" + initial_value;
+    }
+    else {
+      init_str = initial_value;
+    }
+    result << " = " << init_str << ";";
   }
   else {
     result << ";";
