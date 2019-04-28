@@ -9,25 +9,13 @@
 #include <algorithm>
 #include <iostream>
 #include <libxml2/libxml/parser.h>
+//#include <libxml/parser.h>
 #include <memory>
 #include <sstream>
-
+#include <stdlib.h>
 extern struct program_args_t pargs;
 
-SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant)
-  : name(name)
-  , type(type)
-  , initial_value(initial_value)
-  , is_constant(is_constant)
-{
-  // allocate and copy initial value
-  if(pargs.target == OutputTarget::FPGA) {
-    std::cerr << "Symbol bindings for FPGA target not yet implemented\n";
-    exit(-1);
-  }
-}
-
-VarTypeEnum strToEnum(std::string str){
+VarTypeEnum strToEnum(std::string str) {
   if (str == "int")
     return VarTypeEnum::Integer;
   if (str == "bool")
@@ -37,6 +25,11 @@ VarTypeEnum strToEnum(std::string str){
   if (str == "String")
     return VarTypeEnum::String;
   return VarTypeEnum::Integer;
+}
+
+SymbolBinding::SymbolBinding()
+{
+	
 }
 
 std::string
@@ -152,4 +145,47 @@ Question::to_string()
   result << answer_source->print_tree();
 
   return result.str();
+}
+
+ContextBindings::ContextBindings(int frameCount) {
+	for (int i = 0; i < frameCount; i++) {
+		std::vector<SymbolBinding> SB;
+		ContextBindings::frames.push_back(SB);
+	}
+
+}
+
+ContextBindings::ContextBindings(int frameCount, std::string conType) {
+	if (strcmp(conType.c_str, "ENV")) {
+		for (int i = 0; i < frameCount; i++) {
+			std::vector<EnvSymbolBinding> *v;
+			this->frames.push_back(v);
+		}
+	}
+	for (int i = 0; i < frameCount; i++) {
+		for (int i = 0; i < frameCount; i++) {
+			std::vector<SymbolBinding> *SB;
+			this->frames.push_back(SB);
+		}
+	}
+
+}
+
+
+
+EnvSymbolBinding::EnvSymbolBinding(std::string & name, VariableType type, std::string initial_value, std::unique_ptr<SourceAST> rulePrt)
+{
+	EnvSymbolBinding::SymbolBinding(name, type, initial_value, false);
+	EnvRule.reset(rulePrt.get());
+	
+}
+
+EnvSymbolBinding::EnvSymbolBinding(std::string & name, VariableType type, std::string initial_value)
+{
+	EnvSymbolBinding::SymbolBinding(name, type, initial_value, true);
+}
+
+void EnvSymbolBinding::updateEnvRule(std::unique_ptr<SourceAST> sast)
+{
+	this->EnvRule.reset(sast._Myptr);
 }

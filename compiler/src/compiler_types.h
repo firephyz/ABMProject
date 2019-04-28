@@ -78,9 +78,11 @@ public:
 
 class ContextBindings {
 public:
-  std::vector<std::vector<SymbolBinding> *> frames;
-  const SymbolBinding& getBindingByName(const char * name) const;
-  ContextBindings& extend(std::vector<SymbolBinding>& bindings);
+	ContextBindings(int frameCount);
+	ContextBindings(int frameCount, std::string conType);
+    std::vector<std::vector<SymbolBinding> *> frames;
+    const SymbolBinding& getBindingByName(const char * name) const;
+    ContextBindings& extend(std::vector<SymbolBinding>& bindings);
 };
 
 #include "source_ast.h"
@@ -99,6 +101,16 @@ public:
   std::string to_string();
 
   const std::string& get_name() const { return question_name; }
+};
+
+
+class EnvSymbolBinding : public SymbolBinding {
+	std::unique_ptr<SourceAST> EnvRule;
+	public:
+		EnvSymbolBinding(std::string& name, struct VariableType type, std::string initial_value, std::unique_ptr<SourceAST> rulePrt);
+		EnvSymbolBinding(std::string& name, struct VariableType type, std::string initial_value);
+		void updateEnvRule(std::unique_ptr<SourceAST> sast);
+	
 };
 
 #endif
