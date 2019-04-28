@@ -152,16 +152,21 @@ ABModel::gen_space_size()
 std::string
 ABModel::gen_logging_funct() 
 {
+  std::stringstream result; 
+  result <<"\
+std::string \
+AgentModel::modelLog(void * mlm_data) {\n\
+	std::stringstream logStr;"\ 
+  << std::endl;  
 
-  //result << "void i
-  //AgentModel::modelLog(void * mlm_data) {
-  //	struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
-  //  
-  // }
-
-
-	return std::string();
-
+  for (auto &agent : agents) { 
+  	if (agent.log_en == true) { 
+   		result << agent.gen_log_code() << std::endl;
+    } 
+  }
+ 
+  result << "	return logStr.str();\n}" << std::endl;
+	return result.str();
 }
 
 void

@@ -157,11 +157,28 @@ void parseAgents(xmlNodePtr agentsChild) {
 
 void newAgentDef(xmlNodePtr agent) {
   xmlNodePtr curNode = agent;
-
+ 
   // Check that the first tag is Agent and go ahead and grab the name
   if (xmlStrcmp(curNode->name, (const xmlChar*)"agent") == 0) {
-    std::string name((const char*)(xmlGetAttribute(curNode, "type")->children->content));
-    AgentForm toAdd(name);
+    std::string name((const char*)(xmlGetAttribute(curNode, "type")->children->content));  
+  AgentForm toAdd(name);
+  
+  // Check for log attr for agent if not present preset to false and type check   
+	auto xml_log_attr = xmlGetAttribute(curNode, "log_en");
+	if(xml_log_attr == NULL) {
+		 toAdd.log_en = false;
+	} else {
+ 		std::string log_en((const char*)xml_log_attr->children->content);
+
+  	if (log_en == "true") {
+    	toAdd.log_en = true;
+   	} else if (log_en == "false") {
+    	toAdd.log_en = false;
+		} else {
+			// Type error
+		std::cerr << "Improper logging attr type (Agent)" << std::endl;
+		}
+  }
 
     // Get Agent Vars
     curNode = xmlFirstElementChild(curNode);
