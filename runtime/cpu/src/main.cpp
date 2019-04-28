@@ -166,8 +166,13 @@ int main(int argc, char** argv) {
   //SimAgent::num_dimensions = loaded_model->num_dimensions;
 
   SimSpace space(*loaded_model);
+  
+  // Print out Model name
+  std::cout << loaded_model->model_name << std::endl;
 
-  while(true) {
+  int limit = 3;
+  int it = 0;
+  while(it < limit) {
     // Ask every agent's question
     for(auto& sender : space.cells) {
       if(sender.is_empty()) continue; // skip if no agent is present
@@ -192,11 +197,12 @@ int main(int argc, char** argv) {
     // Logging Extension stufffff
     for(auto& cell : space.cells) {
       if(cell.is_empty()) continue; // skip empty cells
-      std::cout << loaded_model->Log(cell.mlm_data) << std::endl;
+      std::cout << "" <<loaded_model->Log(cell.mlm_data);
     }
 
     // Call the model tick function
   	loaded_model->Tick();
+    it++;
   }
 
   // Close the model library

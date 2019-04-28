@@ -21,6 +21,8 @@ struct ABModel {
   ABM_Environment environment;
   InitialState init;
   std::vector<AgentForm> agents;
+  // For Logging
+  std::string model_name;  
 
   ABModel() = default;
   ABModel(const ABModel& other) = delete;

@@ -13,7 +13,7 @@ template class SimAgent<num_dimensions>;
 using InitAgent = SimAgent<num_dimensions>;
 const std::array<InitAgent, 3> initial_agents {InitAgent({0, 0}), InitAgent({0, 1}), InitAgent({2, 1})};
 
-AgentModel loaded_model(SpatialType::D2_Cartesian, num_dimensions, dimensions);
+AgentModel loaded_model("DEFAULT_NAME", SpatialType::D2_Cartesian, num_dimensions, dimensions);
 CommsNeighborhood neighborhood = {NeighborhoodType::NCube, 1};
 
 struct mlm_data_t {
@@ -71,7 +71,7 @@ std::string
 AgentModel::modelLog(void * mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
   std::stringstream logStr;
-  logStr << "Agent " << data->id << ": (" << data->sim_cell->readPosition() << ")";
+  logStr << ":" << "Agent_ " << data->id << data->sim_cell->readPosition();
   return logStr.str();
 }
 

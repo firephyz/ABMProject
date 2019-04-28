@@ -34,6 +34,15 @@ ABModel& parse_model(const char * xml_model_path)
     }
 
     xmlNodePtr root = xmlDocGetRootElement(inputDoc);
+
+    // Get the model name or set to default
+    auto model_name = xmlGetAttribute(root, "name");    
+    if (model_name != NULL) {
+    	abmodel.model_name = std::string((const char*)model_name->children->content);	
+    } else {
+    	abmodel.model_name = std::string("DEFAULT_NAME");
+    }
+	
     xmlNodePtr child = xmlFirstElementChild(root);
 
     while (child != NULL) {

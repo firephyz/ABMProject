@@ -59,7 +59,9 @@ class AgentModel {
 public:
 /***********************************************************************
  * Models must specify these elements                                  *
- ***********************************************************************/
+ ***********************************************************************/ 
+  // For Logging
+  const char * model_name;
   const SpatialType space_type;
   const int num_dimensions;
   const size_t * dimensions;
@@ -78,8 +80,9 @@ public:
 
 
   // constexpr so it is constructed in place in the library at compile time
-  constexpr AgentModel(SpatialType space_type, int num_dimensions, const size_t * dimensions)
-    : space_type(space_type)
+  constexpr AgentModel(const char * model_name, SpatialType space_type, int num_dimensions, const size_t * dimensions)
+    : model_name(model_name)
+    , space_type(space_type)
     , num_dimensions(num_dimensions)
     , dimensions(dimensions)
   {}
