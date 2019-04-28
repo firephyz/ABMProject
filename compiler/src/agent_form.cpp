@@ -10,8 +10,8 @@ StateInstance::StateInstance(const std::string& name)
   : state_name(name)
 {}
 
-std::vector<SymbolBinding>&
-StateInstance::getStateScopeBindings()
+const std::vector<SymbolBinding>&
+StateInstance::getStateScopeBindings() const
 {
   return state_scope_vars;
 }
@@ -59,8 +59,8 @@ AgentForm::set_neighborhood(std::unique_ptr<CommsNeighborhood>&& n)
   neighborhood = std::move(n);
 }
 
-std::vector<SymbolBinding>&
-AgentForm::getAgentScopeBindings()
+const std::vector<SymbolBinding>&
+AgentForm::getAgentScopeBindings() const
 {
   return agent_scope_vars;
 }
@@ -124,24 +124,55 @@ std::string
 AgentForm::gen_mlm_data_struct() const
 {
   std::stringstream result;
-  result << "\
-struct mlm_data_" << agent_name << " : public mlm_data {\n";
-  for(auto& variable : agent_scope_vars) {
-    result << "\t" << variable.gen_declaration() << "\n";
+
+  // generate data structs for each state (for local variables)
+  for(auto& state : states) {
+    result << "\
+struct mlm_data_" << agent_name << "_" << state.getName() << " {\n";
+    for(auto& variable : state.getStateScopeBindings()) {
+      result << "\t" << variable.gen_declaration(*this) << "\n";
+    }
+    result << "};\n";
+    result << "\n";
   }
-  // TODO place state variable union
-  result << "}\n";
+
+  // generate mlm_data for specific agent
+  result << "\
+struct " << gen_mlm_data_string() << " : public mlm_data {\n";
+  for(auto& variable : agent_scope_vars) {
+    result << "\t" << variable.gen_declaration(*this) << "\n";
+  }
+  result << "\tunion {\n";
+  for(auto& state : states) {
+    // place struct type declaration
+    result << "\t\tstruct mlm_data_" << agent_name << "_" << state.getName();
+    // place struct name
+    result << " locals_" << state.getName() << ";\n";
+  }
+  result << "\t};\n\n";
+  
+  // constructor
+  result << "\t" << gen_mlm_data_string() << "(const SimCell * sim_cell)\n";
+  result << "\t\t: mlm_data(sim_cell, AgentType::" << gen_enum_type_name() << ")\n";
+  result << "\t{}\n";
+  result << "};\n";
   return result.str();
 }
+
 
 std::string 
 AgentForm::gen_log_code() const 
 {
 	std::stringstream result;  
-  result <<"\ 
+  result <<"\
 if (mlm_data->type == AgentType::" << gen_enum_type_name() << ") {\
 	logStr << \":\" << \"Agent_\" << mlm_data->id << data->sim_cell->readPosition();\
 }";
   return result.str();
 }
 
+std::string 
+AgentForm::gen_mlm_data_string() const
+{
+	return std::string("mlm_data_") + agent_name;
+}

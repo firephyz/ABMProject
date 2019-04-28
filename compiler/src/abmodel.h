@@ -36,10 +36,13 @@ struct ABModel {
   std::string gen_space_size();
   std::string gen_mlm_data_struct();
   std::string gen_logging_funct();
+  std::string gen_new_agent_func();
 
   void add_agent(AgentForm& agent);
   size_t num_agents() const { return agents.size(); }
   AgentForm& get_agent_by_index(const size_t index) { return agents[index]; }
+  uint agent_to_uint(const AgentForm& agent) const;
+  uint agent_to_uint_by_name(const std::string& name) const;
 
   std::string to_string();
 };

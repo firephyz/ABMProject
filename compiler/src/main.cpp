@@ -167,6 +167,7 @@ int main(int argc, char *argv[])
   file_out.close();
 
   // compile file
+  std::cout << "Compiling output file \'" << source_file_name << "\'..." << std::endl;
   std::string object_command = "g++ --std=c++14 -c -g -o " + object_file_name + " -fPIC -I" + pargs.runtime_path + "cpu/include/ " + source_file_name;
   system(object_command.c_str());
   struct stat buf;
