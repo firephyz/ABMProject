@@ -19,8 +19,8 @@ extern void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void *
 extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer);
 extern CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data);
 extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data);
-extern void                (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
-
+extern std::string         (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
+extern void                (*modelTickPtr)(AgentModel * this_class);
 /**********************************************************
  * The following class is only constructed in the MLM cpp files.
  * Not intended to be used by runtime
@@ -62,14 +62,15 @@ public:
   const SpatialType space_type;
   const int num_dimensions;
   const size_t * dimensions;
-
+  
   // Model makers must implement functions below
   void * modelNewAgent(void * position);
   void * modelGiveAnswer(void * mlm_data);
   void modelReceiveAnswer(void * mlm_data, void * answer);
   CommsNeighborhood& modelGiveNeighborhood(void * mlm_data);
   void modelUpdateAgent(void * mlm_data);
-  void modelLog(void * mlm_data);
+  std::string  modelLog(void * mlm_data);
+  void modelTick();
 /***********************************************************************
  * Model specifc elements done                                         *
  ***********************************************************************/
@@ -88,7 +89,8 @@ public:
   inline void receiveAnswer(void * mlm_data, void * answer) { return (*modelReceiveAnswerPtr)(this, mlm_data, answer); }
   inline CommsNeighborhood& giveNeighborhood(void * mlm_data) { return (*modelGiveNeighborhoodPtr)(this, mlm_data); }
   inline void updateAgent(void * mlm_data) { return (*modelUpdateAgentPtr)(this, mlm_data); }
-  inline void Log(void * mlm_data) { return (*modelLogPtr)(this, mlm_data); }
+  inline std::string Log(void * mlm_data) { return (*modelLogPtr)(this, mlm_data); }
+  inline void Tick() { return (*modelTickPtr)(this); }
 };
 
 #endif

@@ -2,6 +2,7 @@
 #include "communications.h"
 
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 #include <array>
 
@@ -17,6 +18,7 @@ CommsNeighborhood neighborhood = {NeighborhoodType::NCube, 1};
 
 struct mlm_data_t {
   int id;
+  SimCell& sim_cell; 
 };
 
 // TODO Should mlm_data space be allocated by the runtime?
@@ -64,8 +66,15 @@ AgentModel::modelUpdateAgent(void * mlm_data) {
   std::cout << "Agent " << data->id << ": Updating..." << std::endl;
 }
 
-void 
+std::string
 AgentModel::modelLog(void * mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
-  std::cout << "Agent " << data->id << " Logging..." << std::endl;
+  std::stringstream logStr;
+  data->sim_cell.readPosition(logStr); 
+  return logStr.str();
+}
+
+void 
+AgentModel::modelTick() {
+	std::cout << "Tick.. " << std::endl;
 }

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <iostream>
 
 typedef enum {
   D1_Cartesian,
@@ -26,6 +27,8 @@ public:
 
   bool operator!=(SimCell& other);
   bool is_empty() { return mlm_data == NULL; }
+  void readPosition(std::ostream &os);
+
 };
 
 // Forward declare

@@ -39,6 +39,10 @@ bool SimCell::operator!=(SimCell& other)
   return this != &other;
 }
 
+void SimCell::readPosition(std::ostream& os) {
+	os << std::to_string(*(this->position)) << std::string(" ") << std::to_string(*(this->position+1)) << std::endl;
+}
+
 SimSpace::SimSpace(AgentModel& model) 
   : space_type(model.space_type)
   , num_dimensions(model.num_dimensions)

@@ -31,7 +31,8 @@ void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_da
 void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer)     = NULL;
 CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data)                 = NULL;
 void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data)                      = NULL;
-void                (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
+std::string         (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
+void                (*modelTickPtr)(AgentModel * this_class);
 
 
 // Output mangled symbols to temporary file to read in later
@@ -50,7 +51,8 @@ extractMangledSymbols(const char * model_path) {
     "modelGiveNeighborhood",
     "modelUpdateAgent",
     "modelReceiveAnswer",
-    "modelLog"
+    "modelLog",
+    "modelTick"
   };
   const char * sed_part = "sed \'s/.*T //g\'";
   const char * grep_part = "grep -E \"_ZN10AgentModel.*(";
@@ -120,7 +122,10 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
     DLSYM_ERROR_CHECK(modelUpdateAgentPtr, symbol);
   }
   else if(symbol.find("modelLog") != std::string::npos) {
-    modelLogPtr = (void (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+    modelLogPtr = (std::string (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+  } 
+  else if(symbol.find("modelTick") != std::string::npos) {
+  	modelTickPtr = (void (*)(AgentModel *))dlsym(model_handle, symbol.c_str());
   }
   else {
     std::cerr << "Could not match symbol \'" << symbol << "\' in the mangled symbols list." << std::endl;
@@ -152,7 +157,8 @@ void * loadModel(const char * model_path) {
 }
 
 int main(int argc, char** argv) {
-
+  
+  const char* model_lib_path;
   model_lib_path = *(argv + 1);
   void * model_handle = loadModel(model_lib_path);
 
@@ -160,9 +166,6 @@ int main(int argc, char** argv) {
   //SimAgent::num_dimensions = loaded_model->num_dimensions;
 
   SimSpace space(*loaded_model);
-
-  // Write Logging file Headers
-
 
   while(true) {
     // Ask every agent's question
@@ -191,6 +194,9 @@ int main(int argc, char** argv) {
       if(cell.is_empty()) continue; // skip empty cells
       loaded_model->Log(cell.mlm_data);
     }
+
+    // Call the model tick function
+  	loaded_model->Tick();
   }
 
   // Close the model library
