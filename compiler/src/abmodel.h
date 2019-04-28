@@ -35,6 +35,7 @@ struct ABModel {
   std::string gen_space_dims();
   std::string gen_space_size();
   std::string gen_mlm_data_struct();
+  std::string gen_logging_funct();
 
   void add_agent(AgentForm& agent);
   size_t num_agents() const { return agents.size(); }
