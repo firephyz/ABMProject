@@ -117,6 +117,8 @@ void parseEnviroment(xmlNodePtr envChild) {
   xmlNodePtr curNode = NULL; 
   vector<xmlNodePtr> localRules;
   vector<xmlNodePtr> globalRules;
+  vector<EnvSymbolBinding*> localVar;
+  vector<EnvSymbolBinding*> globalVar;
   int numOfDim = 0;
   bool wrap = 0;
 
@@ -144,15 +146,19 @@ void parseEnviroment(xmlNodePtr envChild) {
 				char *tnm = (char*)xmlGetAttribute(temp, (const char *) "name")->children->content;           //->children->content; // temp name
 				char *tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
 				char *tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
-				bool cns = true; // temp
+				//bool cns = true; // temp
 				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
 					xmlNodePtr rule = xmlFirstElementChild(curNode); 
 					if (rule != NULL) {
-						cns = false;
+						//cns = false;
 						globalRules.push_back(rule);
-
+						abmodel.add_to_econtext(1, tnm, tvl, tty, false);
+						globalVar.push_back(&((std::vector<EnvSymbolBinding>*)abmodel.get_env_context().frames.at(1))->at(0));
 					}
-					abmodel.add_to_econtext(1, tnm, tvl,tty, cns);
+					else {
+						abmodel.add_to_econtext(1, tnm, tvl, tty, true);
+					}
+					
 				}
 				else {
 					std::cout << "INVALID GLOBAL ENVIRONMENT VARIABLE" << std::endl;
@@ -165,15 +171,20 @@ void parseEnviroment(xmlNodePtr envChild) {
 				char* tnm =(char*) xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
 				char* tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
 				char* tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
-				bool cns = true;
+				//bool cns = true;
 				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
 					xmlNodePtr rule = xmlFirstElementChild(curNode);
 					if (rule != NULL) {
-						cns = false;
+						//cns = false;
 						localRules.push_back(rule);
+						abmodel.add_to_econtext(0, tnm, tvl, tty, false);
+						localVar.push_back(&((std::vector<EnvSymbolBinding>*)abmodel.get_env_context().frames.at(0))->at(0));
+
 					}
-					abmodel.add_to_econtext(0, tnm, tvl, tty, cns);
-					abmodel.get_env_context().frames.at(1)->front()
+					else {
+						abmodel.add_to_econtext(0, tnm, tvl, tty, true);
+				    }
+
 				}
 				else {
 					std::cout << "INVALID LOCAL ENVIRONMENT VARIABLE" << std::endl;
@@ -182,13 +193,14 @@ void parseEnviroment(xmlNodePtr envChild) {
 		}
 		
 	}
-	// parse rules after context is generated 
-	for (vector<xmlNodePtr>::iterator git = globalRules.begin(); git != globalRules.end(); ++git) {
-		//abmodel.add_GRAST(parseEnvRule(*git));
+	// rule xmlPtr and pointers to envSymbolBindings are stored as parsing occurs, then combinded here and stored in the overall environment
+	for (int i = 0; i < globalVar.size(); i++) {
+		globalVar.at(i)->updateEnvRule(parseEnvRule(globalRules.at(i)));
+
 		
 	}
-	for (vector<xmlNodePtr>::iterator lit = localRules.begin(); lit != globalRules.end(); ++lit) {
-		//abmodel.add_LRAST(parseEnvRule(*lit));
+	for (int i = 0; i < localVar.size(); i++) {
+		localVar.at(i)->updateEnvRule(parseEnvRule(localRules.at(i)));
 	}
 }
 // manages code parsing for env variables

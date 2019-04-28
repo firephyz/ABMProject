@@ -15,6 +15,19 @@
 #include <stdlib.h>
 extern struct program_args_t pargs;
 
+SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant)
+	: name(name)
+	, type(type)
+	, initial_value(initial_value)
+	, is_constant(is_constant)
+{
+	// allocate and copy initial value
+	if (pargs.target == OutputTarget::FPGA) {
+		std::cerr << "Symbol bindings for FPGA target not yet implemented\n";
+		exit(-1);
+	}
+}
+
 VarTypeEnum strToEnum(std::string str) {
   if (str == "int")
     return VarTypeEnum::Integer;
@@ -29,6 +42,8 @@ VarTypeEnum strToEnum(std::string str) {
 
 SymbolBinding::SymbolBinding()
 {
+	this->name = "";
+	this->is_constant = true;
 	
 }
 
@@ -153,13 +168,14 @@ ContextBindings::ContextBindings(int frameCount) {
 		ContextBindings::frames.push_back(SB);
 	}
 
-}
+} 
 
 ContextBindings::ContextBindings(int frameCount, std::string conType) {
 	if (strcmp(conType.c_str, "ENV")) {
 		for (int i = 0; i < frameCount; i++) {
 			std::vector<EnvSymbolBinding> *v;
-			this->frames.push_back(v);
+			this->frames.push_back(v); 
+			
 		}
 	}
 	for (int i = 0; i < frameCount; i++) {
