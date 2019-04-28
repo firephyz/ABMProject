@@ -34,7 +34,7 @@ class AgentForm {
   const std::string agent_name;
   std::vector<SymbolBinding> agent_scope_vars;
   std::vector<StateInstance> states;
-  std::vector<Question> questions;
+  std::vector<std::shared_ptr<Question>> questions;
   std::unique_ptr<CommsNeighborhood> neighborhood;
 
 public:
@@ -44,7 +44,7 @@ public:
 
   std::vector<SymbolBinding>& getAgentScopeBindings();
   std::vector<StateInstance>& getStates() { return states; }
-  std::vector<Question>& getQuestions() { return questions; }
+  std::vector<std::shared_ptr<Question>>& getQuestions() { return questions; }
   const std::vector<StateInstance>& getStates() const { return states; }
   const std::string& getName() const { return agent_name; }
 

@@ -1,13 +1,60 @@
 #ifndef PARSER_INCLUDED
 #define PARSER_INCLUDED
 
-#include "abmodel.h"
-#include "compiler_types.h"
+//#include "abmodel.h"
 #include "comms.h"
+#include "debug.h"
 
 #include <libxml2/libxml/parser.h>
 #include <vector>
+#include <memory>
+#include <iostream>
 
+#ifndef VERBOSE_AST_GEN
+#error "Code which has the potential to utilize VERBOSE_AST_GEN debug\
+ option does not have it defined."
+#endif
+
+class SourceAST_ask;
+class SourceAST;
+class ABModel;
+class AgentForm;
+class ContextBindings;
+
+// used in parser object to know what sort of thing its parsing
+enum class ParserState {
+  States,
+  Questions,
+  Answers,
+  Environment,
+};
+
+// need this if we want to print ParserState enum classes
+#if VERBOSE_AST_GEN
+  std::string ParserState_to_string(ParserState s);
+#endif
+
+// Parsing needs to know extra information like the general xml area within
+// which it is called. Always call parser.set_state when you're about to parse_logic
+// in an entirely new area that has different parse rules, syntax, ect.
+struct ParserObject {
+  ParserState state;
+
+  // nodes that need to be linked back with their Question objects. The AST is
+  // parsed before the Questions
+  std::vector<SourceAST_ask *> nodes;
+
+  std::unique_ptr<SourceAST> parse_logic(const ContextBindings& ctxt, xmlNodePtr node);
+  void set_state(ParserState s) { 
+    state = s;
+
+    #if VERBOSE_AST_GEN
+      std::cout << "Setting parser state: " << ParserState_to_string(s) << std::endl;
+    #endif
+  }
+};
+
+#include "compiler_types.h"
 class ParserContext {
 public:
   std::vector<std::vector<SymbolBinding>> bindings;
@@ -22,7 +69,6 @@ void parse_dimensions(xmlNodePtr curNode);
 void parse_init_agent(xmlNodePtr node);
 std::unique_ptr<CommsNeighborhood> parse_neighborhood(const size_t agent_index, const char * n);
 
-std::unique_ptr<SourceAST> parse_logic(const ContextBindings& ctxt, xmlNodePtr node);
 std::unique_ptr<SourceAST> dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node);
 void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode); 
 void parseAgentStates(AgentForm& agent, xmlNodePtr curNode);

@@ -38,7 +38,9 @@ ABModel& parse_model(const char * xml_model_path)
 
     while (child != NULL) {
         if (xmlStrcmp(child->name, (const xmlChar*)"environment") == 0){
-//#          parseEnviroment(child);
+          // change parser state so we limit the allowed AST
+          parser.set_state(ParserState::Environment);
+//        parseEnviroment(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){
           parseAgents(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"initialState") == 0) {
@@ -161,6 +163,7 @@ void newAgentDef(xmlNodePtr agent) {
     parseBindings(toAdd.getAgentScopeBindings(), curNode);
 
     // Get the agent states
+    parser.set_state(ParserState::States);
     curNode = xmlNextElementSibling(curNode);
     if(xmlStrcmp(curNode->name, (const xmlChar*)"rules") != 0) {
       std::cerr << "Missing rules tag in agent definition" << std::endl;
@@ -188,10 +191,29 @@ void newAgentDef(xmlNodePtr agent) {
         exit(-1);
       }
 
-      toAdd.getQuestions().push_back(Question(toAdd.genContextBindings(), commsSearch));
+      toAdd.getQuestions().push_back(std::make_shared<Question>(toAdd.genContextBindings(), commsSearch));
 
       commsSearch = xmlNextElementSibling(commsSearch);
     }
+
+    // Resolve ask-question links
+    for(SourceAST_ask * node : parser.nodes) {
+      for(auto& q : toAdd.getQuestions()) {
+        if(q->get_name() == node->getQuestionName()) {
+          // give ask node the shared_ptr to Question
+          node->setQuestion(q);
+          break;
+        }
+      }
+
+      if(node->getQuestion() == nullptr) {
+        std::cerr << "Could not link ask node with question name \'" << node->getQuestionName();
+        std::cerr << "\' with a question in agent \'" << toAdd.getName() << "\'." << std::endl;
+        exit(-1);
+      }
+    }
+    // empty nodes for next agent to be parsed
+    parser.nodes.clear();
 
     abmodel.add_agent(toAdd);
   } else {
@@ -237,7 +259,7 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
         parseBindings(newState.getStateScopeBindings(), curNode);
       } else if (xmlStrcmp(curNode->name, (const xmlChar*)"logic") == 0) {
         const ContextBindings ctxt = agent.genContextBindings(newState);
-        std::unique_ptr<SourceAST> logic_ast = parse_logic(ctxt, curNode);
+        std::unique_ptr<SourceAST> logic_ast = parser.parse_logic(ctxt, curNode);
         newState.add_logic(std::move(logic_ast));
         logic_ast.release();
       }
@@ -365,7 +387,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
 }
 
 std::unique_ptr<SourceAST>
-parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
+ParserObject::parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
 {
   xmlNodePtr child = xmlFirstElementChild(node);
   std::unique_ptr<SourceAST> result = dispatch_on_logic_tag(ctxt, child);
@@ -382,3 +404,21 @@ parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
 
   return std::move(result);
 }
+
+#if VERBOSE_AST_GEN
+std::string
+ParserState_to_string(ParserState s)
+{
+  switch(s) {
+    case ParserState::States:
+      return std::string("States");
+    case ParserState::Questions:
+      return std::string("Questions");
+    case ParserState::Answers:
+      return std::string("Answers");
+    case ParserState::Environment:
+      return std::string("Environment");
+  }
+  return std::string("UNKNOWN ParserState");
+}
+#endif
