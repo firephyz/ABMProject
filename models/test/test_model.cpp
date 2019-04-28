@@ -18,12 +18,12 @@ CommsNeighborhood neighborhood = {NeighborhoodType::NCube, 1};
 
 struct mlm_data_t {
   int id;
-  SimCell& sim_cell; 
+  const SimCell * sim_cell;
 };
 
 // TODO Should mlm_data space be allocated by the runtime?
 void *
-AgentModel::modelNewAgent(void * position) {
+AgentModel::modelNewAgent(void * position, const SimCell& sim_cell) {
   // Only return new agent data if one has been declared in the model
   if(std::find_if(initial_agents.begin(), initial_agents.end(),
     [&](const auto& agent){
@@ -32,6 +32,7 @@ AgentModel::modelNewAgent(void * position) {
     static int next_id = 0x1;
     struct mlm_data_t * data = (mlm_data_t *)malloc(sizeof(mlm_data_t));
     data->id = next_id;
+    data->sim_cell = &sim_cell;
     next_id++;
     return data;
   }
@@ -70,7 +71,7 @@ std::string
 AgentModel::modelLog(void * mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
   std::stringstream logStr;
-  data->sim_cell.readPosition(logStr); 
+  logStr << "Agent " << data->id << ": (" << data->sim_cell->readPosition() << ")";
   return logStr.str();
 }
 

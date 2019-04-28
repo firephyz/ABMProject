@@ -2,6 +2,7 @@
 #include "agent_model.h"
 
 #include <vector>
+#include <sstream>
 
 extern AgentModel * loaded_model;
 
@@ -26,7 +27,7 @@ SimCell::SimCell(SimSpace& space, int position_index)
   }
 
   // create agent data if one is present. Keep NULL otherwise
-  mlm_data = loaded_model->newAgent(position);
+  mlm_data = loaded_model->newAgent(position, *this);
 }
 
 SimCell::SimCell(SimCell&& other) noexcept
@@ -39,8 +40,10 @@ bool SimCell::operator!=(SimCell& other)
   return this != &other;
 }
 
-void SimCell::readPosition(std::ostream& os) {
-	os << std::to_string(*(this->position)) << std::string(" ") << std::to_string(*(this->position+1)) << std::endl;
+std::string SimCell::readPosition() const {
+  std::stringstream os;
+	os << std::to_string(*(this->position)) << " " << std::to_string(*(this->position+1));
+  return os.str();
 }
 
 SimSpace::SimSpace(AgentModel& model) 

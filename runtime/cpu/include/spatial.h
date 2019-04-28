@@ -27,7 +27,7 @@ public:
 
   bool operator!=(SimCell& other);
   bool is_empty() { return mlm_data == NULL; }
-  void readPosition(std::ostream &os);
+  std::string readPosition() const;
 
 };
 

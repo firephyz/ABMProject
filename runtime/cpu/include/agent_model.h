@@ -11,10 +11,11 @@
 // Forward declare to avoid circular dependency
 typedef struct comms_neighborhood_t CommsNeighborhood;
 class AgentModel;
+class SimCell;
 
 // Must be outside class to be resolved by dlsym
 // Declared and defined in main during model loading with libdl
-extern void *              (*modelNewAgentPtr)(AgentModel * this_class, void * position);
+extern void *              (*modelNewAgentPtr)(AgentModel * this_class, void * position, const SimCell& sim_cell);
 extern void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_data);
 extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer);
 extern CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data);
@@ -64,7 +65,7 @@ public:
   const size_t * dimensions;
   
   // Model makers must implement functions below
-  void * modelNewAgent(void * position);
+  void * modelNewAgent(void * position, const SimCell& sim_cell);
   void * modelGiveAnswer(void * mlm_data);
   void modelReceiveAnswer(void * mlm_data, void * answer);
   CommsNeighborhood& modelGiveNeighborhood(void * mlm_data);
@@ -84,7 +85,7 @@ public:
   {}
 
   // So we can call these functions in runtime code nicely
-  inline void * newAgent(void * position) { return (*modelNewAgentPtr)(this, position); }
+  inline void * newAgent(void * position, const SimCell& sim_cell) { return (*modelNewAgentPtr)(this, position, sim_cell); }
   inline void * giveAnswer(void * mlm_data) { return (*modelGiveAnswerPtr)(this, mlm_data); }
   inline void receiveAnswer(void * mlm_data, void * answer) { return (*modelReceiveAnswerPtr)(this, mlm_data, answer); }
   inline CommsNeighborhood& giveNeighborhood(void * mlm_data) { return (*modelGiveNeighborhoodPtr)(this, mlm_data); }
