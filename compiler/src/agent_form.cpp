@@ -50,6 +50,7 @@ StateInstance::gen_state_enum_name(const std::string& agent_name) const
 AgentForm::AgentForm(const std::string& name)
   : agent_name(name)
   , neighborhood(nullptr)
+  , log_en(false)
 {}
 
 void
@@ -158,8 +159,20 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   return result.str();
 }
 
-std::string
+
+std::string 
+AgentForm::gen_log_code() const 
+{
+	std::stringstream result;  
+  result <<"\
+if (mlm_data->type == AgentType::" << gen_enum_type_name() << ") {\
+	logStr << \":\" << \"Agent_\" << mlm_data->id << data->sim_cell->readPosition();\
+}";
+  return result.str();
+}
+
+std::string 
 AgentForm::gen_mlm_data_string() const
 {
-  return std::string("mlm_data_") + agent_name;
+	return std::string("mlm_data_") + agent_name;
 }

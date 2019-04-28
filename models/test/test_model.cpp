@@ -2,6 +2,7 @@
 #include "communications.h"
 
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 #include <array>
 
@@ -12,16 +13,17 @@ template class SimAgent<num_dimensions>;
 using InitAgent = SimAgent<num_dimensions>;
 const std::array<InitAgent, 3> initial_agents {InitAgent({0, 0}), InitAgent({0, 1}), InitAgent({2, 1})};
 
-AgentModel loaded_model(SpatialType::D2_Cartesian, num_dimensions, dimensions);
+AgentModel loaded_model("DEFAULT_NAME", SpatialType::D2_Cartesian, num_dimensions, dimensions);
 CommsNeighborhood neighborhood = {NeighborhoodType::NCube, 1};
 
 struct mlm_data_t {
   int id;
+  const SimCell * sim_cell;
 };
 
 // TODO Should mlm_data space be allocated by the runtime?
 void *
-AgentModel::modelNewAgent(void * position) {
+AgentModel::modelNewAgent(void * position, const SimCell& sim_cell) {
   // Only return new agent data if one has been declared in the model
   if(std::find_if(initial_agents.begin(), initial_agents.end(),
     [&](const auto& agent){
@@ -30,6 +32,7 @@ AgentModel::modelNewAgent(void * position) {
     static int next_id = 0x1;
     struct mlm_data_t * data = (mlm_data_t *)malloc(sizeof(mlm_data_t));
     data->id = next_id;
+    data->sim_cell = &sim_cell;
     next_id++;
     return data;
   }
@@ -64,8 +67,15 @@ AgentModel::modelUpdateAgent(void * mlm_data) {
   std::cout << "Agent " << data->id << ": Updating..." << std::endl;
 }
 
-void 
+std::string
 AgentModel::modelLog(void * mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
-  std::cout << "Agent " << data->id << " Logging..." << std::endl;
+  std::stringstream logStr;
+  logStr << ":" << "Agent_ " << data->id << data->sim_cell->readPosition();
+  return logStr.str();
+}
+
+void 
+AgentModel::modelTick() {
+	std::cout << "Tick.. " << std::endl;
 }

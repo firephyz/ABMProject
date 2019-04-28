@@ -21,6 +21,8 @@ struct ABModel {
   ABM_Environment environment;
   InitialState init;
   std::vector<AgentForm> agents;
+  // For Logging
+  std::string model_name;  
 
   ABModel() = default;
   ABModel(const ABModel& other) = delete;
@@ -33,6 +35,7 @@ struct ABModel {
   std::string gen_space_dims();
   std::string gen_space_size();
   std::string gen_mlm_data_struct();
+  std::string gen_logging_funct();
   std::string gen_new_agent_func();
 
   void add_agent(AgentForm& agent);

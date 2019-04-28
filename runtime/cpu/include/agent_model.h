@@ -11,16 +11,21 @@
 // Forward declare to avoid circular dependency
 typedef struct comms_neighborhood_t CommsNeighborhood;
 class AgentModel;
+class SimCell;
 
 // Must be outside class to be resolved by dlsym
 // Declared and defined in main during model loading with libdl
+<<<<<<< HEAD
+extern void *              (*modelNewAgentPtr)(AgentModel * this_class, void * position, const SimCell& sim_cell);
+=======
 extern void *              (*modelNewAgentPtr)(AgentModel * this_class, void * position, const SimCell * cell);
+>>>>>>> origin/kyles_branch
 extern void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_data);
 extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer);
 extern CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data);
 extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data);
-extern void                (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
-
+extern std::string         (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
+extern void                (*modelTickPtr)(AgentModel * this_class);
 /**********************************************************
  * The following class is only constructed in the MLM cpp files.
  * Not intended to be used by runtime
@@ -62,37 +67,50 @@ class AgentModel {
 public:
 /***********************************************************************
  * Models must specify these elements                                  *
- ***********************************************************************/
+ ***********************************************************************/ 
+  // For Logging
+  const char * model_name;
   const SpatialType space_type;
   const int num_dimensions;
   const size_t * dimensions;
-
+  
   // Model makers must implement functions below
+<<<<<<< HEAD
+  void * modelNewAgent(void * position, const SimCell& sim_cell);
+=======
   void * modelNewAgent(void * position, const SimCell * cell);
+>>>>>>> origin/kyles_branch
   void * modelGiveAnswer(void * mlm_data);
   void modelReceiveAnswer(void * mlm_data, void * answer);
   CommsNeighborhood& modelGiveNeighborhood(void * mlm_data);
   void modelUpdateAgent(void * mlm_data);
-  void modelLog(void * mlm_data);
+  std::string  modelLog(void * mlm_data);
+  void modelTick();
 /***********************************************************************
  * Model specifc elements done                                         *
  ***********************************************************************/
 
 
   // constexpr so it is constructed in place in the library at compile time
-  constexpr AgentModel(SpatialType space_type, int num_dimensions, const size_t * dimensions)
-    : space_type(space_type)
+  constexpr AgentModel(const char * model_name, SpatialType space_type, int num_dimensions, const size_t * dimensions)
+    : model_name(model_name)
+    , space_type(space_type)
     , num_dimensions(num_dimensions)
     , dimensions(dimensions)
   {}
 
   // So we can call these functions in runtime code nicely
+<<<<<<< HEAD
+  inline void * newAgent(void * position, const SimCell& sim_cell) { return (*modelNewAgentPtr)(this, position, sim_cell); }
+=======
   inline void * newAgent(void * position, const SimCell * cell) { return (*modelNewAgentPtr)(this, position, cell); }
+>>>>>>> origin/kyles_branch
   inline void * giveAnswer(void * mlm_data) { return (*modelGiveAnswerPtr)(this, mlm_data); }
   inline void receiveAnswer(void * mlm_data, void * answer) { return (*modelReceiveAnswerPtr)(this, mlm_data, answer); }
   inline CommsNeighborhood& giveNeighborhood(void * mlm_data) { return (*modelGiveNeighborhoodPtr)(this, mlm_data); }
   inline void updateAgent(void * mlm_data) { return (*modelUpdateAgentPtr)(this, mlm_data); }
-  inline void Log(void * mlm_data) { return (*modelLogPtr)(this, mlm_data); }
+  inline std::string Log(void * mlm_data) { return (*modelLogPtr)(this, mlm_data); }
+  inline void Tick() { return (*modelTickPtr)(this); }
 };
 
 #endif

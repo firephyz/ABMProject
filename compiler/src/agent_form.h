@@ -40,6 +40,7 @@ class AgentForm {
   std::unique_ptr<CommsNeighborhood> neighborhood;
 
 public:
+  bool log_en;
   AgentForm(const std::string& name);
   AgentForm(const AgentForm&) = delete;
   AgentForm(AgentForm&&) = default;
@@ -63,7 +64,8 @@ public:
   std::string gen_enum_type_name() const;
   std::string gen_mlm_data_struct() const;
   std::string gen_mlm_data_string() const;
-
+  std::string gen_log_code() const;
+ 
   std::string to_string();
 };
 

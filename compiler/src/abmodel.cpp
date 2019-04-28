@@ -83,10 +83,7 @@ ABModel::to_c_source()
   // Declare functions for updating each agent
 
   // Declare functions for logging
-  //result << "void 
-  //AgentModel::modelLog(void * mlm_data) {
-  //struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
-  //std::cout << "Agent " << data->id << " Logging..." << std::endl;
+  result << gen_logging_funct() << std::endl;
 
   return result.str();
 }
@@ -196,6 +193,26 @@ std::string
 ABModel::gen_space_size()
 {
   return std::string("2");
+}
+
+std::string
+ABModel::gen_logging_funct() 
+{
+  std::stringstream result; 
+  result <<"\
+std::string \
+AgentModel::modelLog(void * mlm_data) {\n\
+	std::stringstream logStr;"\
+  << std::endl;  
+
+  for (auto &agent : agents) { 
+  	if (agent.log_en == true) { 
+   		result << agent.gen_log_code() << std::endl;
+    } 
+  }
+ 
+  result << "	return logStr.str();\n}" << std::endl;
+	return result.str();
 }
 
 void
