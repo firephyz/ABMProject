@@ -2,4 +2,6 @@ build/
 .vs/
 commit-message.txt
 BUILD/
+*.so
+*.o
 tags
