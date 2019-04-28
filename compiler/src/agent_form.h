@@ -17,12 +17,14 @@ public:
   StateInstance(const StateInstance&) = delete;
   StateInstance(StateInstance&&) = default;
 
-  std::vector<SymbolBinding>& getStateScopeBindings();
+  const std::vector<SymbolBinding>& getStateScopeBindings() const;
+  std::vector<SymbolBinding>& getStateScopeBindingsMut() { return state_scope_vars; }
 
   // moves argument
   void add_logic(std::unique_ptr<SourceAST>&& source);
 
   std::string gen_state_enum_name(const std::string& str) const;
+  const std::string& getName() const { return state_name; }
 
   std::string to_string();
 };
@@ -34,7 +36,7 @@ class AgentForm {
   const std::string agent_name;
   std::vector<SymbolBinding> agent_scope_vars;
   std::vector<StateInstance> states;
-  std::vector<Question> questions;
+  std::vector<std::shared_ptr<Question>> questions;
   std::unique_ptr<CommsNeighborhood> neighborhood;
 
 public:
@@ -42,9 +44,10 @@ public:
   AgentForm(const AgentForm&) = delete;
   AgentForm(AgentForm&&) = default;
 
-  std::vector<SymbolBinding>& getAgentScopeBindings();
+  const std::vector<SymbolBinding>& getAgentScopeBindings() const;
+  std::vector<SymbolBinding>& getAgentScopeBindingsMut() { return agent_scope_vars; }
   std::vector<StateInstance>& getStates() { return states; }
-  std::vector<Question>& getQuestions() { return questions; }
+  std::vector<std::shared_ptr<Question>>& getQuestions() { return questions; }
   const std::vector<StateInstance>& getStates() const { return states; }
   const std::string& getName() const { return agent_name; }
 
@@ -59,6 +62,7 @@ public:
 
   std::string gen_enum_type_name() const;
   std::string gen_mlm_data_struct() const;
+  std::string gen_mlm_data_string() const;
 
   std::string to_string();
 };

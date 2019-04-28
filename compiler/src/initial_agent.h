@@ -1,8 +1,7 @@
 #ifndef INITIAL_AGENT_INCLUDED
 #define INITIAL_AGENT_INCLUDED
 
-//#include <libxml2/libxml/parser.h>
-#include <libxml/parser.h>
+#include <libxml2/libxml/parser.h>
 #include <vector>
 #include <string>
 
@@ -108,7 +107,8 @@ struct AgentPosition {
 struct InitialAgent {
   std::string gen_constructor() const;
   bool operator<(const InitialAgent& other) const;
-  bool operator!=(const InitialAgent& other) const;
+  static bool base_neq(const InitialAgent& a, const InitialAgent& other);
+  virtual const std::string& getAgentName() const = 0;
 
   AgentPosition position;
 };
@@ -121,6 +121,7 @@ struct LogicalInitialAgent : public InitialAgent {
   LogicalInitialAgent(const ConcreteInitialAgent& agent);
   void next(); // increments position to next in the concrete agent region
   bool operator!=(const LogicalInitialAgent& other) const;
+  const std::string& getAgentName() const;
 
   const ConcreteInitialAgent& actual;
 };
@@ -143,6 +144,7 @@ struct ConcreteInitialAgent : public InitialAgent {
   ConcreteInitialAgent(xmlNodePtr node);
   InitialAgentIterator enumerate() const;
   bool operator!=(const ConcreteInitialAgent& other) const;
+  const std::string& getAgentName() const { return agent_type; }
 
   std::string agent_type;
   std::vector<VarValueOverride> vars;

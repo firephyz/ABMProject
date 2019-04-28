@@ -12,7 +12,6 @@
 
 using namespace std;
 #include <libxml2/libxml/parser.h>
-//#include <libxml/parser.h>
 #include <string>
 
 #include <iomanip>
@@ -39,7 +38,9 @@ ABModel& parse_model(const char * xml_model_path)
 
     while (child != NULL) {
         if (xmlStrcmp(child->name, (const xmlChar*)"environment") == 0){
-//#          parseEnviroment(child);
+          // change parser state so we limit the allowed AST
+          parser.set_state(ParserState::Environment);
+//        parseEnviroment(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){
           parseAgents(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"initialState") == 0) {
@@ -114,15 +115,13 @@ void parse_dimensions(xmlNodePtr curNode)
 
 void parseEnviroment(xmlNodePtr envChild) {
   const char * value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
-  xmlNodePtr curNode = NULL; 
-  vector<xmlNodePtr> localRules;
-  vector<xmlNodePtr> globalRules;
+  xmlNodePtr curNode = NULL;
   int numOfDim = 0;
-  bool wrap = 0;
+	bool wrap = 0;
 
 	if (value_str != NULL) {
     std::string relationType(value_str);
-       if(relationType == "spatial") {
+    if(relationType == "spatial") {
 		  curNode = xmlFirstElementChild(envChild);
 			if (xmlStrcmp(curNode->name, (const xmlChar*)"spatialRelation") == 0){
                      	numOfDim = std::stoi((const char*)xmlGetAttribute(curNode, "dimensions")->children->content, NULL, 10);
@@ -130,72 +129,9 @@ void parseEnviroment(xmlNodePtr envChild) {
 				std::cout << numOfDim << "\n" << wrap << std::endl;
 			} else {
 				std::cout << "Invalid Enviroment Definiton" << std::endl;
-              }
-	   } 
-	} 
-	abmodel.setDim(numOfDim);
-	abmodel.setWrap(wrap);
-	
-	for (curNode; curNode; curNode = xmlNextElementSibling(curNode)) {
-		//curNode = xmlNextElementSibling(curNode);
-		if (curNode->name == "GlobalParameter") {
-			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child in global tag 
-			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
-				char *tnm = (char*)xmlGetAttribute(temp, (const char *) "name")->children->content;           //->children->content; // temp name
-				char *tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
-				char *tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
-				bool cns = true; // temp
-				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
-					xmlNodePtr rule = xmlFirstElementChild(curNode); 
-					if (rule != NULL) {
-						cns = false;
-						globalRules.push_back(rule);
-
-					}
-					abmodel.add_to_econtext(1, tnm, tvl,tty, cns);
-				}
-				else {
-					std::cout << "INVALID GLOBAL ENVIRONMENT VARIABLE" << std::endl;
-				}
-			}
-		} //
-		else if (curNode->name == "localParameters") {
-			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child of the local paramters
-			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
-				char* tnm =(char*) xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
-				char* tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
-				char* tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
-				bool cns = true;
-				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
-					xmlNodePtr rule = xmlFirstElementChild(curNode);
-					if (rule != NULL) {
-						cns = false;
-						localRules.push_back(rule);
-					}
-					abmodel.add_to_econtext(0, tnm, tvl, tty, cns);
-					abmodel.get_env_context().frames.at(1)->front()
-				}
-				else {
-					std::cout << "INVALID LOCAL ENVIRONMENT VARIABLE" << std::endl;
-				}
-			}
+      }
 		}
-		
 	}
-	// parse rules after context is generated 
-	for (vector<xmlNodePtr>::iterator git = globalRules.begin(); git != globalRules.end(); ++git) {
-		//abmodel.add_GRAST(parseEnvRule(*git));
-		
-	}
-	for (vector<xmlNodePtr>::iterator lit = localRules.begin(); lit != globalRules.end(); ++lit) {
-		//abmodel.add_LRAST(parseEnvRule(*lit));
-	}
-}
-// manages code parsing for env variables
-// fairly sure that the full context is required to allow intra set referencing, so whole context goes through
-std::unique_ptr<SourceAST> parseEnvRule(xmlNodePtr varRule) {
-	return parse_logic(abmodel.get_env_context, varRule);
-
 }
 
 void parseAgents(xmlNodePtr agentsChild) {
@@ -224,9 +160,10 @@ void newAgentDef(xmlNodePtr agent) {
       std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl;
       return; // Return error
     }
-    parseBindings(toAdd.getAgentScopeBindings(), curNode);
+    parseBindings(toAdd.getAgentScopeBindingsMut(), curNode);
 
     // Get the agent states
+    parser.set_state(ParserState::States);
     curNode = xmlNextElementSibling(curNode);
     if(xmlStrcmp(curNode->name, (const xmlChar*)"rules") != 0) {
       std::cerr << "Missing rules tag in agent definition" << std::endl;
@@ -242,7 +179,7 @@ void newAgentDef(xmlNodePtr agent) {
     }
     auto xml_attr = xmlGetAttribute(curNode, "neighborhood");
     if(xml_attr == NULL) {
-      std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Comms interface does not have a neighborhood type." << std::endl;
+      util::error(curNode) << "Comms interface does not have a neighborhood type." << std::endl;
       exit(-1);
     }
     toAdd.set_neighborhood(parse_neighborhood(abmodel.num_agents(), (const char *)xml_attr->children->content));
@@ -254,10 +191,29 @@ void newAgentDef(xmlNodePtr agent) {
         exit(-1);
       }
 
-      toAdd.getQuestions().push_back(Question(toAdd.genContextBindings(), commsSearch));
+      toAdd.getQuestions().push_back(std::make_shared<Question>(toAdd.genContextBindings(), commsSearch));
 
       commsSearch = xmlNextElementSibling(commsSearch);
     }
+
+    // Resolve ask-question links
+    for(SourceAST_ask * node : parser.nodes) {
+      for(auto& q : toAdd.getQuestions()) {
+        if(q->get_name() == node->getQuestionName()) {
+          // give ask node the shared_ptr to Question
+          node->setQuestion(q);
+          break;
+        }
+      }
+
+      if(node->getQuestion() == nullptr) {
+        std::cerr << "Could not link ask node with question name \'" << node->getQuestionName();
+        std::cerr << "\' with a question in agent \'" << toAdd.getName() << "\'." << std::endl;
+        exit(-1);
+      }
+    }
+    // empty nodes for next agent to be parsed
+    parser.nodes.clear();
 
     abmodel.add_agent(toAdd);
   } else {
@@ -300,10 +256,10 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
     while(curNode != NULL) {
       // Get the state variables
       if(xmlStrcmp(curNode->name, (const xmlChar*)"stateScope") == 0) {
-        parseBindings(newState.getStateScopeBindings(), curNode);
+        parseBindings(newState.getStateScopeBindingsMut(), curNode);
       } else if (xmlStrcmp(curNode->name, (const xmlChar*)"logic") == 0) {
         const ContextBindings ctxt = agent.genContextBindings(newState);
-        std::unique_ptr<SourceAST> logic_ast = parse_logic(ctxt, curNode);
+        std::unique_ptr<SourceAST> logic_ast = parser.parse_logic(ctxt, curNode);
         newState.add_logic(std::move(logic_ast));
         logic_ast.release();
       }
@@ -323,8 +279,19 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
     std::string val;
     bool is_constant;
 
-    varType.type = strToEnum((const char*)(xmlGetAttribute(curNode, "type")->children->content));
+    auto xml_attr = xmlGetAttribute(curNode, "type");
+    if(xml_attr == NULL) {
+      util::error(curNode) << "Variable declaration is missing its \'type\' attribute." << std::endl;
+      exit(-1);
+    }
+
+    std::string type_str = std::string((const char*)(xml_attr->children->content));
+    varType.type = strToEnum(type_str);
     std::string symName = (const char*)(xmlGetAttribute(curNode, "id")->children->content);
+    if(symName.find("-") != std::string::npos) {
+      util::error(curNode) << "Variables cannot use the dash \'-\' in their \'id\' attribute." << std::endl;
+      exit(-1);
+    }
     
 		auto xml_log_attr = xmlGetAttribute(curNode, "log");
 		if(xml_log_attr == NULL) {
@@ -343,7 +310,7 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
     }
 	
     // Check if the var has a val attribute and if so use that else set default
-    xmlAttrPtr xml_attr = xmlGetAttribute(curNode, "value");
+    xml_attr = xmlGetAttribute(curNode, "value");
     if (xml_attr == NULL) {
       val = std::string(); // empty so code-gen assumes default
     } else {
@@ -362,35 +329,12 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
    }
 }
 
-xmlAttrPtr xmlGetAttribute(xmlNodePtr node, const char * attr_name) {
-  xmlAttrPtr result = node->properties;
-  while(result != NULL) {
-    if(xmlStrcmp(result->name, (const xmlChar *)attr_name) == 0) {
-      return result;
-    }
-    result = result->next;
-  }
-  return (xmlAttrPtr)NULL;
-}
-
-bool stobool(std::string str) {
-    std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-    std::istringstream is(str);
-    bool b;
-    is >> std::boolalpha >> b;
-    return b;
-}
-
-std::string xtos(const xmlChar* toString) { 
-  return std::string((const char*)toString);
-}
-
 std::unique_ptr<SourceAST>
 dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
 {
   if(xmlStrcmp(node->name, (const xmlChar*)"if") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_if_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_if_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_if_C>(ctxt, node);
@@ -398,7 +342,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"assign") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_assignment_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_assignment_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_assignment_C>(ctxt, node);
@@ -406,7 +350,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"var") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_var_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_var_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_var_C>(ctxt, node);
@@ -414,7 +358,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"operator") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_operator_Verilog>(ctxt, node);
+//      return std::make_unique<SourceAST_operator_Verilog>(ctxt, node);
     }
     else {
       return std::make_unique<SourceAST_operator_C>(ctxt, node);
@@ -422,7 +366,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"constant") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_constant_Verilog>(node);
+//      return std::make_unique<SourceAST_constant_Verilog>(node);
     }
     else {
       return std::make_unique<SourceAST_constant_C>(node);
@@ -454,7 +398,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
 }
 
 std::unique_ptr<SourceAST>
-parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
+ParserObject::parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
 {
   xmlNodePtr child = xmlFirstElementChild(node);
   std::unique_ptr<SourceAST> result = dispatch_on_logic_tag(ctxt, child);
@@ -472,3 +416,20 @@ parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
   return std::move(result);
 }
 
+#if VERBOSE_AST_GEN
+std::string
+ParserState_to_string(ParserState s)
+{
+  switch(s) {
+    case ParserState::States:
+      return std::string("States");
+    case ParserState::Questions:
+      return std::string("Questions");
+    case ParserState::Answers:
+      return std::string("Answers");
+    case ParserState::Environment:
+      return std::string("Environment");
+  }
+  return std::string("UNKNOWN ParserState");
+}
+#endif

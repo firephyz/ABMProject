@@ -16,6 +16,7 @@
 
 struct program_args_t pargs;
 ABModel abmodel;
+ParserObject parser;
 
 void printUsage()
 {
@@ -154,7 +155,7 @@ int main(int argc, char *argv[])
   // load and parse input model
   ABModel& model = parse_model(pargs.xml_model_path.c_str());
 
-//  std::cout << model.to_string();
+  //std::cout << model.to_string();
 
   // write out ast as code to file
   std::string unique_id = std::to_string((int)time(NULL));
@@ -166,6 +167,7 @@ int main(int argc, char *argv[])
   file_out.close();
 
   // compile file
+  std::cout << "Compiling output file \'" << source_file_name << "\'..." << std::endl;
   std::string object_command = "g++ --std=c++14 -c -g -o " + object_file_name + " -fPIC -I" + pargs.runtime_path + "cpu/include/ " + source_file_name;
   system(object_command.c_str());
   struct stat buf;

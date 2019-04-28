@@ -3,33 +3,45 @@
 #include "source_ast.h"
 #include "util.h"
 #include "parser.h"
+#include "agent_form.h"
 
 #include <string>
 #include <cstring>
 #include <algorithm>
 #include <iostream>
 #include <libxml2/libxml/parser.h>
-//#include <libxml/parser.h>
 #include <memory>
 #include <sstream>
-#include <stdlib.h>
+
 extern struct program_args_t pargs;
 
-VarTypeEnum strToEnum(std::string str) {
+SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant)
+  : name(name)
+  , type(type)
+  , initial_value(initial_value)
+  , is_constant(is_constant)
+{
+  // allocate and copy initial value
+  if(pargs.target == OutputTarget::FPGA) {
+    std::cerr << "Symbol bindings for FPGA target not yet implemented\n";
+    exit(-1);
+  }
+}
+
+VarTypeEnum strToEnum(std::string& str){
   if (str == "int")
     return VarTypeEnum::Integer;
   if (str == "bool")
     return VarTypeEnum::Bool;
-  if (str == "Real")
+  if (str == "real")
     return VarTypeEnum::Real;
   if (str == "String")
     return VarTypeEnum::String;
-  return VarTypeEnum::Integer;
-}
-
-SymbolBinding::SymbolBinding()
-{
-	
+  if (str == "state")
+    return VarTypeEnum::State;
+  
+  std::cerr << "Unknown type string \'" << str <<"\'." << std::endl;
+  exit(-1);
 }
 
 std::string
@@ -43,13 +55,20 @@ SymbolBinding::to_string()
 }
 
 std::string
-SymbolBinding::gen_declaration() const
+SymbolBinding::gen_declaration(const AgentForm& agent) const
 {
   std::string type_part = type.to_c_source();
   std::stringstream result;
   result << type_part << " " << name;
   if(!initial_value.empty()) {
-    result << " = " << initial_value << ";";
+    std::string init_str;
+    if(type.type == VarTypeEnum::State) {
+      init_str = std::string("AgentState::STATE_") + agent.getName() + "_" + initial_value;
+    }
+    else {
+      init_str = initial_value;
+    }
+    result << " = " << init_str << ";";
   }
   else {
     result << ";";
@@ -97,13 +116,17 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
   xmlNodePtr curNode = xmlFirstElementChild(node);
   while(curNode != NULL) {
     if(xmlStrcmp(curNode->name, (const xmlChar *)"answer") == 0) {
-      answer_source = parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
+      // change parser state so we limit the allowed AST
+      parser.set_state(ParserState::Answers);
+      answer_source = parser.parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"questionScope") == 0) {
       parseBindings(question_scope_vars, curNode);
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"body") == 0) {
-      question_source = parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
+      // change parser state so we limit the allowed AST
+      parser.set_state(ParserState::Questions);
+      question_source = parser.parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
     }
     else {
       std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Unrecognized tag in question \'" << question_name << "\'." << std::endl;
@@ -133,6 +156,7 @@ Question::to_string()
   std::stringstream result;
 
   result << "\tQuestion name: " << question_name << std::endl;
+  result << "\t         addr: " << this << std::endl;
   result << "\t\t\t------ Vars ------" << std::endl;
   for(auto& binding : question_scope_vars) {
     result << "\t\t\t\t" << binding.to_string();
@@ -145,47 +169,4 @@ Question::to_string()
   result << answer_source->print_tree();
 
   return result.str();
-}
-
-ContextBindings::ContextBindings(int frameCount) {
-	for (int i = 0; i < frameCount; i++) {
-		std::vector<SymbolBinding> SB;
-		ContextBindings::frames.push_back(SB);
-	}
-
-}
-
-ContextBindings::ContextBindings(int frameCount, std::string conType) {
-	if (strcmp(conType.c_str, "ENV")) {
-		for (int i = 0; i < frameCount; i++) {
-			std::vector<EnvSymbolBinding> *v;
-			this->frames.push_back(v);
-		}
-	}
-	for (int i = 0; i < frameCount; i++) {
-		for (int i = 0; i < frameCount; i++) {
-			std::vector<SymbolBinding> *SB;
-			this->frames.push_back(SB);
-		}
-	}
-
-}
-
-
-
-EnvSymbolBinding::EnvSymbolBinding(std::string & name, VariableType type, std::string initial_value, std::unique_ptr<SourceAST> rulePrt)
-{
-	EnvSymbolBinding::SymbolBinding(name, type, initial_value, false);
-	EnvRule.reset(rulePrt.get());
-	
-}
-
-EnvSymbolBinding::EnvSymbolBinding(std::string & name, VariableType type, std::string initial_value)
-{
-	EnvSymbolBinding::SymbolBinding(name, type, initial_value, true);
-}
-
-void EnvSymbolBinding::updateEnvRule(std::unique_ptr<SourceAST> sast)
-{
-	this->EnvRule.reset(sast._Myptr);
 }
