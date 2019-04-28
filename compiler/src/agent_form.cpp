@@ -165,8 +165,8 @@ AgentForm::gen_log_code() const
 {
 	std::stringstream result;  
   result <<"\
-if (mlm_data->type == AgentType::" << gen_enum_type_name() << ") {\
-	logStr << \":\" << \"Agent_\" << mlm_data->id << data->sim_cell->readPosition();\
+if (data->type == AgentType::" << gen_enum_type_name() << ") {\
+	logStr << \":\" << \"Agent_\" << data->sim_cell->readPosition();\
 }";
   return result.str();
 }

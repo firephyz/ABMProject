@@ -16,6 +16,7 @@ ABModel::to_c_source()
   result << "\u0023include <algorithm>\n";
   result << "\u0023include <array>\n";
   result << "\u0023include <iostream>\n";
+  result << "\u0023include <sstream>\n";
   result << "\n";
 
   // Declare space for initial agents.
@@ -38,7 +39,7 @@ ABModel::to_c_source()
 
   // Declare spatial info and model
   result << "size_t dimensions[] = " << gen_space_dims() << ";\n";
-  result << "AgentModel loaded_model(" << gen_spatial_enum() << ", num_dimensions, dimensions);\n";
+  result << "AgentModel loaded_model(\"" << model_name << "\", " << gen_spatial_enum() << ", num_dimensions, dimensions);\n";
   result << "\n";
 
   // Declare neighborhoods. Must get types from agents
@@ -201,7 +202,8 @@ ABModel::gen_logging_funct()
   std::stringstream result; 
   result <<"\
 std::string \
-AgentModel::modelLog(void * mlm_data) {\n\
+AgentModel::modelLog(void * ptr) {\n\
+  mlm_data * data = (mlm_data *)ptr;\n\
 	std::stringstream logStr;"\
   << std::endl;  
 
