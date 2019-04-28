@@ -27,7 +27,7 @@ SimCell::SimCell(SimSpace& space, int position_index)
   }
 
   // create agent data if one is present. Keep NULL otherwise
-  mlm_data = loaded_model->newAgent(position, *this);
+  mlm_data = loaded_model->newAgent(position, this);
 }
 
 SimCell::SimCell(SimCell&& other) noexcept

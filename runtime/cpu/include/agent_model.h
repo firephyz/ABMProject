@@ -15,11 +15,7 @@ class SimCell;
 
 // Must be outside class to be resolved by dlsym
 // Declared and defined in main during model loading with libdl
-<<<<<<< HEAD
-extern void *              (*modelNewAgentPtr)(AgentModel * this_class, void * position, const SimCell& sim_cell);
-=======
 extern void *              (*modelNewAgentPtr)(AgentModel * this_class, void * position, const SimCell * cell);
->>>>>>> origin/kyles_branch
 extern void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_data);
 extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer);
 extern CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data);
@@ -75,11 +71,7 @@ public:
   const size_t * dimensions;
   
   // Model makers must implement functions below
-<<<<<<< HEAD
-  void * modelNewAgent(void * position, const SimCell& sim_cell);
-=======
   void * modelNewAgent(void * position, const SimCell * cell);
->>>>>>> origin/kyles_branch
   void * modelGiveAnswer(void * mlm_data);
   void modelReceiveAnswer(void * mlm_data, void * answer);
   CommsNeighborhood& modelGiveNeighborhood(void * mlm_data);
@@ -100,11 +92,7 @@ public:
   {}
 
   // So we can call these functions in runtime code nicely
-<<<<<<< HEAD
-  inline void * newAgent(void * position, const SimCell& sim_cell) { return (*modelNewAgentPtr)(this, position, sim_cell); }
-=======
   inline void * newAgent(void * position, const SimCell * cell) { return (*modelNewAgentPtr)(this, position, cell); }
->>>>>>> origin/kyles_branch
   inline void * giveAnswer(void * mlm_data) { return (*modelGiveAnswerPtr)(this, mlm_data); }
   inline void receiveAnswer(void * mlm_data, void * answer) { return (*modelReceiveAnswerPtr)(this, mlm_data, answer); }
   inline CommsNeighborhood& giveNeighborhood(void * mlm_data) { return (*modelGiveNeighborhoodPtr)(this, mlm_data); }
