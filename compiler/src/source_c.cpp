@@ -1,6 +1,7 @@
 #include "source_c.h"
 #include "parser.h"
 #include "util.h"
+#include "debug.h"
 
 #include <libxml2/libxml/parser.h>
 #include <string>
@@ -9,19 +10,24 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifndef VERBOSE_AST_GEN
+#error "Code which has the potential to utilize VERBOSE_AST_GEN debug\
+ option does not have it defined."
+#endif
+
 SourceAST_if_C::SourceAST_if_C(const ContextBindings& ctxt, xmlNodePtr node)
 {
   xmlNodePtr child = xmlFirstElementChild(node);   
 
   while (child != NULL) { 
     if (xmlStrcmp(child->name, (const xmlChar*)"predicate") == 0) { 
-      predicate = parse_logic(ctxt, child);
+      predicate = parser.parse_logic(ctxt, child);
     }
     else if(xmlStrcmp(child->name, (const xmlChar*)"then") == 0) {
-      then_clause = parse_logic(ctxt, child);
+      then_clause = parser.parse_logic(ctxt, child);
     }
     else if(xmlStrcmp(child->name, (const xmlChar*)"else") == 0) {
-      else_clause = parse_logic(ctxt, child);
+      else_clause = parser.parse_logic(ctxt, child);
     }
     else {
       std::cerr << "Invalid xml tag \'" << child->name << "\' under \'<if>\' tag.\n";
@@ -31,7 +37,7 @@ SourceAST_if_C::SourceAST_if_C(const ContextBindings& ctxt, xmlNodePtr node)
     child = xmlNextElementSibling(child);
   }
 
-  #ifdef VERBOSE_AST_GEN
+  #if VERBOSE_AST_GEN
     std::cout << "If" << std::endl;
   #endif
 }
@@ -96,7 +102,7 @@ SourceAST_assignment_C::SourceAST_assignment_C(const ContextBindings& ctxt, xmlN
     exit(-1);
   }
 
-  #ifdef VERBOSE_AST_GEN
+  #if VERBOSE_AST_GEN
     std::cout << "Assignment: " << this->to_source() << std::endl;
   #endif
 }
@@ -191,7 +197,7 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
   //     break;
   value = std::string((const char *)xml_attr->children->content);
 
-  #ifdef VERBOSE_AST_GEN
+  #if VERBOSE_AST_GEN
     std::cout << "Constant: " << type_string << ", " << value << std::endl;
   #endif
 }
@@ -236,7 +242,7 @@ SourceAST_var_C::SourceAST_var_C(const ContextBindings& ctxt, xmlNodePtr node)
 
   binding = &ctxt.getBindingByName((const char *)xml_attr->children->content);
 
-  #ifdef VERBOSE_AST_GEN
+  #if VERBOSE_AST_GEN
     std::cout << "Var: " << binding->getName() << std::endl;
   #endif
 }
@@ -264,12 +270,13 @@ SourceAST_ask_C::SourceAST_ask_C(xmlNodePtr node)
     std::cerr << "Ask tag in assigment is missing the question name." << std::endl;
     exit(-1);
   }
-  const char * question_name = (const char *)xml_attr->children->content;
+  const char * qname = (const char *)xml_attr->children->content;
+  this->question_name = std::string(qname);
 
   // TODO get matching question from abmodel
-  
+  parser.nodes.push_back(this);
 
-  #ifdef VERBOSE_AST_GEN
+  #if VERBOSE_AST_GEN
     std::cout << "Ask: " << question_name << std::endl;
   #endif
 }
@@ -286,7 +293,7 @@ SourceAST_ask_C::to_string()
 {
   std::stringstream result;
 
-  result << "ASK" << std::endl;
+  result << "ASK: \'" << question_name << "\' " << question.get() << std::endl;
 
   return result.str();
 }
@@ -337,7 +344,7 @@ SourceAST_operator_C::SourceAST_operator_C(const ContextBindings& ctxt, xmlNodeP
     exit(-1);
   }
 
-  #ifdef VERBOSE_AST_GEN
+  #if VERBOSE_AST_GEN
     std::cout << "Operator: " << type.to_string() << std::endl;
   #endif
 }
@@ -376,7 +383,7 @@ SourceAST_return_C::SourceAST_return_C(const ContextBindings& ctxt, xmlNodePtr n
     exit(-1);
   }
 
-  #ifdef VERBOSE_AST_GEN
+  #if VERBOSE_AST_GEN
     std::cout << "Return" << std::endl;
   #endif
 }
@@ -400,7 +407,7 @@ SourceAST_return_C::to_string()
 
 SourceAST_response_C::SourceAST_response_C(const ContextBindings& ctxt, xmlNodePtr node)
 {
-  #ifdef VERBOSE_AST_GEN
+  #if VERBOSE_AST_GEN
     std::cout << "Response" << std::endl;
   #endif
 }

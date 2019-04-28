@@ -104,13 +104,17 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
   xmlNodePtr curNode = xmlFirstElementChild(node);
   while(curNode != NULL) {
     if(xmlStrcmp(curNode->name, (const xmlChar *)"answer") == 0) {
-      answer_source = parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
+      // change parser state so we limit the allowed AST
+      parser.set_state(ParserState::Answers);
+      answer_source = parser.parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"questionScope") == 0) {
       parseBindings(question_scope_vars, curNode);
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"body") == 0) {
-      question_source = parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
+      // change parser state so we limit the allowed AST
+      parser.set_state(ParserState::Questions);
+      question_source = parser.parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
     }
     else {
       std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Unrecognized tag in question \'" << question_name << "\'." << std::endl;
@@ -140,6 +144,7 @@ Question::to_string()
   std::stringstream result;
 
   result << "\tQuestion name: " << question_name << std::endl;
+  result << "\t         addr: " << this << std::endl;
   result << "\t\t\t------ Vars ------" << std::endl;
   for(auto& binding : question_scope_vars) {
     result << "\t\t\t\t" << binding.to_string();

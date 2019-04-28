@@ -104,7 +104,7 @@ AgentForm::to_string()
   }
   result << "\t------ Questions -------" << std::endl;
   for(auto& question : questions) {
-    result << "\t" << question.to_string() << std::endl;
+    result << "\t" << question->to_string() << std::endl;
   }
 
   // reset SourceAST printer

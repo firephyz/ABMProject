@@ -4,11 +4,13 @@
 #ifndef SOURCE_AST_INCLUDED
 #define SOURCE_AST_INCLUDED
 
-// Uncomment to show the ast nodes being generated in stdout
-//#define VERBOSE_AST_GEN
-
 #include <memory>
 #include <string>
+#include <iostream>
+
+#include "parser.h"
+
+extern ParserObject parser;
 
 class SourceAST {
 public:
@@ -89,9 +91,27 @@ protected:
   const SymbolBinding * binding;
 };
 
+class Question;
 class SourceAST_ask : public SourceAST {
 protected:
-  // question
+  std::string question_name;
+  std::shared_ptr<const Question> question;
+
+  SourceAST_ask()
+    : question(nullptr)
+  {
+    // we don't currently allow recursive questions
+    if(parser.state != ParserState::States) {
+      std::cerr << "Attempting to ask a question when parsing Questions and Answers.";
+      std::cerr << "Recursive questions not currently allowed." << std::endl;
+      exit(-1);
+    }
+  }
+
+public:
+  const std::string& getQuestionName() const { return question_name; }
+  void setQuestion(std::shared_ptr<Question>& q) { question = q; }
+  const std::shared_ptr<const Question>& getQuestion() { return question; }
 };
 
 class SourceAST_operator : public SourceAST {
@@ -145,8 +165,27 @@ protected:
 class SourceAST_return : public SourceAST {
 protected:
   std::unique_ptr<SourceAST> value;
+
+  SourceAST_return()
+  {
+    // we don't currently allow recursive questions
+    if(parser.state == ParserState::States) {
+      std::cerr << "Cannot return values from state logic." << std::endl;
+      exit(-1);
+    }
+  }
 };
 
-class SourceAST_response : public SourceAST {};
+class SourceAST_response : public SourceAST {
+protected:
+  SourceAST_response()
+  {
+    if(parser.state != ParserState::Questions) {
+      std::cerr << "The \'response\' tag is only allowed in Question bodies. It denotes\
+        the value of the answer that is given to the agent asking the question." << std::endl;
+      exit(-1);
+    }
+  }
+};
 
 #endif
