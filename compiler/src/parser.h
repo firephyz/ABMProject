@@ -20,6 +20,7 @@ class SourceAST;
 class ABModel;
 class AgentForm;
 class ContextBindings;
+class Answer;
 
 // used in parser object to know what sort of thing its parsing
 enum class ParserState {
@@ -43,6 +44,19 @@ struct ParserObject {
   // nodes that need to be linked back with their Question objects. The AST is
   // parsed before the Questions
   std::vector<SourceAST_ask *> nodes;
+
+  // Answers that need to be linked to corresponding questions and agent targets
+  struct answer_link_data {
+    Answer * answer;
+    std::string question_name;
+    std::string agent_name;
+
+    answer_link_data(Answer * answer, std::string& question_name, std::string agent_name)
+      : answer(answer), question_name(question_name), agent_name(agent_name)
+    {}
+    void resolve_answer_links();
+  };
+  std::vector<struct answer_link_data> answers_to_be_linked;
 
   std::unique_ptr<SourceAST> parse_logic(const ContextBindings& ctxt, xmlNodePtr node);
   void set_state(ParserState s) { 

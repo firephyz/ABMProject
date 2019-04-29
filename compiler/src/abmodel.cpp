@@ -71,15 +71,23 @@ ABModel::to_c_source()
   result << gen_mlm_data_struct() << "\n";
   result << "\n";
 
+  // Declare struct for communicating answers
+
   // Declare agent constructors
   result << gen_new_agent_func() << "\n";
   result << "\n";
 
-  // Declare functions for asking questions
+  // Declare functions for giving answers
+  result << gen_give_answer_code() << "\n";
+  result << "\n";
 
   // Declare functions for receiving answers
+  result << gen_receive_answer_code() << "\n";
+  result << "\n";
 
   // Declare functions for giving neighborhoods
+  result << gen_give_neighborhood_code() << "\n";
+  result << "\n";
 
   // Declare functions for updating each agent
 
@@ -87,6 +95,24 @@ ABModel::to_c_source()
   result << gen_logging_funct() << std::endl;
 
   return result.str();
+}
+
+std::string
+ABModel::gen_give_answer_code()
+{
+  return std::string();
+}
+
+std::string 
+ABModel::gen_receive_answer_code()
+{
+  return std::string();
+}
+
+std::string
+ABModel::gen_give_neighborhood_code()
+{
+  return std::string();
 }
 
 std::string
@@ -241,16 +267,26 @@ ABModel::agent_to_uint(const AgentForm& agent) const
 uint
 ABModel::agent_to_uint_by_name(const std::string& name) const
 {
-  auto agent_iter = std::find_if(agents.begin(), agents.end(),
+  return agent_to_uint(find_agent_by_name(name));
+}
+
+const AgentForm&
+ABModel::find_agent_by_name(const std::string& name) const
+{
+  auto agent_iter = std::find_if(
+    agents.begin(),
+    agents.end(),
     [&](const AgentForm& agent) {
       return agent.getName() == name;
     });
+
   if(agent_iter == agents.end()) {
     std::cerr << "Failed to convert agent name \'" << name << "\' into uint.";
     std::cerr << " Could not find corresponding agent." << std::endl;
     exit(-1);
   }
-  return agent_to_uint(*agent_iter);
+
+  return *agent_iter;
 }
 
 std::string

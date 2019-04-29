@@ -72,6 +72,28 @@ AgentForm::add_state(StateInstance&& state)
   return states[states.size() - 1];
 }
 
+void
+AgentForm::resolve_ask_links()
+{
+  for(SourceAST_ask * node : parser.nodes) {
+    for(auto& q : questions) {
+      if(q->get_name() == node->getQuestionName()) {
+        // give ask node the shared_ptr to Question
+        node->setQuestion(q);
+        break;
+      }
+    }
+
+    if(node->getQuestion() == nullptr) {
+      std::cerr << "Could not link ask node with question name \'" << node->getQuestionName();
+      std::cerr << "\' with a question in agent \'" << agent_name << "\'." << std::endl;
+      exit(-1);
+    }
+  }
+  // empty nodes for next agent to be parsed
+  parser.nodes.clear();
+}
+
 ContextBindings
 AgentForm::genContextBindings(StateInstance& state)
 {
@@ -106,6 +128,10 @@ AgentForm::to_string()
   result << "\t------ Questions -------" << std::endl;
   for(auto& question : questions) {
     result << "\t" << question->to_string() << std::endl;
+  }
+  result << "\t------ Answers -------" << std::endl;
+  for(auto& answer : answers) {
+    result << "\t" << answer->to_string() << std::endl;
   }
 
   // reset SourceAST printer

@@ -45,7 +45,7 @@ VarTypeEnum strToEnum(std::string& str){
 }
 
 std::string
-SymbolBinding::to_string()
+SymbolBinding::to_string() const
 {
   std::stringstream result;
 
@@ -115,12 +115,7 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
 
   xmlNodePtr curNode = xmlFirstElementChild(node);
   while(curNode != NULL) {
-    if(xmlStrcmp(curNode->name, (const xmlChar *)"answer") == 0) {
-      // change parser state so we limit the allowed AST
-      parser.set_state(ParserState::Answers);
-      answer_source = parser.parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
-    }
-    else if(xmlStrcmp(curNode->name, (const xmlChar *)"questionScope") == 0) {
+    if(xmlStrcmp(curNode->name, (const xmlChar *)"scope") == 0) {
       parseBindings(question_scope_vars, curNode);
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"body") == 0) {
@@ -140,10 +135,6 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
     std::cerr << "<" << xmlGetLineNo(node) << "> " << "Question is missing the question body logic. Needs a \'body\' tag." << std::endl;
     exit(-1);
   }
-  if(answer_source.get() == nullptr) {
-    std::cerr << "<" << xmlGetLineNo(node) << "> " << "Question is missing the response logic. Needs a \'response\' tag." << std::endl;
-    exit(-1);
-  }
 }
 
 Question::Question(ContextBindings&& ctxt, xmlNodePtr node)
@@ -151,12 +142,12 @@ Question::Question(ContextBindings&& ctxt, xmlNodePtr node)
 {}
 
 std::string
-Question::to_string()
+Question::to_string() const
 {
   std::stringstream result;
 
   result << "\tQuestion name: " << question_name << std::endl;
-  result << "\t         addr: " << this << std::endl;
+  result << "\t\t         addr: " << this << std::endl;
   result << "\t\t\t------ Vars ------" << std::endl;
   for(auto& binding : question_scope_vars) {
     result << "\t\t\t\t" << binding.to_string();
@@ -164,6 +155,67 @@ Question::to_string()
   result << "\t\t\t------ Question Source ------" << std::endl;
   SourceAST::set_start_depth(4);
   result << question_source->print_tree();
+
+  return result.str();
+}
+
+Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
+{
+  // Agent and question will remain null until parsing is done.
+  // Only then can we link them together
+  auto xml_attr = xmlGetAttribute(node, "agent");
+  if(xml_attr == NULL) {
+    util::error(node) << "Answer needs a \'agent\' attribute." << std::endl;
+    exit(-1);
+  }
+  std::string agent_name((const char *)xml_attr->children->content);
+
+  xml_attr = xmlGetAttribute(node, "question");
+  if(xml_attr == NULL) {
+    util::error(node) << "Answer needs a corresponding\'question\' attribute." << std::endl;
+    exit(-1);
+  }
+  std::string question_name((const char *)xml_attr->children->content);
+
+  // store some data so we can link answer to question and agent later after parsing is done
+  parser.answers_to_be_linked.emplace_back(this, question_name, agent_name);
+
+  xmlNodePtr curNode = xmlFirstElementChild(node);
+  while(curNode != NULL) {
+    if(xmlStrcmp(curNode->name, (const xmlChar *)"scope") == 0) {
+      parseBindings(answer_scope_vars, curNode);
+    }
+    else if(xmlStrcmp(curNode->name, (const xmlChar *)"body") == 0) {
+      // change parser state so we limit the allowed AST
+      parser.set_state(ParserState::Questions);
+      answer_source = parser.parse_logic(ctxt.extend(answer_scope_vars), xmlFirstElementChild(curNode));
+    }
+    else {
+      std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Unrecognized tag in answer: \'" << xml_attr->children->content << "\'" << std::endl;
+      exit(-1);
+    }
+
+    curNode = xmlNextElementSibling(curNode);
+  }
+
+  if(answer_source.get() == nullptr) {
+    std::cerr << "<" << xmlGetLineNo(node) << "> " << "Answer is missing the answer body logic. Needs a \'body\' tag." << std::endl;
+    exit(-1);
+  }
+}
+
+std::string
+Answer::to_string() const
+{
+  std::stringstream result;
+
+  result << "\tAnswer: to " << target_agent->getName() << ", for question " << question->get_name() << std::endl;
+  result << "\t\t  addr: " << this << std::endl;
+  result << "\t\tQ addr: " << question << std::endl;
+  result << "\t\t\t------ Vars ------" << std::endl;
+  for(auto& binding : answer_scope_vars) {
+    result << "\t\t\t\t" << binding.to_string();
+  }
   result << "\t\t\t------ Answer Source -------" << std::endl;
   SourceAST::set_start_depth(4);
   result << answer_source->print_tree();

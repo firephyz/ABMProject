@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
   // load and parse input model
   ABModel& model = parse_model(pargs.xml_model_path.c_str());
 
-  //std::cout << model.to_string();
+  std::cout << model.to_string();
 
   // write out ast as code to file
   std::string unique_id = std::to_string((int)time(NULL));

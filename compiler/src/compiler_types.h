@@ -36,7 +36,7 @@ struct VariableType {
     , log_en((false))
   {}
 
-  std::string to_string() {
+  std::string to_string() const {
     switch(type) {
       case VarTypeEnum::Bool:
         return std::string("bool");
@@ -80,7 +80,7 @@ public:
   SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant);
 
   const std::string& getName() const { return name; }
-  std::string to_string();
+  std::string to_string() const;
   std::string gen_declaration(const AgentForm& agent) const;
 };
 
@@ -97,16 +97,32 @@ class Question {
   std::string question_name;
   std::vector<SymbolBinding> question_scope_vars;
   std::unique_ptr<SourceAST> question_source;
-  std::unique_ptr<SourceAST> answer_source;
 public:
   Question(ContextBindings& ctxt, xmlNodePtr node);
   Question(ContextBindings&& ctxt, xmlNodePtr node);
   Question(const Question&) = delete;
   Question(Question&&) = default;
 
-  std::string to_string();
+  std::string to_string() const;
 
   const std::string& get_name() const { return question_name; }
+};
+
+class Answer {
+  const AgentForm * target_agent = nullptr;
+  const Question * question = nullptr;
+  std::vector<SymbolBinding> answer_scope_vars;
+  std::unique_ptr<SourceAST> answer_source;
+public:
+  Answer(ContextBindings& ctxt, xmlNodePtr node);
+  Answer(ContextBindings&& ctxt, xmlNodePtr node) : Answer(ctxt, node) {}
+  Answer(const Answer&) = delete;
+  Answer(Answer&&) = default;
+
+  std::string to_string() const;
+
+  void set_agent(const AgentForm& agent) { target_agent = &agent; }
+  void set_question(const Question& question) { this->question = &question; }
 };
 
 #endif
