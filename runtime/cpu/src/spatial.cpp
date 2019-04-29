@@ -13,7 +13,7 @@ extern AgentModel * loaded_model;
 
 SimCell::SimCell(SimSpace& space, int position_index)
   : position(new size_t[space.num_dimensions])
-  , mlm_data(NULL)
+  , data(NULL)
 {
   size_t mod_amount = 1;
   for(int dim = 0; dim < space.num_dimensions; ++dim) {
@@ -27,12 +27,12 @@ SimCell::SimCell(SimSpace& space, int position_index)
   }
 
   // create agent data if one is present. Keep NULL otherwise
-  mlm_data = loaded_model->newAgent(position, this);
+  data = loaded_model->newAgent(position, this);
 }
 
 SimCell::SimCell(SimCell&& other) noexcept
   : position(std::move(other.position))
-  , mlm_data(other.mlm_data)
+  , data(other.data)
 {}
 
 bool SimCell::operator!=(SimCell& other)

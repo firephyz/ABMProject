@@ -69,6 +69,7 @@ struct ParserObject {
 };
 
 #include "compiler_types.h"
+class SymbolBinding;
 class ParserContext {
 public:
   std::vector<std::vector<SymbolBinding>> bindings;

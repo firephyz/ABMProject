@@ -26,8 +26,8 @@ if(varName == NULL) {\
 
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;
-void *              (*modelNewAgentPtr)(AgentModel * this_class, void *, const SimCell * sim_cell)                                  = NULL;
-void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_data)                       = NULL;
+mlm_data *              (*modelNewAgentPtr)(AgentModel * this_class, void *, const SimCell * sim_cell)                                  = NULL;
+void *              (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * mlm_data)                       = NULL;
 void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer)     = NULL;
 CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data)                 = NULL;
 void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data)                      = NULL;
@@ -102,11 +102,11 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
     DLSYM_ERROR_CHECK(loaded_model, symbol);
   }
   else if(symbol.find("modelGiveAnswer") != std::string::npos) {
-    modelGiveAnswerPtr = (void * (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+    modelGiveAnswerPtr = (void * (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelGiveAnswerPtr, symbol);
   }
   else if(symbol.find("modelNewAgent") != std::string::npos) {
-    modelNewAgentPtr = (void * (*)(AgentModel *, void *, const SimCell * sim_cell))dlsym(model_handle, symbol.c_str());
+    modelNewAgentPtr = (mlm_data * (*)(AgentModel *, void *, const SimCell * sim_cell))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelNewAgentPtr, symbol);
   }
   else if(symbol.find("modelGiveNeighborhood") != std::string::npos) {
@@ -123,9 +123,11 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
   }
   else if(symbol.find("modelLog") != std::string::npos) {
     modelLogPtr = (std::string (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+    DLSYM_ERROR_CHECK(modelLogPtr, symbol);
   } 
   else if(symbol.find("modelTick") != std::string::npos) {
   	modelTickPtr = (void (*)(AgentModel *))dlsym(model_handle, symbol.c_str());
+    DLSYM_ERROR_CHECK(modelTickPtr, symbol);
   }
   else {
     std::cerr << "Could not match symbol \'" << symbol << "\' in the mangled symbols list." << std::endl;
@@ -176,14 +178,14 @@ int main(int argc, char** argv) {
     // Ask every agent's question
     for(auto& sender : space.cells) {
       if(sender.is_empty()) continue; // skip if no agent is present
-      void * agent_answer = loaded_model->giveAnswer(sender.mlm_data);
+      void * agent_answer = loaded_model->giveAnswer(sender.data);
       for(auto& receiver : space.cells) {
         if(sender != receiver) {
           if(receiver.is_empty()) continue; // skip if no agent is present
-          CommsNeighborhood& n = loaded_model->giveNeighborhood(receiver.mlm_data);
+          CommsNeighborhood& n = loaded_model->giveNeighborhood(receiver.data);
           auto commsPredicate = getCommsPredicate(n.type);
           if(commsPredicate(space, receiver, sender, n.size)) {
-            loaded_model->receiveAnswer(receiver.mlm_data, agent_answer);
+            loaded_model->receiveAnswer(receiver.data, agent_answer);
           }
         }
       }
@@ -191,13 +193,13 @@ int main(int argc, char** argv) {
 
     for(auto& cell : space.cells) {
       if(cell.is_empty()) continue; // skip empty cells
-      loaded_model->updateAgent(cell.mlm_data);
+      loaded_model->updateAgent(cell.data);
     }
 
     // Logging Extension stufffff
     for(auto& cell : space.cells) {
       if(cell.is_empty()) continue; // skip empty cells
-      std::cout << "" <<loaded_model->Log(cell.mlm_data);
+      std::cout << "" <<loaded_model->Log(cell.data);
     }
 
     // Call the model tick function

@@ -12,6 +12,17 @@
 
 extern ParserObject parser;
 
+enum ASTNodeType {
+  Node_if,
+  Node_assignment,
+  Node_constant,
+  Node_var,
+  Node_ask,
+  Node_operator,
+  Node_return,
+  Node_response,
+};
+
 class SourceAST {
 public:
   std::unique_ptr<SourceAST> next;
@@ -20,6 +31,42 @@ public:
   virtual ~SourceAST();
   virtual std::string to_source() = 0;
   virtual std::string to_string() = 0;
+  virtual ASTNodeType get_type() const = 0;
+  virtual std::string gen_c_default_value() const {
+    std::cerr << "Cannot call \'gen_c_default_value\' function on a SourceAST node of type\'" << this->type_to_string() << "\'" << std::endl;
+    exit(-1);
+    return std::string();
+  }
+  virtual std::string gen_declaration() const {
+    std::cerr << "Cannot call \'gen_declaration\' function on a SourceAST node of type\'" << this->type_to_string() << "\'" << std::endl;
+    exit(-1);
+    return std::string();
+  }
+  std::string type_to_string() const {
+    switch(this->get_type()) {
+      case ASTNodeType::Node_if:
+        return "Node_if";
+      case ASTNodeType::Node_assignment:
+        return "Node_assignment";
+      case ASTNodeType::Node_constant:
+        return "Node_constant";
+      case ASTNodeType::Node_var:
+        return "Node_var";
+      case ASTNodeType::Node_ask:
+        return "Node_ask";
+      case ASTNodeType::Node_operator:
+        return "Node_operator";
+      case ASTNodeType::Node_return:
+        return "Node_return";
+      case ASTNodeType::Node_response:
+        return "Node_response";
+    }
+    return std::string();
+  }
+  virtual std::string gen_type() const {
+    std::cerr << "Cannot call \'gen_type\' on a \'" << get_type() << "\' node." << std::endl;
+    exit(-1);
+  }
   void append_next(std::unique_ptr<SourceAST>&& next_node) {
     next = std::move(next_node);
   };
@@ -39,12 +86,14 @@ public:
 class SourceAST_if : public SourceAST {
 public:
   ~SourceAST_if() = default;
+  ASTNodeType get_type() const { return ASTNodeType::Node_if; }
 protected:
   std::unique_ptr<SourceAST> predicate;
   std::unique_ptr<SourceAST> then_clause;
   std::unique_ptr<SourceAST> else_clause;
 };
 
+class SymbolBinding;
 class SourceAST_assignment : public SourceAST {
 public:
   enum class AssignmentValueType {
@@ -58,6 +107,7 @@ public:
     , value_expr(nullptr)
   {}
   ~SourceAST_assignment() {}
+  ASTNodeType get_type() const { return ASTNodeType::Node_assignment; }
 protected:
   const SymbolBinding * binding;
   AssignmentValueType type;
@@ -80,6 +130,23 @@ public:
   SourceAST_constant()
     : type(ConstantType::NoInit)
   {}
+  ASTNodeType get_type() const { return ASTNodeType::Node_constant; }
+  const std::string& getValue() const { return value; }
+  std::string gen_declaration() const;
+  std::string gen_c_default_value() const;
+  std::string gen_type() const {
+    switch(type) {
+      case ConstantType::NoInit:
+        return std::string("ERROR");
+      case ConstantType::Integer:
+        return std::string("int");
+      case ConstantType::Real:
+        return std::string("double");
+      case ConstantType::Bool:
+        return std::string("bool");
+    }
+    return std::string();
+  }
 
 protected:
   ConstantType type;
@@ -87,6 +154,12 @@ protected:
 };
 
 class SourceAST_var : public SourceAST {
+public:
+  ASTNodeType get_type() const { return ASTNodeType::Node_var; }
+  std::string gen_declaration() const;
+  std::string gen_type() const;
+  std::string gen_c_default_value() const;
+  const SymbolBinding& getBinding() const { return *binding; }
 protected:
   const SymbolBinding * binding;
 };
@@ -107,6 +180,7 @@ protected:
       exit(-1);
     }
   }
+  ASTNodeType get_type() const { return ASTNodeType::Node_ask; }
 
 public:
   const std::string& getQuestionName() const { return question_name; }
@@ -156,6 +230,7 @@ public:
   SourceAST_operator()
     : type(OperatorType(OperatorTypeEnum::NoInit, -1))
   {}
+  ASTNodeType get_type() const { return ASTNodeType::Node_operator; }
 
 protected:
   OperatorType type;
@@ -163,9 +238,7 @@ protected:
 };
 
 class SourceAST_return : public SourceAST {
-protected:
-  std::unique_ptr<SourceAST> value;
-
+public:
   SourceAST_return()
   {
     // we don't currently allow recursive questions
@@ -174,10 +247,14 @@ protected:
       exit(-1);
     }
   }
+  ASTNodeType get_type() const { return ASTNodeType::Node_return; }
+  const SourceAST& getValue() const { return *value; }
+protected:
+  std::unique_ptr<SourceAST> value;
 };
 
 class SourceAST_response : public SourceAST {
-protected:
+public:
   SourceAST_response()
   {
     if(parser.state != ParserState::Questions) {
@@ -186,6 +263,8 @@ protected:
       exit(-1);
     }
   }
+  ASTNodeType get_type() const { return ASTNodeType::Node_response; }
+protected:
 };
 
 #endif

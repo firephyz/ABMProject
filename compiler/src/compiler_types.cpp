@@ -55,6 +55,24 @@ SymbolBinding::to_string() const
 }
 
 std::string
+SymbolBinding::gen_c_default_value() const
+{
+  switch(type.type) {
+    case VarTypeEnum::String:
+      return "FIXME_INIT_STRING";
+    case VarTypeEnum::Integer:
+      return "0";
+    case VarTypeEnum::Real:
+      return "0.0";
+    case VarTypeEnum::Bool:
+      return "false";
+    case VarTypeEnum::State:
+      return "FIXME_INIT_STATE";
+  }
+  return std::string();
+}
+
+std::string
 SymbolBinding::gen_declaration(const AgentForm& agent) const
 {
   std::string type_part = type.to_c_source();
@@ -202,6 +220,54 @@ Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
     std::cerr << "<" << xmlGetLineNo(node) << "> " << "Answer is missing the answer body logic. Needs a \'body\' tag." << std::endl;
     exit(-1);
   }
+
+  // Make sure answer source has a correct form. Can only return a constant or variable
+  if(answer_source->get_type() != ASTNodeType::Node_return) {
+    util::error(node) << "Answer body must immediately return its result.\n";
+    exit(-1);
+  }
+
+  SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
+  ASTNodeType type = return_node.getValue().get_type();
+  if((type != ASTNodeType::Node_var) &&
+     (type != ASTNodeType::Node_constant)) {
+    util::error(node) << "Answer body can only return a constant or variable.\n";
+    exit(-1);
+  }
+}
+
+const std::string&
+Answer::gen_answer_source() const
+{
+  SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
+  if(return_node.getValue().get_type() == ASTNodeType::Node_constant) {
+    SourceAST_constant& constant_node = *(SourceAST_constant *)&return_node.getValue();
+    return constant_node.getValue();
+  }
+  else if(return_node.getValue().get_type() == ASTNodeType::Node_var) {
+    SourceAST_var& var_node = *(SourceAST_var *)&return_node.getValue();
+    return var_node.getBinding().gen_var_name();
+  }
+  else {
+    std::cerr << "Compiler error in \'Answer::gen_answer_source()\'. Answer result returns something other than a constant or variable." << std::endl;
+    exit(-1);
+  }
+}
+
+std::string
+Answer::gen_declaration() const
+{
+  SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
+  std::string type_str = return_node.getValue().gen_type();
+  std::string default_value = return_node.getValue().gen_c_default_value();
+  return type_str + " " + gen_name_as_struct_member() + " = " + default_value + ";";
+}
+
+const std::string&
+Answer::gen_name_as_struct_member() const
+{
+  static std::string name = target_agent->getName() + "_" + question->get_name();
+  return name;
 }
 
 std::string

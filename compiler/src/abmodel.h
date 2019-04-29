@@ -34,7 +34,7 @@ struct ABModel {
   std::string gen_spatial_enum();
   std::string gen_space_dims();
   std::string gen_space_size();
-  std::string gen_mlm_data_struct();
+  std::string gen_mlm_data_structs();
   std::string gen_logging_funct();
   std::string gen_new_agent_func();
   std::string gen_give_answer_code();

@@ -6,8 +6,6 @@
 #include <libxml2/libxml/parser.h>
 #include <memory>
 
-class AgentForm;
-
 enum class VarTypeEnum {
   Bool,
   Integer,
@@ -71,6 +69,7 @@ struct VariableType {
   }
 };
 
+class AgentForm;
 class SymbolBinding {
   std::string name;
   struct VariableType type;
@@ -82,7 +81,12 @@ public:
   const std::string& getName() const { return name; }
   std::string to_string() const;
   std::string gen_declaration(const AgentForm& agent) const;
+  const std::string& gen_var_name() const { return name; }
+  const VariableType& get_type() const { return type; }
+  std::string gen_c_default_value() const;
 };
+
+#include "agent_form.h"
 
 class ContextBindings {
 public:
@@ -121,8 +125,12 @@ public:
 
   std::string to_string() const;
 
+  const SourceAST& get_source() const { return *answer_source; }
   void set_agent(const AgentForm& agent) { target_agent = &agent; }
   void set_question(const Question& question) { this->question = &question; }
+  const std::string& gen_name_as_struct_member() const;
+  const std::string& gen_answer_source() const;
+  std::string gen_declaration() const;
 };
 
 #endif

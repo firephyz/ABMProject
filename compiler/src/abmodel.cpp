@@ -67,11 +67,21 @@ ABModel::to_c_source()
   result << "};\n";
   result << "\n";
 
-  // Declare mlm_data structure and the derived ones for each agents
-  result << gen_mlm_data_struct() << "\n";
+  result << "struct answer_block {\n";
+  result << "\tAgentType type_tag;\n\n";
+  result << "\
+  answer_block(AgentType type) : type_tag(type) {}\n";
+  result << "};\n";
   result << "\n";
 
   // Declare struct for communicating answers
+  for(auto& agent : agents) {
+    result << agent.gen_answer_struct();
+    result << "\n";
+  }
+
+  // Declare mlm_data structure and the derived ones for each agents
+  result << gen_mlm_data_structs();
 
   // Declare agent constructors
   result << gen_new_agent_func() << "\n";
@@ -100,7 +110,16 @@ ABModel::to_c_source()
 std::string
 ABModel::gen_give_answer_code()
 {
-  return std::string();
+  std::stringstream result;
+
+  result << "\
+void *\n\
+AgentModel::modelGiveAnswer(mlm_data * data) {\n\
+  data->record_answers();\n\
+  return data->get_answers();\n\
+}";
+
+  return result.str();
 }
 
 std::string 
@@ -157,7 +176,7 @@ AgentModel::modelNewAgent(void * position, const SimCell * cell) {\n\
 }
 
 std::string
-ABModel::gen_mlm_data_struct()
+ABModel::gen_mlm_data_structs()
 {
   std::stringstream result;
   result <<"\
@@ -169,6 +188,8 @@ struct mlm_data {\n\
     : sim_cell(sim_cell)\n\
     , type(type)\n\
   {}\n\
+  virtual void record_answers();\n\
+  virtual void * get_answers() const;\n\
 };\n" << "\n";
 
   for(auto& agent : agents) {

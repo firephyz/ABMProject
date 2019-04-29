@@ -8,6 +8,8 @@
 #include <string>
 #include <memory>
 
+class Question;
+
 class StateInstance {
   const std::string state_name;
   std::vector<SymbolBinding> state_scope_vars;
@@ -71,6 +73,7 @@ public:
   std::string gen_mlm_data_struct() const;
   std::string gen_mlm_data_string() const;
   std::string gen_log_code() const;
+  std::string gen_answer_struct() const;
  
   std::string to_string();
 };
