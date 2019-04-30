@@ -102,7 +102,10 @@ ABModel::to_c_source()
   result << gen_update_agent_code();
 
   // Declare functions for logging
-  result << gen_logging_funct() << std::endl;
+  result << gen_logging_funct();
+
+  // Delcare functions related to global time tick
+  result << gen_tick_code();
 
   return result.str();
 }
@@ -164,6 +167,19 @@ AgentModel::modelUpdateAgent(mlm_data * data) {\n\
 }
 
 std::string
+ABModel::gen_tick_code()
+{
+  std::stringstream result;
+  result << "\
+void\n\
+AgentModel::modelTick() {\n\
+  std::cout << \"Tick.. \" << std::endl;\n\
+}\n";
+  result << "\n";
+  return result.str();
+}
+
+std::string
 ABModel::gen_new_agent_func()
 {
   std::stringstream result;
@@ -219,8 +235,8 @@ struct mlm_data {\n\
     , type(type)\n\
     , neighborhood(neighborhood)\n\
   {}\n\
-  virtual void record_answers();\n\
-  virtual answer_block * get_answers() const;\n\
+  virtual void record_answers() = 0;\n\
+  virtual answer_block * get_answers() const = 0;\n\
 };\n" << "\n";
 
   for(auto& agent : agents) {
@@ -291,6 +307,7 @@ AgentModel::modelLog(mlm_data * data) {\n\
   }
  
   result << "	return logStr.str();\n}" << std::endl;
+  result << "\n";
 	return result.str();
 }
 
