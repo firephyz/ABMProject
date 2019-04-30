@@ -42,7 +42,7 @@ bool SimCell::operator!=(SimCell& other)
 
 std::string SimCell::readPosition() const {
   std::stringstream os;
-	os << "("  << std::to_string(*(this->position)) << "," << std::to_string(*(this->position+1)) << ")";
+	os << std::to_string(*(this->position)) << "," << std::to_string(*(this->position+1));
   return os.str();
 }
 

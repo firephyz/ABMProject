@@ -173,9 +173,12 @@ int main(int argc, char** argv) {
   // Print out logfile headers
   log_file << loaded_model->model_name << std::endl; // model name
   // log_file <<  number of inital agents
-  log_file << loaded_model->dimensions << std::endl;
- 
+  log_file << "Enviroment_Size:" <<  loaded_model->dimensions[0] << std::endl;
+  log_file << "Grid_Space:" << "10" << std::endl;
+  log_file << "GridLines:" << "1" << std::endl;  
   int limit = 3;
+  log_file << "Sim_Size:" << limit << std::endl;
+
   int it = 0;
   while(it < limit) {
     // Ask every agent's question
@@ -199,11 +202,14 @@ int main(int argc, char** argv) {
       loaded_model->updateAgent(cell.data);
     }
 
-    // Logging Extension stufffff
+    log_file << it;
+    // Call log function for each cell containing an agent
     for(auto& cell : space.cells) {
       if(cell.is_empty()) continue; // skip empty cells
-      std::cout << "" <<loaded_model->Log(cell.data);
-    }
+      log_file << loaded_model->Log(cell.data);
+    } 
+
+    log_file << std::endl;
 
     // Call the model tick function
   	loaded_model->Tick();
