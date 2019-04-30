@@ -166,9 +166,14 @@ int main(int argc, char** argv) {
   //SimAgent::num_dimensions = loaded_model->num_dimensions;
 
   SimSpace space(*loaded_model);
-  
+ 
+  // Open output file for logging
+  std::string log_file_path = std::string("./log_file");
+  std::cout << "Log file output file: " << log_file_path << std::endl; 
+  std::ofstream log_file(log_file_path); 
+ 
   // Print out Model name
-  std::cout << loaded_model->model_name << std::endl;
+  log_file << loaded_model->model_name << std::endl;
 
   int limit = 3;
   int it = 0;

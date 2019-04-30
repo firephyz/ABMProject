@@ -11,29 +11,40 @@ const size_t dimensions[] = {3, 3};
 
 template class SimAgent<num_dimensions>;
 using InitAgent = SimAgent<num_dimensions>;
-const std::array<InitAgent, 3> initial_agents {InitAgent({0, 0}), InitAgent({0, 1}), InitAgent({2, 1})};
+const std::array<InitAgent, 3> initial_agents {InitAgent(0, {0, 0}), InitAgent(0, {0, 1}), InitAgent(0, {2, 1})};
 
 AgentModel loaded_model("DEFAULT_NAME", SpatialType::D2_Cartesian, num_dimensions, dimensions);
 CommsNeighborhood neighborhood = {NeighborhoodType::NCube, 1};
 
+enum class AgentType {
+ AGENT_AgentType,
+}
+
 struct mlm_data_t {
-  int id;
   const SimCell * sim_cell;
-};
+  const AgentType type;
+  mlm_data(const SimCell * sim_cell, const AgentType type)
+    : sim_cell(sim_cell)
+    , type(type)
+  {}
+}
+
+
 
 // TODO Should mlm_data space be allocated by the runtime?
 void *
-AgentModel::modelNewAgent(void * position, const SimCell& sim_cell) {
+AgentModel::modelNewAgent(void * position, const SimCell * sim_cell) {
   // Only return new agent data if one has been declared in the model
   if(std::find_if(initial_agents.begin(), initial_agents.end(),
     [&](const auto& agent){
       return agent.is_at_position(position);
   }) != initial_agents.end()) {
-    static int next_id = 0x1;
+    // static int next_id = 0x1;
     struct mlm_data_t * data = (mlm_data_t *)malloc(sizeof(mlm_data_t));
-    data->id = next_id;
+    // data->id = next_id;
     data->sim_cell = &sim_cell;
-    next_id++;
+    type->type =  AgentType.AGENT_AgentType;
+    // next_id++;
     return data;
   }
 
@@ -43,7 +54,7 @@ AgentModel::modelNewAgent(void * position, const SimCell& sim_cell) {
 void *
 AgentModel::modelGiveAnswer(void * mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
-  std::cout << "Agent " << data->id << ": Giving answer..." << std::endl;
+  std::cout << "Agent Giving answer..." << std::endl;
   return NULL;
 }
 
@@ -55,23 +66,23 @@ AgentModel::modelReceiveAnswer(void * mlm_data, void * answer) {
 }
 
 CommsNeighborhood&
-AgentModel::modelGiveNeighborhood(void * mlm_data) {
+AgentModel::modelGiveNeighborhood(mlm_data_t  mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
   std::cout << "Agent " << data->id << ": Giving neighborhood..." << std::endl;
   return neighborhood;
 }
 
 void
-AgentModel::modelUpdateAgent(void * mlm_data) {
+AgentModel::modelUpdateAgent(mlm_data_t * mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
   std::cout << "Agent " << data->id << ": Updating..." << std::endl;
 }
 
 std::string
-AgentModel::modelLog(void * mlm_data) {
+AgentModel::modelLog(mlm_data_t * mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
   std::stringstream logStr;
-  logStr << ":" << "Agent_ " << data->id << data->sim_cell->readPosition();
+  logStr << ":" << data->sim_cell->readPosition();
   return logStr.str();
 }
 
