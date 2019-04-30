@@ -8,6 +8,8 @@
 #include <string>
 #include <memory>
 
+class Question;
+
 class StateInstance {
   const std::string state_name;
   std::vector<SymbolBinding> state_scope_vars;
@@ -37,6 +39,7 @@ class AgentForm {
   std::vector<SymbolBinding> agent_scope_vars;
   std::vector<StateInstance> states;
   std::vector<std::shared_ptr<Question>> questions;
+  std::vector<std::shared_ptr<Answer>> answers;
   std::unique_ptr<CommsNeighborhood> neighborhood;
 
 public:
@@ -48,12 +51,17 @@ public:
   const std::vector<SymbolBinding>& getAgentScopeBindings() const;
   std::vector<SymbolBinding>& getAgentScopeBindingsMut() { return agent_scope_vars; }
   std::vector<StateInstance>& getStates() { return states; }
-  std::vector<std::shared_ptr<Question>>& getQuestions() { return questions; }
   const std::vector<StateInstance>& getStates() const { return states; }
   const std::string& getName() const { return agent_name; }
 
+  const std::vector<std::shared_ptr<Question>>& getQuestions() const { return questions; }
+  std::vector<std::shared_ptr<Question>>& getQuestionsMut() { return questions; }
+  const std::vector<std::shared_ptr<Answer>>& getAnswers() const { return answers; }
+  std::vector<std::shared_ptr<Answer>>& getAnswersMut() { return answers; }
+
   StateInstance& add_state(StateInstance&& state);
   void set_neighborhood(std::unique_ptr<CommsNeighborhood>&& n);
+  void resolve_ask_links();
 
   // Generates a list of symbol bindings representing the bindings available from
   // the agent scope and from the state scope.
@@ -65,6 +73,7 @@ public:
   std::string gen_mlm_data_struct() const;
   std::string gen_mlm_data_string() const;
   std::string gen_log_code() const;
+  std::string gen_answer_struct() const;
  
   std::string to_string();
 };

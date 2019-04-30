@@ -39,3 +39,47 @@ SourceAST::print_tree() {
 
   return result.str();
 }
+
+std::string
+SourceAST_var::gen_type() const
+{
+  return binding->get_type().to_c_source();
+}
+
+std::string 
+SourceAST_var::gen_declaration() const
+{
+  std::stringstream result;
+  result << gen_type() << " " << binding->getName() << ";";
+  return result.str();
+}
+
+std::string
+SourceAST_var::gen_c_default_value() const
+{
+  return binding->gen_c_default_value();
+}
+
+std::string 
+SourceAST_constant::gen_declaration() const
+{
+  std::stringstream result;
+  result << gen_type() << " " << "TODO;";
+  return result.str();
+}
+
+std::string
+SourceAST_constant::gen_c_default_value() const
+{
+  switch(type) {
+    case ConstantType::NoInit:
+      return "0xA5A5";
+    case ConstantType::Integer:
+      return "0";
+    case ConstantType::Real:
+      return "0.0";
+    case ConstantType::Bool:
+      return "false";
+  }
+  return std::string();
+}

@@ -20,6 +20,7 @@ using namespace std;
 #include <iostream>
 #include <stdlib.h>
 #include <algorithm>
+#include <memory>
 
 extern ABModel abmodel;
 extern struct program_args_t pargs;
@@ -153,6 +154,31 @@ void parseAgents(xmlNodePtr agentsChild) {
     newAgentDef(curNode);
     curNode = xmlNextElementSibling(curNode);
   }
+
+  // Resolve question and agent pointers in each answer
+  for(auto& data : parser.answers_to_be_linked) {
+    data.resolve_answer_links();
+  }
+  parser.answers_to_be_linked.clear();
+}
+
+void
+ParserObject::answer_link_data::resolve_answer_links()
+{
+  const AgentForm& agent = abmodel.find_agent_by_name(agent_name);
+  answer->set_agent(agent);
+
+  auto q_iter = std::find_if(
+    agent.getQuestions().begin(),
+    agent.getQuestions().end(),
+    [&](const std::shared_ptr<Question>& q) {
+      return question_name == q->get_name();
+    });
+  if(q_iter == agent.getQuestions().end()) {
+    std::cerr << "Error during answer linking. Could not find question \'" << question_name << "\'" << std::endl;
+    exit(-1);
+  }
+  answer->set_question(*(q_iter->get()));
 }
 
 void newAgentDef(xmlNodePtr agent) {
@@ -212,34 +238,22 @@ void newAgentDef(xmlNodePtr agent) {
 
     xmlNodePtr commsSearch = xmlFirstElementChild(curNode);
     while (commsSearch != NULL) {
-      if(xmlStrcmp(commsSearch->name, (const xmlChar*)"Question") != 0) {
-        std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Expecting a \'Question\' tag node but received a \'" << commsSearch->name << "\' tag node." << std::endl;
-        exit(-1);
+      if(xmlStrcmp(commsSearch->name, (const xmlChar*)"question") == 0) {
+        toAdd.getQuestionsMut().push_back(std::make_shared<Question>(toAdd.genContextBindings(), commsSearch));
       }
-
-      toAdd.getQuestions().push_back(std::make_shared<Question>(toAdd.genContextBindings(), commsSearch));
+      else if(xmlStrcmp(commsSearch->name, (const xmlChar*)"answer") == 0) {
+        toAdd.getAnswersMut().push_back(std::make_shared<Answer>(toAdd.genContextBindings(), commsSearch));
+      }
+      else {
+        util::error(curNode) << "Expecting a \'question\' tag node but received a \'" << commsSearch->name << "\' tag node." << std::endl;
+        exit(-1);
+      }      
 
       commsSearch = xmlNextElementSibling(commsSearch);
     }
 
-    // Resolve ask-question links
-    for(SourceAST_ask * node : parser.nodes) {
-      for(auto& q : toAdd.getQuestions()) {
-        if(q->get_name() == node->getQuestionName()) {
-          // give ask node the shared_ptr to Question
-          node->setQuestion(q);
-          break;
-        }
-      }
-
-      if(node->getQuestion() == nullptr) {
-        std::cerr << "Could not link ask node with question name \'" << node->getQuestionName();
-        std::cerr << "\' with a question in agent \'" << toAdd.getName() << "\'." << std::endl;
-        exit(-1);
-      }
-    }
-    // empty nodes for next agent to be parsed
-    parser.nodes.clear();
+    // Resolve ask-question links in state logic ast
+    toAdd.resolve_ask_links();
 
     abmodel.add_agent(toAdd);
   } else {
@@ -255,8 +269,10 @@ parse_neighborhood(const size_t agent_index, const char * n)
 
   size_t underscore_loc = str.find("_", 0);
 
+  // TODO implement more neighborhoods
   if(underscore_loc == str.npos) {
-
+    std::cerr << "Parsing unimplemented or unrecognized neighborhood." << std::endl;
+    exit(-1);
   }
   else {
     std::string first = str.substr(0, underscore_loc);

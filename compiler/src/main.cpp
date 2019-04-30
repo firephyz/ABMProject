@@ -1,6 +1,8 @@
 // TODO Compilation steps currently are only for cpu and clusters. Needs tweeking to support hdl as well.
 // TODO output-lib-name program argument is only required if the target is cpu or cluster.
 // TODO Fix initial agent region enumeration bug where all regions are missing the last one that should be enumerated
+// TODO Migrate mlm_data struct produced during code-gen into the runtime. The code getting produced
+//      has too much general ABM structure that could be in the runtime.
 
 #include <iostream>
 #include <cstring>
@@ -155,7 +157,7 @@ int main(int argc, char *argv[])
   // load and parse input model
   ABModel& model = parse_model(pargs.xml_model_path.c_str());
 
-  //std::cout << model.to_string();
+  // std::cout << model.to_string();
 
   // write out ast as code to file
   std::string unique_id = std::to_string((int)time(NULL));

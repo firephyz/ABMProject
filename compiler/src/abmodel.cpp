@@ -67,19 +67,37 @@ ABModel::to_c_source()
   result << "};\n";
   result << "\n";
 
-  // Declare mlm_data structure and the derived ones for each agents
-  result << gen_mlm_data_struct() << "\n";
+  result << "struct answer_block {\n";
+  result << "\tAgentType type_tag;\n\n";
+  result << "\
+  answer_block(AgentType type) : type_tag(type) {}\n";
+  result << "};\n";
   result << "\n";
+
+  // Declare struct for communicating answers
+  for(auto& agent : agents) {
+    result << agent.gen_answer_struct();
+    result << "\n";
+  }
+
+  // Declare mlm_data structure and the derived ones for each agents
+  result << gen_mlm_data_structs();
 
   // Declare agent constructors
   result << gen_new_agent_func() << "\n";
   result << "\n";
 
-  // Declare functions for asking questions
+  // Declare functions for giving answers
+  result << gen_give_answer_code() << "\n";
+  result << "\n";
 
   // Declare functions for receiving answers
+  result << gen_receive_answer_code() << "\n";
+  result << "\n";
 
   // Declare functions for giving neighborhoods
+  result << gen_give_neighborhood_code() << "\n";
+  result << "\n";
 
   // Declare functions for updating each agent
 
@@ -87,6 +105,33 @@ ABModel::to_c_source()
   result << gen_logging_funct() << std::endl;
 
   return result.str();
+}
+
+std::string
+ABModel::gen_give_answer_code()
+{
+  std::stringstream result;
+
+  result << "\
+void *\n\
+AgentModel::modelGiveAnswer(mlm_data * data) {\n\
+  data->record_answers();\n\
+  return data->get_answers();\n\
+}";
+
+  return result.str();
+}
+
+std::string 
+ABModel::gen_receive_answer_code()
+{
+  return std::string();
+}
+
+std::string
+ABModel::gen_give_neighborhood_code()
+{
+  return std::string();
 }
 
 std::string
@@ -131,7 +176,7 @@ AgentModel::modelNewAgent(void * position, const SimCell * cell) {\n\
 }
 
 std::string
-ABModel::gen_mlm_data_struct()
+ABModel::gen_mlm_data_structs()
 {
   std::stringstream result;
   result <<"\
@@ -143,6 +188,8 @@ struct mlm_data {\n\
     : sim_cell(sim_cell)\n\
     , type(type)\n\
   {}\n\
+  virtual void record_answers();\n\
+  virtual void * get_answers() const;\n\
 };\n" << "\n";
 
   for(auto& agent : agents) {
@@ -241,16 +288,26 @@ ABModel::agent_to_uint(const AgentForm& agent) const
 uint
 ABModel::agent_to_uint_by_name(const std::string& name) const
 {
-  auto agent_iter = std::find_if(agents.begin(), agents.end(),
+  return agent_to_uint(find_agent_by_name(name));
+}
+
+const AgentForm&
+ABModel::find_agent_by_name(const std::string& name) const
+{
+  auto agent_iter = std::find_if(
+    agents.begin(),
+    agents.end(),
     [&](const AgentForm& agent) {
       return agent.getName() == name;
     });
+
   if(agent_iter == agents.end()) {
     std::cerr << "Failed to convert agent name \'" << name << "\' into uint.";
     std::cerr << " Could not find corresponding agent." << std::endl;
     exit(-1);
   }
-  return agent_to_uint(*agent_iter);
+
+  return *agent_iter;
 }
 
 std::string

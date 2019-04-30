@@ -72,6 +72,28 @@ AgentForm::add_state(StateInstance&& state)
   return states[states.size() - 1];
 }
 
+void
+AgentForm::resolve_ask_links()
+{
+  for(SourceAST_ask * node : parser.nodes) {
+    for(auto& q : questions) {
+      if(q->get_name() == node->getQuestionName()) {
+        // give ask node the shared_ptr to Question
+        node->setQuestion(q);
+        break;
+      }
+    }
+
+    if(node->getQuestion() == nullptr) {
+      std::cerr << "Could not link ask node with question name \'" << node->getQuestionName();
+      std::cerr << "\' with a question in agent \'" << agent_name << "\'." << std::endl;
+      exit(-1);
+    }
+  }
+  // empty nodes for next agent to be parsed
+  parser.nodes.clear();
+}
+
 ContextBindings
 AgentForm::genContextBindings(StateInstance& state)
 {
@@ -107,6 +129,10 @@ AgentForm::to_string()
   for(auto& question : questions) {
     result << "\t" << question->to_string() << std::endl;
   }
+  result << "\t------ Answers -------" << std::endl;
+  for(auto& answer : answers) {
+    result << "\t" << answer->to_string() << std::endl;
+  }
 
   // reset SourceAST printer
   SourceAST::set_start_depth(0);
@@ -139,6 +165,7 @@ struct mlm_data_" << agent_name << "_" << state.getName() << " {\n";
   // generate mlm_data for specific agent
   result << "\
 struct " << gen_mlm_data_string() << " : public mlm_data {\n";
+  result << "\tstatic struct answer_" << agent_name << " answers;\n";
   for(auto& variable : agent_scope_vars) {
     result << "\t" << variable.gen_declaration(*this) << "\n";
   }
@@ -154,7 +181,18 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   // constructor
   result << "\t" << gen_mlm_data_string() << "(const SimCell * sim_cell)\n";
   result << "\t\t: mlm_data(sim_cell, AgentType::" << gen_enum_type_name() << ")\n";
-  result << "\t{}\n";
+  result << "\t{\n";
+  result << "\t\tanswers = answer_" << agent_name << "(AgentType::AGENT_" << agent_name << ");\n";
+  result << "\t}\n";
+  result << "\
+  void record_answers() {\n";
+  for(auto& answer : answers) {
+    result << "\t\tanswers." << answer->gen_name_as_struct_member() << " = ";
+    result << answer->gen_answer_source() << ";\n";
+  }
+  result << "\t}\n";
+  result << "\
+  void * get_answers() { return (void *)&answers; }\n";
   result << "};\n";
   return result.str();
 }
@@ -175,4 +213,19 @@ std::string
 AgentForm::gen_mlm_data_string() const
 {
 	return std::string("mlm_data_") + agent_name;
+}
+
+std::string
+AgentForm::gen_answer_struct() const
+{
+  std::stringstream result;
+  std::string struct_name = "answer_" + agent_name;
+  result << "struct " << struct_name << " : public answer_block {\n";
+  for(auto& answer : answers) {
+    result << "\t" << answer->gen_declaration() << "\n";
+  }
+  result << "\n";
+  result << "\t" << struct_name << "(AgentType type) : answer_block(type) {}\n";
+  result << "};\n";
+  return result.str();
 }

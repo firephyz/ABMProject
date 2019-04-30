@@ -86,17 +86,10 @@
         </state>
       </rules>
       <commsInterface neighborhood='ncube_2'>
-        <Question name='living_neighbors'>
-          <questionScope>
+        <question name='living_neighbors'>
+          <scope>
             <var type='int' id='count' value='0'/>
-          </questionScope>
-          <answer>
-            <logic>
-              <return>
-                <var id='is_alive'/>
-              </return>
-            </logic>
-          </answer>
+          </scope>
           <body>
             <logic>
               <if>
@@ -121,7 +114,16 @@
               </return>
             </logic>
           </body>
-        </Question>
+        </question>
+        <answer agent='AgentType' question='living_neighbors'>
+          <body>
+            <logic>
+              <return>
+                <var id='is_alive'/>
+              </return>
+            </logic>
+          </body>
+        </answer>
       </commsInterface>
     </agent>
   </agentDefinitions>

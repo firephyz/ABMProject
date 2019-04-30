@@ -15,18 +15,19 @@ typedef enum {
 
 // Forward declaration
 class SimSpace;
+struct mlm_data;
 
 class SimCell {
 public:
   size_t * position;
-  void * mlm_data;
+  mlm_data * data;
 
   SimCell(SimSpace& space, int position_index);
   SimCell(const SimCell& other) = delete;
   SimCell(SimCell&& other) noexcept;
 
   bool operator!=(SimCell& other);
-  bool is_empty() { return mlm_data == NULL; }
+  bool is_empty() { return data == NULL; }
   std::string readPosition() const;
 
 };
