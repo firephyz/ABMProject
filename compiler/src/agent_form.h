@@ -74,6 +74,8 @@ public:
   std::string gen_mlm_data_string() const;
   std::string gen_log_code() const;
   std::string gen_answer_struct() const;
+  std::string gen_receive_answer_code() const;
+  std::string gen_responses_struct() const;
  
   std::string to_string();
 };

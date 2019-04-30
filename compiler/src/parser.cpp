@@ -156,18 +156,35 @@ void parseAgents(xmlNodePtr agentsChild) {
   }
 
   // Resolve question and agent pointers in each answer
+  // and answer and agent pointers in each question
   for(auto& data : parser.answers_to_be_linked) {
     data.resolve_answer_links();
   }
   parser.answers_to_be_linked.clear();
+
+  // Make sure every question has an answer
+  bool did_fail = false;
+  for(auto& agent : abmodel.agents) {
+    for(auto& q : agent.getQuestions()) {
+      if(q->getAnswer() == nullptr) {
+        std::cerr << "Error: Question \'" << q->get_name() << "\' in agent \'" << agent.getName() << "\'" << " does not have an answer link." << std::endl;
+        did_fail = true;
+      }
+    }
+  }
+  if(did_fail) {
+    exit(-1);
+  }
 }
 
+// Every answer has a corresponding question so we will link
+// questions to the answer in this function as well.
 void
 ParserObject::answer_link_data::resolve_answer_links()
 {
   const AgentForm& agent = abmodel.find_agent_by_name(agent_name);
-  answer->set_agent(agent);
 
+  // find the question to link to the answer
   auto q_iter = std::find_if(
     agent.getQuestions().begin(),
     agent.getQuestions().end(),
@@ -178,7 +195,15 @@ ParserObject::answer_link_data::resolve_answer_links()
     std::cerr << "Error during answer linking. Could not find question \'" << question_name << "\'" << std::endl;
     exit(-1);
   }
-  answer->set_question(*(q_iter->get()));
+  Question& question = *(q_iter->get());
+
+  // resolve links on answer side
+  answer->set_agent(agent);
+  answer->set_question(question);
+
+  // resolve links on question side
+  question.set_agent(agent);
+  question.set_answer(*answer);
 }
 
 void newAgentDef(xmlNodePtr agent) {

@@ -3,6 +3,9 @@
 // TODO Fix initial agent region enumeration bug where all regions are missing the last one that should be enumerated
 // TODO Migrate mlm_data struct produced during code-gen into the runtime. The code getting produced
 //      has too much general ABM structure that could be in the runtime.
+// TODO Change the generated agent mlm_data structs for the specific agents to have non-static
+//      answers and responses structs. This would allow multiple agents to be processed in parallel.
+//      Better yet, create them dynamically, one for each thread working on a region of the simulation.
 
 #include <iostream>
 #include <cstring>

@@ -177,6 +177,15 @@ Question::to_string() const
   return result.str();
 }
 
+std::string
+Question::gen_response_declaration() const
+{
+  std::string decl = std::string("int ") + question_name;
+  std::string name = source_agent->getName();
+
+  return std::move(decl);
+}
+
 Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
 {
   // Agent and question will remain null until parsing is done.
@@ -260,7 +269,7 @@ Answer::gen_declaration() const
   SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
   std::string type_str = return_node.getValue().gen_type();
   std::string default_value = return_node.getValue().gen_c_default_value();
-  return type_str + " " + gen_name_as_struct_member() + " = " + default_value + ";";
+  return type_str + " " + gen_name_as_struct_member() + " = " + default_value;
 }
 
 const std::string&

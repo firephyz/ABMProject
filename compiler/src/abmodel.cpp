@@ -68,18 +68,13 @@ ABModel::to_c_source()
   result << "};\n";
   result << "\n";
 
+  // Declare answer_block base class
   result << "struct answer_block {\n";
   result << "\tAgentType type_tag;\n\n";
   result << "\
   answer_block(AgentType type) : type_tag(type) {}\n";
   result << "};\n";
   result << "\n";
-
-  // Declare struct for communicating answers
-  for(auto& agent : agents) {
-    result << agent.gen_answer_struct();
-    result << "\n";
-  }
 
   // Declare mlm_data structure and the derived ones for each agents
   result << gen_mlm_data_structs();
@@ -120,7 +115,7 @@ answer_block *\n\
 AgentModel::modelGiveAnswer(mlm_data * data) {\n\
   std::cout << \"Agent: Giving answer...\" << std::endl;\n\
   data->record_answers();\n\
-  return data->get_answers();\n\
+  return data->give_answers();\n\
 }";
 
   return result.str();
@@ -133,9 +128,15 @@ ABModel::gen_receive_answer_code()
   result << "\
 void\n\
 AgentModel::modelReceiveAnswer(mlm_data * data, answer_block * answer) {\n\
+  data->receive_answers(answer);\n\
   std::cout << \"Agent: Receiving answer...\" << std::endl;\n\
 }\n";
   result << "\n";
+
+  for(auto& agent : agents) {
+    result << agent.gen_receive_answer_code();
+  }
+
   return result.str();
 }
 
@@ -236,7 +237,8 @@ struct mlm_data {\n\
     , neighborhood(neighborhood)\n\
   {}\n\
   virtual void record_answers() = 0;\n\
-  virtual answer_block * get_answers() const = 0;\n\
+  virtual answer_block * give_answers() const = 0;\n\
+  virtual void receive_answers(answer_block * answer) = 0;\n\
 };\n" << "\n";
 
   for(auto& agent : agents) {

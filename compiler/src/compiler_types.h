@@ -97,8 +97,11 @@ public:
 
 #include "source_ast.h"
 
+class Answer;
 class Question {
   std::string question_name;
+  const AgentForm * source_agent = nullptr;
+  const Answer * answer = nullptr;
   std::vector<SymbolBinding> question_scope_vars;
   std::unique_ptr<SourceAST> question_source;
 public:
@@ -107,9 +110,14 @@ public:
   Question(const Question&) = delete;
   Question(Question&&) = default;
 
+  void set_agent(const AgentForm& agent) { source_agent = &agent; }
+  void set_answer(const Answer& answer) { this->answer = &answer; }
+  const Answer * getAnswer() const { return answer; }
+
   std::string to_string() const;
 
   const std::string& get_name() const { return question_name; }
+  std::string gen_response_declaration() const;
 };
 
 class Answer {
