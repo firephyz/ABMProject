@@ -40,6 +40,7 @@ struct ABModel {
   std::string gen_give_answer_code();
   std::string gen_receive_answer_code();
   std::string gen_give_neighborhood_code();
+  std::string gen_update_agent_code();
 
   void add_agent(AgentForm& agent);
   size_t num_agents() const { return agents.size(); }

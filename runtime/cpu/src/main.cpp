@@ -26,12 +26,12 @@ if(varName == NULL) {\
 
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;
-mlm_data *              (*modelNewAgentPtr)(AgentModel * this_class, void *, const SimCell * sim_cell)                                  = NULL;
-void *              (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * mlm_data)                       = NULL;
-void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer)     = NULL;
-CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data)                 = NULL;
-void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data)                      = NULL;
-std::string         (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
+mlm_data *          (*modelNewAgentPtr)(AgentModel * this_class, void *, const SimCell * sim_cell)                                  = NULL;
+answer_block *      (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * mlm_data)                       = NULL;
+void                (*modelReceiveAnswerPtr)(AgentModel * this_class, mlm_data * data, answer_block * answer)     = NULL;
+const CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, mlm_data * data)                 = NULL;
+void                (*modelUpdateAgentPtr)(AgentModel * this_class, mlm_data * data)                      = NULL;
+std::string         (*modelLogPtr)(AgentModel * this_class, mlm_data * data);
 void                (*modelTickPtr)(AgentModel * this_class);
 
 
@@ -102,7 +102,7 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
     DLSYM_ERROR_CHECK(loaded_model, symbol);
   }
   else if(symbol.find("modelGiveAnswer") != std::string::npos) {
-    modelGiveAnswerPtr = (void * (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
+    modelGiveAnswerPtr = (answer_block * (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelGiveAnswerPtr, symbol);
   }
   else if(symbol.find("modelNewAgent") != std::string::npos) {
@@ -110,19 +110,19 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
     DLSYM_ERROR_CHECK(modelNewAgentPtr, symbol);
   }
   else if(symbol.find("modelGiveNeighborhood") != std::string::npos) {
-    modelGiveNeighborhoodPtr = (CommsNeighborhood& (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+    modelGiveNeighborhoodPtr = (const CommsNeighborhood& (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelGiveNeighborhoodPtr, symbol);
   }
   else if(symbol.find("modelReceiveAnswer") != std::string::npos) {
-    modelReceiveAnswerPtr = (void (*)(AgentModel *, void *, void *))dlsym(model_handle, symbol.c_str());
+    modelReceiveAnswerPtr = (void (*)(AgentModel *, mlm_data *, answer_block *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelReceiveAnswerPtr, symbol);
   }
   else if(symbol.find("modelUpdateAgent") != std::string::npos) {
-    modelUpdateAgentPtr = (void (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+    modelUpdateAgentPtr = (void (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelUpdateAgentPtr, symbol);
   }
   else if(symbol.find("modelLog") != std::string::npos) {
-    modelLogPtr = (std::string (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+    modelLogPtr = (std::string (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelLogPtr, symbol);
   } 
   else if(symbol.find("modelTick") != std::string::npos) {
@@ -183,11 +183,11 @@ int main(int argc, char** argv) {
     // Ask every agent's question
     for(auto& sender : space.cells) {
       if(sender.is_empty()) continue; // skip if no agent is present
-      void * agent_answer = loaded_model->giveAnswer(sender.data);
+      answer_block * agent_answer = loaded_model->giveAnswer(sender.data);
       for(auto& receiver : space.cells) {
         if(sender != receiver) {
           if(receiver.is_empty()) continue; // skip if no agent is present
-          CommsNeighborhood& n = loaded_model->giveNeighborhood(receiver.data);
+          const CommsNeighborhood& n = loaded_model->giveNeighborhood(receiver.data);
           auto commsPredicate = getCommsPredicate(n.type);
           if(commsPredicate(space, receiver, sender, n.size)) {
             loaded_model->receiveAnswer(receiver.data, agent_answer);

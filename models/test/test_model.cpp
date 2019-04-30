@@ -66,7 +66,7 @@ AgentModel::modelReceiveAnswer(void * mlm_data, void * answer) {
 }
 
 CommsNeighborhood&
-AgentModel::modelGiveNeighborhood(mlm_data_t  mlm_data) {
+AgentModel::modelGiveNeighborhood(mlm_data * mlm_data) {
   struct mlm_data_t * data = (struct mlm_data_t *)mlm_data;
   std::cout << "Agent " << data->id << ": Giving neighborhood..." << std::endl;
   return neighborhood;

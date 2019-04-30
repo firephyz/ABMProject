@@ -9,14 +9,15 @@
 // directory.
 
 struct CommsNeighborhood {
+  // index into the abmodel agents vector
   const size_t agent_index;
 
   CommsNeighborhood(const size_t agent_index)
     : agent_index(agent_index)
   {}
 
-  virtual std::string to_c_source() const = 0;
-  std::string base_c_source_wrapper(std::string&& derived_string) const;
+  virtual std::string gen_c_init_value() const = 0;
+  std::string gen_c_declaration() const;
 };
 
 namespace Comms {
@@ -27,7 +28,7 @@ namespace Comms {
       : CommsNeighborhood(agent_index)
       , size(size)
     {}
-    std::string to_c_source() const;
+    std::string gen_c_init_value() const;
   };
 }
 
