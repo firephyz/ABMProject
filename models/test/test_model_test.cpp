@@ -29,33 +29,52 @@ enum class AgentState {
 struct mlm_data {
   const SimCell * sim_cell;
   const AgentType type;
+
   mlm_data(const SimCell * sim_cell, const AgentType type)
     : sim_cell(sim_cell)
     , type(type)
   {}
 };
 
+struct mlm_data_AgentType_Alive {
+	int neighbors_alive;
+};
 
-// TODO Should mlm_data space be allocated by the runtime?
+struct mlm_data_AgentType : public mlm_data {
+	AgentState state = AgentState::STATE_AgentType_Alive;
+	bool is_alive = false;
+	union {
+		struct mlm_data_AgentType_Alive locals_Alive;
+	};
+
+	mlm_data_AgentType(const SimCell * sim_cell)
+		: mlm_data(sim_cell, AgentType::AGENT_AgentType)
+	{}
+};
+
+
+
 mlm_data *
-AgentModel::modelNewAgent(void * position, const SimCell * sim_cell) {
-  // Only return new agent data if one has been declared in the model
-  if(std::find_if(initial_agents.begin(), initial_agents.end(),
-    [&](const auto& agent){
-      return agent.is_at_position(position);
-  }) != initial_agents.end()) {
-    // static int next_id = 0x1;
-   mlm_data* data = (mlm_data*)malloc(sizeof(mlm_data)); 
-   return data;
-  }
-
-  return NULL;
+allocate_agent_space(const uint type, const SimCell * cell)
+{
+  switch(type) {
+		case 0: return new mlm_data_AgentType(cell);
+		default:
+			std::cerr << "Runtime failure. Unknown agent uint id." << std::endl;
+			exit(-1);
+	}
+	return NULL;
 }
 
 void *
-AgentModel::modelGiveAnswer(mlm_data * mlm_data) {
-  std::cout << "Agent Giving answer..." << std::endl;
-  return NULL;
+AgentModel::modelNewAgent(void * position, const SimCell * cell) {
+  auto agent_iter = std::find_if(initial_agents.begin(), initial_agents.end(),
+    [&](const auto& agent){
+      return agent.is_at_position(position);
+    });
+  if(agent_iter != initial_agents.end()) {
+    struct mlm_data * data = allocate_agent_space(agent_iter->getAgentType(), cell);
+    return data;
 }
 
 void AgentModel::modelReceiveAnswer(void * mlm_data, void * answer) {
@@ -65,7 +84,7 @@ void AgentModel::modelReceiveAnswer(void * mlm_data, void * answer) {
 }
 
 CommsNeighborhood&
-AgentModel::modelGiveNeighborhood(void  * mlm_data) {
+AgentModel::modelGiveNeighborhood(mlm_data  * mlm_data) {
   struct mlm_data * data = (struct mlm_data *)mlm_data;
   std::cout << "Agent: Giving neighborhood..." << std::endl;
   return neighborhood;
@@ -89,3 +108,4 @@ void
 AgentModel::modelTick() {
 	std::cout << "Tick.. " << std::endl;
 }
+

@@ -30,8 +30,8 @@ mlm_data *              (*modelNewAgentPtr)(AgentModel * this_class, void *, con
 void *              (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * mlm_data)                       = NULL;
 void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer)     = NULL;
 CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data)                 = NULL;
-void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data)                      = NULL;
-std::string         (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
+void                (*modelUpdateAgentPtr)(AgentModel * this_class, mlm_data * mlm_data)                      = NULL;
+std::string         (*modelLogPtr)(AgentModel * this_class, mlm_data * mlm_data);
 void                (*modelTickPtr)(AgentModel * this_class);
 
 
@@ -118,11 +118,11 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
     DLSYM_ERROR_CHECK(modelReceiveAnswerPtr, symbol);
   }
   else if(symbol.find("modelUpdateAgent") != std::string::npos) {
-    modelUpdateAgentPtr = (void (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+    modelUpdateAgentPtr = (void (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelUpdateAgentPtr, symbol);
   }
   else if(symbol.find("modelLog") != std::string::npos) {
-    modelLogPtr = (std::string (*)(AgentModel *, void *))dlsym(model_handle, symbol.c_str());
+    modelLogPtr = (std::string (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelLogPtr, symbol);
   } 
   else if(symbol.find("modelTick") != std::string::npos) {
@@ -163,10 +163,6 @@ int main(int argc, char** argv) {
   const char* model_lib_path;
   model_lib_path = *(argv + 1);
   void * model_handle = loadModel(model_lib_path);
-
-  // set dimensions used by SimAgents
-  //SimAgent::num_dimensions = loaded_model->num_dimensions;
-
   SimSpace space(*loaded_model);
  
   // Open output file for logging
@@ -174,8 +170,12 @@ int main(int argc, char** argv) {
   std::cout << "Log file output file: " << log_file_path << std::endl; 
   std::ofstream log_file(log_file_path); 
  
-  // Print out Model name
-  log_file << loaded_model->model_name << std::endl;
+  // Print out logfile headers
+  log_file << loaded_model->model_name << std::endl; // model name
+  // log_file <<  number of inital agents
+  log_file << loaded_model->
+  
+
 
   int limit = 3;
   int it = 0;

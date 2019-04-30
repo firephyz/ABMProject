@@ -100,7 +100,7 @@ void parseSimLogFile(String filename) {
    String[] initialPos = split(simFileLines.get(7), ':');
    int curAgent = 1; // Used to iterate through intialPos array, skipping the first entry
    for (Agent a : agents) {                
-     String pos = split(initialPos[curAgent],  "\\")[1]; //Gets the string in the form of :Agent_x\x,y
+     String pos = split(initialPos[curAgent],  "\\")[1]; //Gets the string in the form of :\x,y
      String xCoordinate = split(pos, ",")[0];
      String yCoordinate = split(pos, ",")[1];
      a.curPos.x = Float.parseFloat(xCoordinate);
