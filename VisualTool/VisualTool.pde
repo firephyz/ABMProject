@@ -17,8 +17,11 @@ public enum Color {
  void setup() {
   size(1000, 1000); 
   currentSims = new ArrayList<VisualSim>();
-  parseSimLogFile("./testFiles/test2.txt");
-  textSize(25);
+  parseSimLogFile("./testFiles/test.txt");
+  
+  for (VisualSim sim : currentSims) {
+    sim.updateSim();  
+  }
 }
 
  void draw () {
@@ -29,19 +32,7 @@ public enum Color {
    int j = 0;
    
    // For each sim 
-   for (VisualSim sim : currentSims) {
-      // Diplay Agents and their locations
-     fill(255);
-     String agentDisplay = "Agent Positions: "; 
-     textSize(25);
-     text(agentDisplay, 700, 25);
-     textSize(12);
-     for (Agent a : sim.agents) {
-       text(a.ID + ":(" + (int)a.curPos.x * gridSpaceSize + "," + (int)a.curPos.y * gridSpaceSize + ")", 700, 50 + (i * 25));
-       i++;
-     }
-     i = 0;
-         
+   for (VisualSim sim : currentSims) {  
      // Draw the gridspaces and color based on the agents they contain
      for (GridRow r: sim.gridRows) {
        for(GridSpace s: r.row) {
@@ -55,7 +46,7 @@ public enum Color {
            stroke(0);
          }
          
-         // Draw the gridspaces as rectangles originating at a point (0-63, 0-63) and the size set by the simulation log file
+         // Draw the gridspaces as rectangles originating at a point (0-envSize-1, 0-envSize-1) and the size set by the simulation log file
          rect(j*gridSpaceSize, i*gridSpaceSize, gridSpaceSize, gridSpaceSize); // Raster Style Printing //<>//
          j++;
        }
@@ -81,12 +72,13 @@ void parseSimLogFile(String filename) {
    
    // Process Headers
    String simName = simFileLines.get(0);
-   int numOfAgents = Integer.parseInt(split(simFileLines.get(1), ':')[1]);
-   int envSize = Integer.parseInt(split(simFileLines.get(2), ':')[1]);
-   gridSpaceSize = Integer.parseInt(split(simFileLines.get(3), ':')[1]);
-   int gridLines = Integer.parseInt(split(simFileLines.get(4), ':')[1]);
-   int simSize = Integer.parseInt(split(simFileLines.get(5), ':')[1]);
+   // int numOfAgents = Integer.parseInt(split(simFileLines.get(1), ':')[1]);
+   int envSize = Integer.parseInt(split(simFileLines.get(1), ':')[1]);
+   gridSpaceSize = Integer.parseInt(split(simFileLines.get(2), ':')[1]);
+   int gridLines = Integer.parseInt(split(simFileLines.get(3), ':')[1]);
+   int simSize = Integer.parseInt(split(simFileLines.get(4), ':')[1]);
    
+   /*
    // Get Agents
    ArrayList<Agent> agents = new ArrayList<Agent>();
    String[] agentsList = split(simFileLines.get(6), ':');
@@ -95,7 +87,9 @@ void parseSimLogFile(String filename) {
      Agent a = new Agent(curName, new PVector(Math.round(random(0, 63)), Math.round(random(0, 63))), Color.RED);
      agents.add(a);
    }
+   */
    
+   /*
    // Set Agent initial positions
    String[] initialPos = split(simFileLines.get(7), ':');
    int curAgent = 1; // Used to iterate through intialPos array, skipping the first entry
@@ -107,16 +101,16 @@ void parseSimLogFile(String filename) {
      a.curPos.y = Float.parseFloat(yCoordinate);
      curAgent++;
    }
+   */
    
    // Process Timesteps to get a list of each agent and their movement
-   for (int i = 8; i < simFileLines.size(); i++) { // Start at the first TimeStamp Line
+   for (int i = 5; i < simFileLines.size(); i++) { // Start at the first TimeStamp Line
      TimeStamp curTimeStamp = new TimeStamp(simFileLines.get(i));
      timeStamps.add(curTimeStamp);
    }
    
    
-   sim = new VisualSim(simName, envSize, gridSpaceSize, simSize, gridLines, timeStamps, agents);
-   sim.populateEnviroment();
+   sim = new VisualSim(simName, envSize, gridSpaceSize, simSize, gridLines, timeStamps);
    currentSims.add(sim);
  }
  
