@@ -158,7 +158,7 @@ allocate_agent_space(const uint type, const SimCell * cell)\n\
 
   // Function that creates all the new agents
   result << "\
-void *\n\
+mlm_data *\n\
 AgentModel::modelNewAgent(void * position, const SimCell * cell) {\n\
   auto agent_iter = std::find_if(initial_agents.begin(), initial_agents.end(),\n\
     [&](const auto& agent){\n\
