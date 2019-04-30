@@ -1,5 +1,4 @@
 class VisualSim {
-  ArrayList<Agent> agents;
   ArrayList<GridRow> gridRows;
   ArrayList<TimeStamp> stampLog;
   int envSize;
@@ -9,8 +8,7 @@ class VisualSim {
   String simName;
   boolean noGridLines;
   
-  VisualSim(String simName, int envSize, int stepSize, int simSize, int gridLines,  ArrayList<TimeStamp> timeStamps, 
-          ArrayList<Agent> agents) {
+  VisualSim(String simName, int envSize, int stepSize, int simSize, int gridLines,  ArrayList<TimeStamp> timeStamps) {
     this.simName = simName;
     this.envSize = envSize;
     this.stepSize = stepSize;
@@ -32,25 +30,17 @@ class VisualSim {
     
     // Make a deep copy of the time stamps
     this.stampLog = new ArrayList<TimeStamp>();
-    for (TimeStamp t : timeStamps) {
+    for (TimeStamp t : timeStamps) {  
       this.stampLog.add(t);  
-    }
-    
-    // Make a deep copy of the Agent list
-    this.agents = new ArrayList<Agent>();
-    for (Agent a : agents) {
-      this.agents.add(a);  
     }
   }
   
-  // Adds the agents to the enviroment
-  void populateEnviroment() {
-    for (Agent a : this.agents) {
-      int rowNum = (int)a.curPos.x;
-      int colNum = (int)a.curPos.y;
-      this.gridRows.get(rowNum).row.get(colNum).agents.add(a); // Add the agent a to the appropriate gridSpace
-      a.curSpace = this.gridRows.get(rowNum).row.get(colNum);
-    }
+  // Adds agent to gridSpace
+  void placeAgent(Agent a) {
+     int rowNum = (int)a.curPos.x;
+     int colNum = (int)a.curPos.y;
+     this.gridRows.get(rowNum).row.get(colNum).agents.add(a); // Add the agent a to the appropriate gridSpace
+     a.curSpace = this.gridRows.get(rowNum).row.get(colNum);
   }
   
   void updateSim() {
@@ -63,21 +53,15 @@ class VisualSim {
       return;
     }
     
-    // Update all the agents based on the current simualtion timestamp
-    int curAgent = 0;
-    for (Agent a : this.agents) {
-      moveAgent(a, stampLog.get(curStep).moves.get(curAgent)); 
-      curAgent++;
+    for (Agent a : this.stampLog.get(curStep).agents) {
+      moveAgent(a);  
     }
   }
   
-  void moveAgent(Agent a, PVector heading) {
+  void moveAgent(Agent a) {
     // Get the current gridspace the Agent was in previously and Remove the agent from that spaces's arrayList
     a.curSpace.agents.remove(a);
     
-    // Update the Agents position
-    a.curPos = heading;
-
     // Set Hard Limits to prevent array access errors as well as wrap
     if (a.curPos.x <= 0) {
       a.curPos.x = envSize - 1; 
@@ -92,7 +76,6 @@ class VisualSim {
     }
     
     // Add to new gridSpace, and update the agents internal gridspace
-    this.gridRows.get((int)a.curPos.y).row.get((int)a.curPos.x).agents.add(a);
-    a.curSpace = this.gridRows.get((int)a.curPos.y).row.get((int)a.curPos.x);
+    this.placeAgent(a);
   }
 }
