@@ -173,10 +173,8 @@ int main(int argc, char** argv) {
   // Print out logfile headers
   log_file << loaded_model->model_name << std::endl; // model name
   // log_file <<  number of inital agents
-  log_file << loaded_model->
-  
-
-
+  log_file << loaded_model->dimensions << std::endl;
+ 
   int limit = 3;
   int it = 0;
   while(it < limit) {

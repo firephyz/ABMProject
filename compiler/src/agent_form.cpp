@@ -192,8 +192,9 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   }
   result << "\t}\n";
   result << "\
-  answer_block * get_answers() { return (answer_block *)&answers; }\n";
+  answer_block * get_answers() const { return (answer_block *)&answers; }\n";
   result << "};\n";
+  result << "struct answer_" << agent_name << " " << gen_mlm_data_string() << "::answers(AgentType::AGENT_" << agent_name << ");" << std::endl;
   return result.str();
 }
 
@@ -204,7 +205,7 @@ AgentForm::gen_log_code() const
 	std::stringstream result;  
   result <<"\
 	if (data->type == AgentType::" << gen_enum_type_name() << ") {\n\
-		logStr << \":\" << \"Agent_\" << data->sim_cell->readPosition();\n\
+		logStr << \":\" << \"Agent_\" << data->sim_cell->readPosition() << std::endl;\n\
 	}";
   return result.str();
 }
