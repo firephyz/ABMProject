@@ -42,11 +42,12 @@ ABModel::to_c_source()
   result << "AgentModel loaded_model(\"" << model_name << "\", " << gen_spatial_enum() << ", num_dimensions, dimensions);\n";
   result << "\n";
 
-  // Declare neighborhoods. Must get types from agents
-  for(auto& agent : agents) {
-    result << agent.getNeighborhood().to_c_source() << "\n";
-  }
-  result << "\n";
+  // Moved declaration into each agent specific mlm_data struct
+  // // Declare neighborhoods. Must get types from agents
+  // for(auto& agent : agents) {
+  //   result << agent.getNeighborhood().to_c_source() << "\n";
+  // }
+  // result << "\n";
 
   // Declare agent types enum
   result << "enum class AgentType {\n";
@@ -92,14 +93,13 @@ ABModel::to_c_source()
   result << "\n";
 
   // Declare functions for receiving answers
-  result << gen_receive_answer_code() << "\n";
-  result << "\n";
+  result << gen_receive_answer_code();
 
   // Declare functions for giving neighborhoods
-  result << gen_give_neighborhood_code() << "\n";
-  result << "\n";
+  result << gen_give_neighborhood_code();
 
   // Declare functions for updating each agent
+  result << gen_update_agent_code();
 
   // Declare functions for logging
   result << gen_logging_funct() << std::endl;
@@ -113,8 +113,9 @@ ABModel::gen_give_answer_code()
   std::stringstream result;
 
   result << "\
-void *\n\
+answer_block *\n\
 AgentModel::modelGiveAnswer(mlm_data * data) {\n\
+  std::cout << \"Agent: Giving answer...\" << std::endl;\n\
   data->record_answers();\n\
   return data->get_answers();\n\
 }";
@@ -125,13 +126,41 @@ AgentModel::modelGiveAnswer(mlm_data * data) {\n\
 std::string 
 ABModel::gen_receive_answer_code()
 {
-  return std::string();
+  std::stringstream result;
+  result << "\
+void\n\
+AgentModel::modelReceiveAnswer(mlm_data * data, answer_block * answer) {\n\
+  std::cout << \"Agent: Receiving answer...\" << std::endl;\n\
+}\n";
+  result << "\n";
+  return result.str();
 }
 
 std::string
 ABModel::gen_give_neighborhood_code()
 {
-  return std::string();
+  std::stringstream result;
+  result << "\
+const CommsNeighborhood&\n\
+AgentModel::modelGiveNeighborhood(mlm_data * data) {\n\
+  std::cout << \"Agent: Giving neighborhood...\" << std::endl;\n\
+  return data->neighborhood;\n\
+}\n";
+  result << "\n";
+  return result.str();
+}
+
+std::string
+ABModel::gen_update_agent_code()
+{
+  std::stringstream result;
+  result << "\
+void\n\
+AgentModel::modelUpdateAgent(mlm_data * data) {\n\
+  std::cout << \"Agent: Updating...\" << std::endl;\n\
+}\n";
+  result << "\n";
+  return result.str();
 }
 
 std::string
@@ -158,7 +187,7 @@ allocate_agent_space(const uint type, const SimCell * cell)\n\
 
   // Function that creates all the new agents
   result << "\
-void *\n\
+mlm_data *\n\
 AgentModel::modelNewAgent(void * position, const SimCell * cell) {\n\
   auto agent_iter = std::find_if(initial_agents.begin(), initial_agents.end(),\n\
     [&](const auto& agent){\n\
@@ -183,13 +212,15 @@ ABModel::gen_mlm_data_structs()
 struct mlm_data {\n\
   const SimCell * sim_cell;\n\
   const AgentType type;\n\
+  const CommsNeighborhood neighborhood;\n\
 \n\
-  mlm_data(const SimCell * sim_cell, const AgentType type)\n\
+  mlm_data(const SimCell * sim_cell, const AgentType type, CommsNeighborhood neighborhood)\n\
     : sim_cell(sim_cell)\n\
     , type(type)\n\
+    , neighborhood(neighborhood)\n\
   {}\n\
   virtual void record_answers();\n\
-  virtual void * get_answers() const;\n\
+  virtual answer_block * get_answers() const;\n\
 };\n" << "\n";
 
   for(auto& agent : agents) {
@@ -249,8 +280,7 @@ ABModel::gen_logging_funct()
   std::stringstream result; 
   result <<"\
 std::string \
-AgentModel::modelLog(void * ptr) {\n\
-  mlm_data * data = (mlm_data *)ptr;\n\
+AgentModel::modelLog(mlm_data * data) {\n\
 	std::stringstream logStr;"\
   << std::endl;  
 

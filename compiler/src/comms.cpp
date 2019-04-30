@@ -6,19 +6,32 @@
 
 extern ABModel abmodel;
 
+// std::string
+// CommsNeighborhood::base_c_source_wrapper(std::string&& derived_string) const
+// {
+//   std::stringstream result;
+//   result << "CommsNeighborhood neighborhood = " << derived_string << ";";
+//   return result.str();
+// }
+
 std::string
-CommsNeighborhood::base_c_source_wrapper(std::string&& derived_string) const
+CommsNeighborhood::gen_c_declaration() const
 {
-  std::stringstream result;
-  auto& agent = abmodel.get_agent_by_index(agent_index);
-  result << "CommsNeighborhood neighborhood_" << agent.getName() << " = " << derived_string << ";";
-  return result.str();
+  return std::string("CommsNeighborhood neighborhood");
 }
 
 std::string
-Comms::NCube::to_c_source() const
+Comms::NCube::gen_c_init_value() const
 {
   std::stringstream result;
-  result << "{NeighborhoodType::NCube, " << size << "}";
-  return CommsNeighborhood::base_c_source_wrapper(result.str());
+  result << "(CommsNeighborhood){NeighborhoodType::NCube, " << size << "}";
+  return result.str();
 }
+
+// std::string
+// Comms::NCube::to_c_source() const
+// {
+//   std::stringstream result;
+//   result << "{NeighborhoodType::NCube, " << size << "}";
+//   return CommsNeighborhood::base_c_source_wrapper(result.str());
+// }

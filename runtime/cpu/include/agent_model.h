@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <string.h>
+#include <iostream>
+#include <sstream>
 
 // Forward declare to avoid circular dependency
 typedef struct comms_neighborhood_t CommsNeighborhood;
@@ -15,15 +17,16 @@ class SimCell;
 
 // currently produced during compiler code-gen
 struct mlm_data;
+struct answer_block;
 
 // Must be outside class to be resolved by dlsym
 // Declared and defined in main during model loading with libdl
-extern mlm_data *              (*modelNewAgentPtr)(AgentModel * this_class, void * position, const SimCell * cell);
-extern void *              (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * data);
-extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer);
-extern CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data);
-extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, mlm_data * mlm_data);
-extern std::string         (*modelLogPtr)(AgentModel * this_class, mlm_data * mlm_data);
+extern mlm_data *          (*modelNewAgentPtr)(AgentModel * this_class, void * position, const SimCell * cell);
+extern answer_block *      (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * data);
+extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, mlm_data * data, answer_block * answer);
+extern const CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, mlm_data * data);
+extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, mlm_data * data);
+extern std::string         (*modelLogPtr)(AgentModel * this_class, mlm_data * data);
 extern void                (*modelTickPtr)(AgentModel * this_class);
 /**********************************************************
  * The following class is only constructed in the MLM cpp files.
@@ -45,12 +48,19 @@ public:
 
   bool is_at_position(void * query_position) const
   {
+    std::stringstream position_str;
     size_t * query_position_array = (size_t *)query_position;
     for(int i = 0; i < num_dimensions; ++i) {
       if(query_position_array[i] != position[i]) {
         return false;
       }
+      position_str << query_position_array[i];
+      if(i != num_dimensions - 1) {
+        position_str << ", ";
+      }
     }
+
+    std::cout << "Making Agent: " << position_str.str() << std::endl;
   
     return true;
   }
@@ -74,13 +84,13 @@ public:
   const size_t * dimensions;
   
   // Model makers must implement functions below
-  mlm_data * modelNewAgent(void * position, const SimCell * cell);
-  void * modelGiveAnswer(mlm_data * data);
-  void modelReceiveAnswer(void * mlm_data, void * answer);
-  CommsNeighborhood& modelGiveNeighborhood(void * mlm_data);
-  void modelUpdateAgent(mlm_data * mlm_data);
-  std::string  modelLog(mlm_data * mlm_data);
-  void modelTick();
+  mlm_data *          modelNewAgent(void * position, const SimCell * cell);
+  answer_block *      modelGiveAnswer(mlm_data * data);
+  void                modelReceiveAnswer(mlm_data * data, answer_block * answer);
+  const CommsNeighborhood&  modelGiveNeighborhood(mlm_data * data);
+  void                modelUpdateAgent(mlm_data * data);
+  std::string         modelLog(mlm_data * data);
+  void                modelTick();
 /***********************************************************************
  * Model specifc elements done                                         *
  ***********************************************************************/
@@ -96,11 +106,11 @@ public:
 
   // So we can call these functions in runtime code nicely
   inline mlm_data * newAgent(void * position, const SimCell * cell) { return (*modelNewAgentPtr)(this, position, cell); }
-  inline void * giveAnswer(mlm_data * data) { return (*modelGiveAnswerPtr)(this, data); }
-  inline void receiveAnswer(void * mlm_data, void * answer) { return (*modelReceiveAnswerPtr)(this, mlm_data, answer); }
-  inline CommsNeighborhood& giveNeighborhood(void * mlm_data) { return (*modelGiveNeighborhoodPtr)(this, mlm_data); }
-  inline void updateAgent(mlm_data * mlm_data) { return (*modelUpdateAgentPtr)(this, mlm_data); }
-  inline std::string Log(mlm_data * mlm_data) { return (*modelLogPtr)(this, mlm_data); }
+  inline answer_block * giveAnswer(mlm_data * data) { return (*modelGiveAnswerPtr)(this, data); }
+  inline void receiveAnswer(mlm_data * data, answer_block * answer) { return (*modelReceiveAnswerPtr)(this, data, answer); }
+  inline const CommsNeighborhood& giveNeighborhood(mlm_data * data) { return (*modelGiveNeighborhoodPtr)(this, data); }
+  inline void updateAgent(mlm_data * data) { return (*modelUpdateAgentPtr)(this, data); }
+  inline std::string Log(mlm_data * data) { return (*modelLogPtr)(this, data); }
   inline void Tick() { return (*modelTickPtr)(this); }
 };
 

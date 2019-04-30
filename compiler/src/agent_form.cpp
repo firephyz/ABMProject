@@ -180,7 +180,7 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   
   // constructor
   result << "\t" << gen_mlm_data_string() << "(const SimCell * sim_cell)\n";
-  result << "\t\t: mlm_data(sim_cell, AgentType::" << gen_enum_type_name() << ")\n";
+  result << "\t\t: mlm_data(sim_cell, AgentType::" << gen_enum_type_name() << ", (CommsNeighborhood)" << neighborhood->gen_c_init_value() << ")\n";
   result << "\t{\n";
   result << "\t\tanswers = answer_" << agent_name << "(AgentType::AGENT_" << agent_name << ");\n";
   result << "\t}\n";
@@ -192,7 +192,7 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   }
   result << "\t}\n";
   result << "\
-  void * get_answers() { return (void *)&answers; }\n";
+  answer_block * get_answers() { return (answer_block *)&answers; }\n";
   result << "};\n";
   return result.str();
 }
