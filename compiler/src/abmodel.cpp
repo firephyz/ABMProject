@@ -60,12 +60,13 @@ ABModel::to_c_source()
  	result << "\tstd::string to_string() {\n";
 	result << "\t\tswitch(val) {\n";
 	for(auto& agent : agents) {
-		result << "\t\t\tcase: " << agent.gen_enum_type_name() << ":";
-		result << "\t\t\t\treturn " << agent.gen_enum_type_name() << ";\n";
+		result << "\t\t\tcase " << agent.gen_enum_type_name() << ":\n";
+		result << "\t\t\t\treturn " << "\"agent.gen_enum_type_name()\" << ";\n";
 	} 
 	result << "\t\t}";
   result << "}";
-	
+
+  /*	
   // TODO split this following enum into multiple ones for each agent
   // Declare agent state enum
   result << "enum class AgentState {\n";
@@ -77,7 +78,8 @@ ABModel::to_c_source()
   }
   result << "};\n";
   result << "\n";
-
+  */
+ 
   // Declare answer_block base class
   result << "struct answer_block {\n";
   result << "\tAgentType type_tag;\n\n";
