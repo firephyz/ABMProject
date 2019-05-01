@@ -68,6 +68,7 @@ struct ParserObject {
   }
 };
 
+#include "source_ast.h"
 #include "compiler_types.h"
 class SymbolBinding;
 class ParserContext {
@@ -85,7 +86,7 @@ void parse_init_agent(xmlNodePtr node);
 std::unique_ptr<CommsNeighborhood> parse_neighborhood(const size_t agent_index, const char * n);
 
 std::unique_ptr<SourceAST> dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node);
-void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode); 
+void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode, SymbolBindingScope scope); 
 void parseAgentStates(AgentForm& agent, xmlNodePtr curNode);
 
 #endif

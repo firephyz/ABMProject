@@ -45,10 +45,16 @@ SourceAST_if_C::SourceAST_if_C(const ContextBindings& ctxt, xmlNodePtr node)
 std::string
 SourceAST_if_C::to_source()
 {
+  CHECK_AST_CODE_GEN_READY();
+
   std::stringstream result;
-  result << "if (" << predicate->to_source() << ") { " << then_clause->to_source() << " }";
+  result << "if " << predicate->to_source() << " {\n";
+  result << util::indent(then_clause->to_source()) << "\n}\n";
   if(else_clause != nullptr) {
-    result << " else { " << else_clause->to_source() << " }";
+    result << "else {\n" << util::indent(else_clause->to_source()) << "\n}\n";
+  }
+  if(next != nullptr) {
+    result << next->to_source();
   }
   return result.str();
 }
@@ -82,12 +88,13 @@ SourceAST_assignment_C::SourceAST_assignment_C(const ContextBindings& ctxt, xmlN
     exit(-1);
   }
   const char * symbol_name = (const char *)xml_attr->children->content;
-  binding = &ctxt.getBindingByName(symbol_name);
+  const SymbolBinding * binding = &ctxt.getBindingByName(symbol_name);
+  var_binding = std::make_unique<const SourceAST_var_C>(binding);
 
   curNode = xmlNextElementSibling(curNode);
   if(xmlStrcmp(curNode->name, (const xmlChar *)"ask") == 0) {
     type = AssignmentValueType::CommsAnswer;
-    value_answer = std::make_unique<SourceAST_ask_C>(curNode);
+    value_answer = std::make_unique<SourceAST_ask_C>(curNode, var_binding.get());
   }
   else if(xmlStrcmp(curNode->name, (const xmlChar *)"constant") == 0) {
     type = AssignmentValueType::Expression;
@@ -103,13 +110,15 @@ SourceAST_assignment_C::SourceAST_assignment_C(const ContextBindings& ctxt, xmlN
   }
 
   #if VERBOSE_AST_GEN
-    std::cout << "Assignment: " << this->to_source() << std::endl;
+    std::cout << "Assignment: " << this->to_string() << std::endl;
   #endif
 }
 
 std::string
 SourceAST_assignment_C::to_source()
 {
+  CHECK_AST_CODE_GEN_READY();
+
   std::stringstream result;
   std::string value_string = type == AssignmentValueType::Expression ? 
     value_expr->to_source() :
@@ -118,7 +127,7 @@ SourceAST_assignment_C::to_source()
         "ANSWER" :
         value_answer->to_source()) :
       "NoInit");
-  result << binding->getName() << " = " << value_string << ";";
+  result << var_binding->getBinding().getName() << " = " << value_string << ";";
   return result.str();
 }
 
@@ -127,7 +136,7 @@ SourceAST_assignment_C::to_string()
 {
   std::stringstream result;
 
-  result << "ASSIGN var=\'" << binding->getName() << "\'" << std::endl;
+  result << "ASSIGN var=\'" << var_binding->getBinding().getName() << "\'" << std::endl;
   switch(type) {
     case AssignmentValueType::NoInit:
       break;
@@ -205,6 +214,8 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
 std::string
 SourceAST_constant_C::to_source()
 {
+  CHECK_AST_CODE_GEN_READY();
+
   return value;
 }
 
@@ -243,13 +254,20 @@ SourceAST_var_C::SourceAST_var_C(const ContextBindings& ctxt, xmlNodePtr node)
   binding = &ctxt.getBindingByName((const char *)xml_attr->children->content);
 
   #if VERBOSE_AST_GEN
-    std::cout << "Var: " << binding->getName() << std::endl;
+    if(binding != nullptr) {
+      std::cout << "Var: " << binding->getName() << std::endl;
+    }
+    else {
+      std::cout << "var: NULL\n";
+    }
   #endif
 }
 
 std::string
 SourceAST_var_C::to_source()
 {
+  CHECK_AST_CODE_GEN_READY();
+
   return binding->getName();
 }
 
@@ -263,7 +281,26 @@ SourceAST_var_C::to_string()
   return result.str();
 }
 
-SourceAST_ask_C::SourceAST_ask_C(xmlNodePtr node)
+std::string
+SourceAST_var_C::get_var_c_name() const
+{
+  switch(binding->getScope()) {
+    case SymbolBindingScope::StateLocal:
+      return std::string("locals_") + binding->getScopeState().getName() + "." + binding->getName();
+      break;
+    case SymbolBindingScope::AgentLocal:
+      return binding->getName();
+      break;
+    default:
+      std::cerr << "Error: Compiler currently doesn't support getting the c name for variable \'" << binding->getName() << "\' in scope \'" << SymbolBinding::scope_to_string(binding->getScope()) << "\'.\n";
+      exit(-1);
+      break;
+  }
+  return std::string();
+}
+
+SourceAST_ask_C::SourceAST_ask_C(xmlNodePtr node, const SourceAST_var * binding)
+  : SourceAST_ask(binding)
 {
   auto xml_attr = xmlGetAttribute(node, "name");
   if(xml_attr == NULL) {
@@ -284,6 +321,8 @@ SourceAST_ask_C::SourceAST_ask_C(xmlNodePtr node)
 std::string
 SourceAST_ask_C::to_source()
 {
+  CHECK_AST_CODE_GEN_READY();
+
   // TODO finish
   return std::string();
 }
@@ -296,6 +335,17 @@ SourceAST_ask_C::to_string()
   result << "ASK: \'" << question_name << "\' " << question.get() << std::endl;
 
   return result.str();
+}
+
+std::string
+SourceAST_ask_C::get_target_var_c_name() const
+{
+  if(target_var == nullptr) {
+    std::cerr << "Compiler runtime error: Ask tag for question \'" << question->get_name() << "\' " << "is not linked.\n";
+    exit(-1);
+  }
+
+  return target_var->get_var_c_name();
 }
 
 SourceAST_operator_C::SourceAST_operator_C(const ContextBindings& ctxt, xmlNodePtr node)
@@ -352,7 +402,40 @@ SourceAST_operator_C::SourceAST_operator_C(const ContextBindings& ctxt, xmlNodeP
 std::string
 SourceAST_operator_C::to_source()
 {
-  return std::string();
+  CHECK_AST_CODE_GEN_READY();
+
+  std::stringstream result;
+  std::string op_str = [&](){
+    switch(type.get_type()) {
+      case SourceAST_operator::OperatorTypeEnum::NoInit:
+        std::cerr << "Cannot codegen AST operator node with type NoInit. Should have an actual operator.\n";
+        exit(-1);
+        break;
+      case SourceAST_operator::OperatorTypeEnum::Add:
+        return std::string("+");
+      case SourceAST_operator::OperatorTypeEnum::Equal:
+        return std::string("==");
+      case SourceAST_operator::OperatorTypeEnum::Not:
+        return std::string("!");
+      case SourceAST_operator::OperatorTypeEnum::Or:
+        return std::string("||");
+    }
+    return std::string("NONE");
+  }();
+
+  result << "(";
+  if(type.get_num_args() == 1) {
+    result << op_str << " " << args[0]->to_source() << ")";
+  }
+  else if (type.get_num_args() == 2) {
+    result << args[0]->to_source() << " " << op_str << " " << args[1]->to_source() << ")";
+  }
+  else {
+    std::cerr << "Invalid number of arguments in operator \'" << op_str << "\'\n";
+    exit(-1);
+  }
+
+  return result.str();
 }
 
 std::string
@@ -388,10 +471,19 @@ SourceAST_return_C::SourceAST_return_C(const ContextBindings& ctxt, xmlNodePtr n
   #endif
 }
 
+// Not as simple as emitting a return statement
+// The code generated will get called every time an answer is recevied
+// and it will update the corresponding static question local variables.
+// Returning then, is equivalent to updating the value to which the Question's
+// corresponding ask tag is assigning to.
 std::string
 SourceAST_return_C::to_source()
 {
-  return std::string();
+  CHECK_AST_CODE_GEN_READY();
+
+  std::stringstream result;
+  result << info.data.question->get_ask_tag()->get_target_var_c_name() << " = " << value->to_source() << ";";
+  return result.str();
 }
 
 std::string
@@ -412,11 +504,12 @@ SourceAST_response_C::SourceAST_response_C(const ContextBindings& ctxt, xmlNodeP
   #endif
 }
 
-
 std::string
 SourceAST_response_C::to_source()
 {
-  return std::string();
+  CHECK_AST_CODE_GEN_READY();
+
+  return std::string("responses.") + info.data.question->get_name();
 }
 
 std::string

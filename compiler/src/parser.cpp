@@ -188,18 +188,35 @@ void parseAgents(xmlNodePtr agentsChild) {
   }
 
   // Resolve question and agent pointers in each answer
+  // and answer and agent pointers in each question
   for(auto& data : parser.answers_to_be_linked) {
     data.resolve_answer_links();
   }
   parser.answers_to_be_linked.clear();
+
+  // Make sure every question has an answer
+  bool did_fail = false;
+  for(auto& agent : abmodel.agents) {
+    for(auto& q : agent.getQuestions()) {
+      if(q->getAnswer() == nullptr) {
+        std::cerr << "Error: Question \'" << q->get_name() << "\' in agent \'" << agent.getName() << "\'" << " does not have an answer link." << std::endl;
+        did_fail = true;
+      }
+    }
+  }
+  if(did_fail) {
+    exit(-1);
+  }
 }
 
+// Every answer has a corresponding question so we will link
+// questions to the answer in this function as well.
 void
 ParserObject::answer_link_data::resolve_answer_links()
 {
   const AgentForm& agent = abmodel.find_agent_by_name(agent_name);
-  answer->set_agent(agent);
 
+  // find the question to link to the answer
   auto q_iter = std::find_if(
     agent.getQuestions().begin(),
     agent.getQuestions().end(),
@@ -210,7 +227,15 @@ ParserObject::answer_link_data::resolve_answer_links()
     std::cerr << "Error during answer linking. Could not find question \'" << question_name << "\'" << std::endl;
     exit(-1);
   }
-  answer->set_question(*(q_iter->get()));
+  Question& question = *(q_iter->get());
+
+  // resolve links on answer side
+  answer->set_agent(agent);
+  answer->set_question(question);
+
+  // resolve links on question side
+  question.set_agent(agent);
+  question.set_answer(*answer);
 }
 
 void newAgentDef(xmlNodePtr agent) {
@@ -244,7 +269,7 @@ void newAgentDef(xmlNodePtr agent) {
       std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl;
       return; // Return error
     }
-    parseBindings(toAdd.getAgentScopeBindingsMut(), curNode);
+    parseBindings(toAdd.getAgentScopeBindingsMut(), curNode, SymbolBindingScope::AgentLocal);
 
     // Get the agent states
     parser.set_state(ParserState::States);
@@ -330,7 +355,12 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
     while(curNode != NULL) {
       // Get the state variables
       if(xmlStrcmp(curNode->name, (const xmlChar*)"stateScope") == 0) {
-        parseBindings(newState.getStateScopeBindingsMut(), curNode);
+        parseBindings(newState.getStateScopeBindingsMut(), curNode, SymbolBindingScope::StateLocal);
+
+        // Link the bindings we just created with this state so we can use the info later
+        for(auto& binding : newState.getStateScopeBindingsMut()) {
+          binding.set_state(newState);
+        }
       } else if (xmlStrcmp(curNode->name, (const xmlChar*)"logic") == 0) {
         const ContextBindings ctxt = agent.genContextBindings(newState);
         std::unique_ptr<SourceAST> logic_ast = parser.parse_logic(ctxt, curNode);
@@ -345,7 +375,7 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
   }
 }
 
-void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
+void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode, SymbolBindingScope scope) {
    curNode = xmlFirstElementChild(curNode);
 
    while (curNode != NULL) {
@@ -397,7 +427,7 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
     } else {
       is_constant = false;
     }
-    bindings.emplace_back(symName, varType, val, is_constant);
+    bindings.emplace_back(symName, varType, val, is_constant, scope);
 
     curNode = xmlNextElementSibling(curNode);
    }
