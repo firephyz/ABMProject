@@ -129,6 +129,7 @@ ABModel::gen_receive_answer_code()
 void\n\
 AgentModel::modelReceiveAnswer(mlm_data * data, answer_block * answer) {\n\
   data->receive_answers(answer);\n\
+  data->process_questions();\n\
   std::cout << \"Agent: Receiving answer...\" << std::endl;\n\
 }\n";
   result << "\n";
@@ -239,6 +240,7 @@ struct mlm_data {\n\
   virtual void record_answers() = 0;\n\
   virtual answer_block * give_answers() const = 0;\n\
   virtual void receive_answers(answer_block * answer) = 0;\n\
+  virtual void process_questions() = 0;\n\
 };\n" << "\n";
 
   for(auto& agent : agents) {

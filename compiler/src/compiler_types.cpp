@@ -186,6 +186,25 @@ Question::gen_response_declaration() const
   return std::move(decl);
 }
 
+std::string
+Question::gen_question_process_code() const
+{
+  std::stringstream result;
+
+  result << "void\n";
+  result << source_agent->gen_mlm_data_string() << "::process_question_" << this->get_name() << "()\n";
+  result << "{\n";
+  // Gen local variables needed for question processing code
+  for(auto& var : question_scope_vars) {
+    result << "\t" << var.gen_declaration(*source_agent);
+  }
+  result << "\n";
+  result << question_source->to_source();
+  result << "}\n\n";
+
+  return result.str();
+}
+
 Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
 {
   // Agent and question will remain null until parsing is done.

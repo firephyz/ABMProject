@@ -203,7 +203,11 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   result << "\t}\n";
   result << "\
   answer_block * give_answers() const { return (answer_block *)&answers; }\n\
-  void receive_answers(answer_block * answer);\n";
+  void receive_answers(answer_block * answer);\n\
+  void process_questions();\n";
+  for(auto& question : questions) {
+    result << "\tvoid process_question_" << question->get_name() << "();\n";
+  }
   result << "};\n";
   result << "struct answer_" << agent_name << " " << gen_mlm_data_string() << "::answers(AgentType::AGENT_" << agent_name << ");" << std::endl;
   result << "struct responses_" << agent_name << " " << gen_mlm_data_string() << "::responses;" << std::endl;
@@ -228,6 +232,7 @@ AgentForm::gen_receive_answer_code() const
 {
   std::stringstream result;
 
+  // Code to get answer from answer_block and place it into the agent resonses
   result << "void\n";
   result << gen_mlm_data_string() << "::receive_answers(answer_block * answers)\n{\n";
   result << "\tswitch(answers->type_tag) {\n";
@@ -241,7 +246,20 @@ AgentForm::gen_receive_answer_code() const
     result << "\t\t\tbreak;\n\t\t}\n";
   }
   result << "\t}\n";
-  result << "}\n\n";  
+  result << "}\n\n";
+
+  // Code to do question post-processing on the responses
+  result << "void\n";
+  result << gen_mlm_data_string() << "::process_questions()\n{\n";
+  for(auto& question : questions) {
+    result << "\tprocess_question_" << question->get_name() << "();\n";
+  }
+  result << "}\n\n";
+
+  // Generate functions to process each question; each needs its on scope for variables
+  for(auto& question : questions) {
+    result << question->gen_question_process_code();
+  }
 
   return result.str();
 }

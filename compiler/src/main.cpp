@@ -1,3 +1,13 @@
+/*********************************************************************************
+ * AGASC - Auto-Generated ABM Simulator and Compiler
+ * Senior Design Project
+ *   Prasidh Arora, Kyle Burge, Logan Johnson, Alex Lee
+ * 
+ * Usage Notes:
+ *
+ *********************************************************************************
+*/
+
 // TODO Compilation steps currently are only for cpu and clusters. Needs tweeking to support hdl as well.
 // TODO output-lib-name program argument is only required if the target is cpu or cluster.
 // TODO Fix initial agent region enumeration bug where all regions are missing the last one that should be enumerated

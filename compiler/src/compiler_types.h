@@ -118,6 +118,7 @@ public:
 
   const std::string& get_name() const { return question_name; }
   std::string gen_response_declaration() const;
+  std::string gen_question_process_code() const;
 };
 
 class Answer {
