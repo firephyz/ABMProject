@@ -36,8 +36,6 @@ VarTypeEnum strToEnum(std::string& str){
     return VarTypeEnum::Bool;
   if (str == "real")
     return VarTypeEnum::Real;
-  if (str == "String")
-    return VarTypeEnum::String;
   if (str == "state")
     return VarTypeEnum::State;
   
@@ -58,17 +56,20 @@ SymbolBinding::to_string() const
 std::string
 SymbolBinding::gen_c_default_value() const
 {
-  switch(type.type) {
-    case VarTypeEnum::String:
-      return "FIXME_INIT_STRING";
-    case VarTypeEnum::Integer:
-      return "0";
-    case VarTypeEnum::Real:
-      return "0.0";
-    case VarTypeEnum::Bool:
-      return "false";
-    case VarTypeEnum::State:
-      return "FIXME_INIT_STATE";
+  if(initial_value.empty()) {
+    switch(type.type) {
+      case VarTypeEnum::Integer:
+        return "0";
+      case VarTypeEnum::Real:
+        return "0.0";
+      case VarTypeEnum::Bool:
+        return "false";
+      case VarTypeEnum::State:
+        return "FIXME_INIT_STATE";
+    }
+  }
+  else {
+    return initial_value;
   }
   return std::string();
 }
@@ -93,12 +94,6 @@ SymbolBinding::gen_declaration(const AgentForm& agent) const
     result << ";";
   }
   return result.str();
-}
-
-std::string
-SymbolBinding::gen_initial_value() const
-{
-  return std::string("INIT");
 }
 
 const StateInstance&
@@ -214,17 +209,9 @@ Question::gen_question_process_code() const
   std::stringstream result;
 
   result << this->gen_return_type() << "\n";
-  result << source_agent->gen_mlm_data_string() << "::process_question_" << this->get_name() << "()\n";
+  result << source_agent->gen_mlm_data_string() << "::process_question_" << this->get_name();
+  result << "(" << "mlm_data_" << source_agent->getName() << "_questions::" << this->get_name() << "_t * locals)\n";
   result << "{\n";
-
-  // Gen local variables needed for question processing code
-  for(auto& var : question_scope_vars) {
-    // Needs to be static since the value needs to stay across calls to the
-    // process_question function. Only during a runtime tick (all agents done
-    // processing) will it be reset.
-    result << "\tstatic " << var.gen_declaration(*source_agent);
-  }
-  result << "\n";
 
   // Gen source
   result << util::indent(question_source->to_source_start(SourceASTInfoType::Question, (void *)this));

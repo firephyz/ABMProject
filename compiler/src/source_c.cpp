@@ -43,7 +43,7 @@ SourceAST_if_C::SourceAST_if_C(const ContextBindings& ctxt, xmlNodePtr node)
 }
 
 std::string
-SourceAST_if_C::to_source()
+SourceAST_if_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
@@ -115,7 +115,7 @@ SourceAST_assignment_C::SourceAST_assignment_C(const ContextBindings& ctxt, xmlN
 }
 
 std::string
-SourceAST_assignment_C::to_source()
+SourceAST_assignment_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
@@ -127,7 +127,7 @@ SourceAST_assignment_C::to_source()
         "ANSWER" :
         value_answer->to_source()) :
       "NoInit");
-  result << var_binding->getBinding().getName() << " = " << value_string << ";";
+  result << var_binding->to_source() << " = " << value_string << ";";
   return result.str();
 }
 
@@ -212,7 +212,7 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
 }
 
 std::string
-SourceAST_constant_C::to_source()
+SourceAST_constant_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
@@ -264,11 +264,24 @@ SourceAST_var_C::SourceAST_var_C(const ContextBindings& ctxt, xmlNodePtr node)
 }
 
 std::string
-SourceAST_var_C::to_source()
+SourceAST_var_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
-  return binding->getName();
+  switch(binding->getScope()) {
+    case SymbolBindingScope::StateLocal:
+      return std::string("locals_") + binding->getScopeState().getName() + "." + binding->getName();
+    case SymbolBindingScope::AgentLocal:
+      return binding->getName();
+    case SymbolBindingScope::Question:
+      return std::string("locals->") + binding->getName();
+    case SymbolBindingScope::Answer:
+      return std::string("ANSWER_VAR");
+    default:
+      return std::string("NONE_VAR");
+  }
+
+  return std::string("ERROR");
 }
 
 std::string
@@ -319,7 +332,7 @@ SourceAST_ask_C::SourceAST_ask_C(xmlNodePtr node, const SourceAST_var * binding)
 }
 
 std::string
-SourceAST_ask_C::to_source()
+SourceAST_ask_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
@@ -400,7 +413,7 @@ SourceAST_operator_C::SourceAST_operator_C(const ContextBindings& ctxt, xmlNodeP
 }
 
 std::string
-SourceAST_operator_C::to_source()
+SourceAST_operator_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
@@ -477,7 +490,7 @@ SourceAST_return_C::SourceAST_return_C(const ContextBindings& ctxt, xmlNodePtr n
 // Returning then, is equivalent to updating the value to which the Question's
 // corresponding ask tag is assigning to.
 std::string
-SourceAST_return_C::to_source()
+SourceAST_return_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
@@ -505,7 +518,7 @@ SourceAST_response_C::SourceAST_response_C(const ContextBindings& ctxt, xmlNodeP
 }
 
 std::string
-SourceAST_response_C::to_source()
+SourceAST_response_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
