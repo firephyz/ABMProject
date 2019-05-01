@@ -99,11 +99,6 @@ ABModel::to_c_source()
   // Declare functions for logging
   result << gen_logging_funct();
 
-  // Declare function for resetting state and question local variables
-  for(auto& agent : agents) {
-    result << agent.gen_reset_locals_code();
-  }
-
   // Delcare functions related to global time tick
   result << gen_tick_code();
 
@@ -181,11 +176,6 @@ ABModel::gen_tick_code()
 void\n\
 AgentModel::modelTick() {\n\
   std::cout << \"Tick.. \" << std::endl;\n";
-
-  // Reset all question and state local variables
-  for(auto& agent : agents) {
-    result << "\treset_locals_" << agent.getName() << "();\n";
-  }
   result << "}\n";
   result << "\n";
   return result.str();
