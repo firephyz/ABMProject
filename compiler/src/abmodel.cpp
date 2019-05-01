@@ -49,13 +49,23 @@ ABModel::to_c_source()
   // }
   // result << "\n";
 
-  // Declare agent types enum
-  result << "enum class AgentType {\n";
-  for(auto& agent : agents) {
+  // Declare agent types class with enum
+  result << "class AgentType {\n";
+  result << "	enum Type_t {";
+	for(auto& agent : agents) {
     result << "\t" << agent.gen_enum_type_name() << ",\n";
   }
   result << "};\n\n";
-
+	result << "\tType_t val;\n";
+ 	result << "\tstd::string to_string() {\n";
+	result << "\t\tswitch(val) {\n";
+	for(auto& agent : agents) {
+		result << "\t\t\tcase: " << agent.gen_enum_type_name() << ":";
+		result << "\t\t\t\treturn " << agent.gen_enum_type_name() << ";\n";
+	} 
+	result << "\t\t}";
+  result << "}";
+	
   // TODO split this following enum into multiple ones for each agent
   // Declare agent state enum
   result << "enum class AgentState {\n";
@@ -236,6 +246,7 @@ std::string
 ABModel::gen_mlm_data_structs()
 {
   std::stringstream result;
+/*
   result <<"\
 struct mlm_data {\n\
   const SimCell * sim_cell;\n\
@@ -252,7 +263,7 @@ struct mlm_data {\n\
   virtual void receive_answers(answer_block * answer) = 0;\n\
   virtual void process_questions() = 0;\n\
 };\n" << "\n";
-
+*/
   for(auto& agent : agents) {
     result << agent.gen_mlm_data_struct() << "\n";
   }

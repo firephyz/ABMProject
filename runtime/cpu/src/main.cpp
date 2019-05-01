@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
     // Call log function for each cell containing an agent
     for(auto& cell : space.cells) {
       if(cell.is_empty()) continue; // skip empty cells
-      log_file << loaded_model->Log(cell.data);
+      log_file << cell.data->*AgentType << loaded_model->Log(cell.data);
     } 
 
     log_file << std::endl;

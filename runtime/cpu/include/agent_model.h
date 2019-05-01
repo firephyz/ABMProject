@@ -14,10 +14,28 @@
 typedef struct comms_neighborhood_t CommsNeighborhood;
 class AgentModel;
 class SimCell;
+class AgentType;
+
 
 // currently produced during compiler code-gen
-struct mlm_data;
+// struct mlm_data;
 struct answer_block;
+
+// moved mlm_data struct here for BOIDS
+struct mlm_data {
+  SimCell * sim_cell;
+  const AgentType * type;
+  const CommsNeighborhood neighborhood;
+  mlm_data(SimCell * sim_cell, const AgentType * type, CommsNeighborhood neighborhood)
+    : sim_cell(sim_cell)
+    , type(type)
+    , neighborhood(neighborhood)
+  {}
+  virtual void record_answers() = 0;
+  virtual answer_block * give_answers() const = 0;
+  virtual void receive_answers(answer_block * answer) = 0;
+  virtual void process_questions() = 0;
+};
 
 // Must be outside class to be resolved by dlsym
 // Declared and defined in main during model loading with libdl
