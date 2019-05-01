@@ -1,10 +1,13 @@
 #include "agent_form.h"
 #include "source_ast.h"
 #include "comms.h"
+#include "abmodel.h"
 
 #include <memory>
 #include <string>
 #include <sstream>
+
+extern ABModel abmodel;
 
 StateInstance::StateInstance(const std::string& name)
   : state_name(name)
@@ -80,6 +83,7 @@ AgentForm::resolve_ask_links()
       if(q->get_name() == node->getQuestionName()) {
         // give ask node the shared_ptr to Question
         node->setQuestion(q);
+        q->set_ask_tag(*node);
         break;
       }
     }
@@ -97,7 +101,7 @@ AgentForm::resolve_ask_links()
 ContextBindings
 AgentForm::genContextBindings(StateInstance& state)
 {
-  ContextBindings result;
+  ContextBindings result(SymbolBindingScope::StateLocal);
   result.frames.push_back(&state.getStateScopeBindings());
   result.frames.push_back(&agent_scope_vars);
   return result;
@@ -106,7 +110,7 @@ AgentForm::genContextBindings(StateInstance& state)
 ContextBindings
 AgentForm::genContextBindings()
 {
-  ContextBindings result;
+  ContextBindings result(SymbolBindingScope::AgentLocal);
   result.frames.push_back(&agent_scope_vars);
   return result;
 }
@@ -151,6 +155,12 @@ AgentForm::gen_mlm_data_struct() const
 {
   std::stringstream result;
 
+  // Declare struct for holding answers
+  result << gen_answer_struct();
+
+  // Declare struct for holding question reponses
+  result << gen_responses_struct();
+
   // generate data structs for each state (for local variables)
   for(auto& state : states) {
     result << "\
@@ -166,17 +176,17 @@ struct mlm_data_" << agent_name << "_" << state.getName() << " {\n";
   result << "\
 struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   result << "\tstatic struct answer_" << agent_name << " answers;\n";
+  result << "\tstatic struct responses_" << agent_name << " responses;\n";
   for(auto& variable : agent_scope_vars) {
     result << "\t" << variable.gen_declaration(*this) << "\n";
   }
-  result << "\tunion {\n";
   for(auto& state : states) {
     // place struct type declaration
-    result << "\t\tstruct mlm_data_" << agent_name << "_" << state.getName();
+    result << "\tstruct mlm_data_" << agent_name << "_" << state.getName();
     // place struct name
     result << " locals_" << state.getName() << ";\n";
   }
-  result << "\t};\n\n";
+  result << "\n";
   
   // constructor
   result << "\t" << gen_mlm_data_string() << "(const SimCell * sim_cell)\n";
@@ -192,12 +202,67 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   }
   result << "\t}\n";
   result << "\
-  answer_block * get_answers() const { return (answer_block *)&answers; }\n";
+  answer_block * give_answers() const { return (answer_block *)&answers; }\n\
+  void receive_answers(answer_block * answer);\n\
+  void process_questions();\n";
+  for(auto& question : questions) {
+    result << "\t" << question->gen_return_type() << " process_question_" << question->get_name() << "();\n";
+  }
   result << "};\n";
   result << "struct answer_" << agent_name << " " << gen_mlm_data_string() << "::answers(AgentType::AGENT_" << agent_name << ");" << std::endl;
+  result << "struct responses_" << agent_name << " " << gen_mlm_data_string() << "::responses;" << std::endl;
   return result.str();
 }
 
+std::string
+AgentForm::gen_responses_struct() const
+{
+  std::stringstream result;
+  result << "struct responses_" << agent_name << " {\n";
+  for(auto& question : questions) {
+    result << "\t" << question->gen_response_declaration() << ";\n";
+  }
+  result << "};\n";
+  result << "\n";
+  return result.str();
+}
+
+std::string
+AgentForm::gen_receive_answer_code() const
+{
+  std::stringstream result;
+
+  // Code to get answer from answer_block and place it into the agent resonses
+  result << "void\n";
+  result << gen_mlm_data_string() << "::receive_answers(answer_block * answers)\n{\n";
+  result << "\tswitch(answers->type_tag) {\n";
+  for(auto& agent : abmodel.agents) {
+    result << "\t\t" << "case AgentType::AGENT_" << agent.getName() << ": {\n";
+    result << "\t\t\tanswer_" << agent.getName() << " * agent_answers = static_cast<answer_" << agent.getName() << " *>(answers);\n";
+    for(auto& question : questions) {
+      result << "\t\t\t" << "responses." << question->get_name() << " = ";
+      result << "agent_answers->" << agent.getName() << "_" << question->get_name() << ";\n";
+    }
+    result << "\t\t\tbreak;\n\t\t}\n";
+  }
+  result << "\t}\n";
+  result << "}\n\n";
+
+  // Code to do question post-processing on the responses
+  result << "void\n";
+  result << gen_mlm_data_string() << "::process_questions()\n{\n";
+  for(auto& question : questions) {
+    result << "\tprocess_question_" << question->get_name() << "();\n";
+  }
+  result << "}\n\n";
+
+  // Generate functions to process each question; each needs its on scope for variables
+  for(auto& question : questions) {
+    result << question->gen_question_process_code();
+  }
+
+  return result.str();
+}
 
 std::string 
 AgentForm::gen_log_code() const 
@@ -205,7 +270,7 @@ AgentForm::gen_log_code() const
 	std::stringstream result;  
   result <<"\
 	if (data->type == AgentType::" << gen_enum_type_name() << ") {\n\
-		logStr << \":\" << \"Agent_\" << data->sim_cell->readPosition() << std::endl;\n\
+		logStr << \":\" << \"\\\\\" << data->sim_cell->readPosition();\n\
 	}";
   return result.str();
 }
@@ -223,10 +288,33 @@ AgentForm::gen_answer_struct() const
   std::string struct_name = "answer_" + agent_name;
   result << "struct " << struct_name << " : public answer_block {\n";
   for(auto& answer : answers) {
-    result << "\t" << answer->gen_declaration() << "\n";
+    result << "\t" << answer->gen_declaration() << ";\n";
   }
   result << "\n";
   result << "\t" << struct_name << "(AgentType type) : answer_block(type) {}\n";
   result << "};\n";
+  result << "\n";
+  return result.str();
+}
+
+std::string
+AgentForm::gen_reset_locals_code() const
+{
+  std::stringstream result;
+  result << "\
+void\n\
+reset_locals_" << agent_name << "()\n";
+  result << "{\n";
+  for(auto& state : states) {
+    for(auto& binding : state.getStateScopeBindings()) {
+      result << "\tlocals_" << state.getName() << "." << binding.getName() << " = " << binding.gen_initial_value() << ";\n";
+    }
+  }
+  for(auto& question : questions) {
+    for(auto& binding : question->getQuestionScopeBindings()) {
+      result << "\t" << gen_mlm_data_string() << "::process_question_" << question->get_name() << "::" << binding.getName() << " = " << binding.gen_initial_value() << ";\n";
+    }
+  }
+  result << "}\n\n";
   return result.str();
 }

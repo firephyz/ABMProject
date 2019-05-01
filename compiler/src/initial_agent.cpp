@@ -51,13 +51,27 @@ AgentPosition::dimension::dimension(const std::string& str)
     std::pair<relation_t, int> r = parse_relation(str);
     relation = r.first;
     first_value = r.second;
-    position_type = type_t::Absolute_Position;
+
+    if(relation == relation_t::None) {
+      position_type = type_t::Absolute_Position;
+    }
+    else {
+      // TODO implement
+      std::cerr << "Single bound relational dimensions not yet implemented: \'" << str << "\'.\n";
+      exit(-1);
+    }
   }
   else {
     std::string first_part = str.substr(0,comma_pos);
     std::string second_part = str.substr(comma_pos+1);
     std::pair<relation_t, int> r1 = parse_relation(first_part);
     std::pair<relation_t, int> r2 = parse_relation(second_part);
+
+    if(r1.first == relation_t::None || r2.first == relation_t::None) {
+      std::cerr << "Invalid dimension specification \'" << str << "\'.";
+      std::cerr << "Giving two dimension bounds \'" << str << "\'implies they are both relational and not absolute.\n";
+      exit(-1);
+    }
 
     if(r1.first == relation_t::LT) {
       if(r2.first == relation_t::LT) {

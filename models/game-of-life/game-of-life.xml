@@ -8,7 +8,7 @@
     <!-- <agent location='&gt;=0,&lt;2 &gt;=0,&lt;=2' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent> -->
-    <agent location='4 &lt;=1,&gt;2' type='AgentType'>
+    <agent location='4 all' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent>
     <!-- <agent location='0 4' type='AgentType'>
@@ -16,7 +16,9 @@
     </agent> -->
   </initialState>
   <environment relationType="spatial">
-    <spatialRelation dimensions="2" wrap="true"/>
+    <spatialRelation dimensions="2" wrap="true">
+			<dimensions sizes='2 3'/> 
+		</spatialRelation>
   </environment>
   <agentDefinitions>
     <agent type='AgentType' log_en="true">

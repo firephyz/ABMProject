@@ -9,7 +9,7 @@
 #include <memory>
 
 class Question;
-
+class SourceAST;
 class StateInstance {
   const std::string state_name;
   std::vector<SymbolBinding> state_scope_vars;
@@ -33,7 +33,7 @@ public:
 
 // forward declare
 struct CommsNeighborhood;
-
+class Answer;
 class AgentForm {
   const std::string agent_name;
   std::vector<SymbolBinding> agent_scope_vars;
@@ -74,6 +74,9 @@ public:
   std::string gen_mlm_data_string() const;
   std::string gen_log_code() const;
   std::string gen_answer_struct() const;
+  std::string gen_receive_answer_code() const;
+  std::string gen_responses_struct() const;
+  std::string gen_reset_locals_code() const;
  
   std::string to_string();
 };

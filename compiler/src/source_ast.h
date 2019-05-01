@@ -9,6 +9,18 @@
 #include <iostream>
 
 #include "parser.h"
+#include "compiler_types.h"
+#include "agent_form.h"
+
+// Ensures that the programmer calls the correct code-gen function
+#define CHECK_AST_CODE_GEN_READY()\
+do {\
+  if(!info.is_setup) {\
+    std::cerr << "Compiler runtime error when starting AST code-gen. You must use SourceAST::to_source_start()\
+  to start code-gen, not the derived to_source method.\n";\
+    exit(-1);\
+  }\
+} while(false)
 
 extern ParserObject parser;
 
@@ -23,13 +35,39 @@ enum ASTNodeType {
   Node_response,
 };
 
+class Question;
+class Answer;
+class StateInstance;
+
+enum class SourceASTInfoType {
+  None,
+  Question,
+  Answer,
+  StateInstance,
+};
+
+struct sourceast_info_t {
+  union {
+    const Question * question;
+    const Answer * answer;
+    const StateInstance * state;
+  } data;
+  bool is_setup = false;
+  SourceASTInfoType type = SourceASTInfoType::None;
+};
+
 class SourceAST {
 public:
+  // Used during AST code-gen to get information related to what its generating code for.
+  // Certainly not designed for parallel AST code-gen
+  static struct sourceast_info_t info;
+
   std::unique_ptr<SourceAST> next;
 
   SourceAST() : next(nullptr) {}
   virtual ~SourceAST();
   virtual std::string to_source() = 0;
+  std::string to_source_start(SourceASTInfoType type, void * ptr);
   virtual std::string to_string() = 0;
   virtual ASTNodeType get_type() const = 0;
   virtual std::string gen_c_default_value() const {
@@ -41,6 +79,14 @@ public:
     std::cerr << "Cannot call \'gen_declaration\' function on a SourceAST node of type\'" << this->type_to_string() << "\'" << std::endl;
     exit(-1);
     return std::string();
+  }
+  virtual std::string get_target_var_c_name() const {
+    std::cerr << "Cannot call \'get_target_var_c_name\' function on a SourceAST node of type \'" << this->type_to_string() << "\'" << std::endl;
+    exit(-1);
+  }
+  virtual std::string get_var_c_name() const {
+    std::cerr << "Cannot call \'get_var_c_name\' function on a SourceAST node of type \'" << this->type_to_string() << "\'" << std::endl;
+    exit(-1);
   }
   std::string type_to_string() const {
     switch(this->get_type()) {
@@ -94,6 +140,7 @@ protected:
 };
 
 class SymbolBinding;
+class SourceAST_var;
 class SourceAST_assignment : public SourceAST {
 public:
   enum class AssignmentValueType {
@@ -109,7 +156,8 @@ public:
   ~SourceAST_assignment() {}
   ASTNodeType get_type() const { return ASTNodeType::Node_assignment; }
 protected:
-  const SymbolBinding * binding;
+  //const SymbolBinding * binding;
+  std::unique_ptr<const SourceAST_var> var_binding;
   AssignmentValueType type;
   union {
     // TODO adjust Q/A Answer element. Haven't 
@@ -155,6 +203,8 @@ protected:
 
 class SourceAST_var : public SourceAST {
 public:
+  SourceAST_var() : binding(nullptr) {}
+  SourceAST_var(const SymbolBinding * binding) : binding(binding) {}
   ASTNodeType get_type() const { return ASTNodeType::Node_var; }
   std::string gen_declaration() const;
   std::string gen_type() const;
@@ -169,9 +219,11 @@ class SourceAST_ask : public SourceAST {
 protected:
   std::string question_name;
   std::shared_ptr<const Question> question;
+  const SourceAST * target_var = nullptr;
 
-  SourceAST_ask()
+  SourceAST_ask(const SourceAST_var * var)
     : question(nullptr)
+    , target_var(var)
   {
     // we don't currently allow recursive questions
     if(parser.state != ParserState::States) {
@@ -186,6 +238,7 @@ public:
   const std::string& getQuestionName() const { return question_name; }
   void setQuestion(std::shared_ptr<Question>& q) { question = q; }
   const std::shared_ptr<const Question>& getQuestion() { return question; }
+  void set_target_var(const SourceAST& var) { this->target_var = &var; }
 };
 
 class SourceAST_operator : public SourceAST {
@@ -208,6 +261,8 @@ public:
     {}
 
     bool isType(const OperatorTypeEnum& other) { return type == other; }
+    int get_num_args() const { return num_args; }
+    OperatorTypeEnum get_type() const { return type; }
     std::string to_string() {
       switch(type) {
         case OperatorTypeEnum::NoInit:
@@ -241,7 +296,6 @@ class SourceAST_return : public SourceAST {
 public:
   SourceAST_return()
   {
-    // we don't currently allow recursive questions
     if(parser.state == ParserState::States) {
       std::cerr << "Cannot return values from state logic." << std::endl;
       exit(-1);

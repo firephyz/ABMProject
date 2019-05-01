@@ -21,9 +21,15 @@ struct ABModel {
   ABM_Environment environment;
   InitialState init;
   std::vector<AgentForm> agents;
+ 
   // For Logging
   std::string model_name;  
-
+  
+  // Env variables
+  int numOfDimensions;	
+	std::string relationType;
+  std::vector<int> dimension_sizes;	
+	
   ABModel() = default;
   ABModel(const ABModel& other) = delete;
   ABModel(ABModel&& other) = default;

@@ -50,7 +50,7 @@ ABModel& parse_model(const char * xml_model_path)
         if (xmlStrcmp(child->name, (const xmlChar*)"environment") == 0){
           // change parser state so we limit the allowed AST
           parser.set_state(ParserState::Environment);
-//        parseEnviroment(child);
+          parseEnviroment(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){
           parseAgents(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"initialState") == 0) {
@@ -124,25 +124,57 @@ void parse_dimensions(xmlNodePtr curNode)
 }
 
 void parseEnviroment(xmlNodePtr envChild) {
-  const char * value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
+  auto value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
+  int test_dim_count = 0; 
+  if (value_str == NULL) {
+  	std::cerr << "No relational type specified for enivroment: " << envChild->name;
+  }
   xmlNodePtr curNode = NULL;
   int numOfDim = 0;
-	bool wrap = 0;
 
-	if (value_str != NULL) {
-    std::string relationType(value_str);
-    if(relationType == "spatial") {
-		  curNode = xmlFirstElementChild(envChild);
-			if (xmlStrcmp(curNode->name, (const xmlChar*)"spatialRelation") == 0){
-                     	numOfDim = std::stoi((const char*)xmlGetAttribute(curNode, "dimensions")->children->content, NULL, 10);
-				wrap = stobool((const char*)(xmlGetAttribute(curNode, "wrap")->children->content)); // <====8
-				std::cout << numOfDim << "\n" << wrap << std::endl;
+  std::string relationType(value_str);
+    
+  if (relationType == "spatial") {
+		curNode = xmlFirstElementChild(envChild); 
+  	if (xmlStrcmp(curNode->name, (const xmlChar*)("spatialRelation")) == 0)     { 
+      xmlAttrPtr numOfDimensions = xmlGetAttribute(curNode, "dimensions");
+ 			if (numOfDimensions == NULL) {
+				std::cerr << "Error missing dimensions attr" << std::endl;
+			}
+			numOfDim = std::stoi(std::string((const char*)numOfDimensions->children->content));
+			curNode = xmlFirstElementChild(curNode);
+      xmlAttrPtr dim_sizes = xmlGetAttribute(curNode, "sizes");
+  		if (dim_sizes == NULL) {
+				std::cerr << "Improper sizes attribute" << std::endl;  
 			} else {
-				std::cout << "Invalid Enviroment Definiton" << std::endl;
+ 				std::string dim_sizes_str((const char *)dim_sizes->children->content);
+      	size_t str_pos = 0;
+				test_dim_count = 0;
+        while (str_pos < dim_sizes_str.length()) {
+					size_t new_str_pos = dim_sizes_str.find(" ", str_pos);
+					if (new_str_pos == std::string::npos) {
+						new_str_pos = dim_sizes_str.length(); 
+					}
+					std::string dim_size_str = dim_sizes_str.substr(str_pos, new_str_pos - str_pos); 
+				  abmodel.dimension_sizes.push_back(std::stoi(dim_size_str));
+					test_dim_count++;
+					str_pos = new_str_pos + 1;
+  			} 
       }
-		}
+		} else {
+    	std::cerr << "Error, mismatched relation definition" << std::endl;
+	  } 
+  } else {
+		std::cerr << "Error, other relatiion types are not supported at this time" << std::endl;
+   }
+  abmodel.relationType = relationType;
+	abmodel.numOfDimensions = numOfDim;
+
+  // Check if the number of dimensions match the number supplied
+  if (abmodel.numOfDimensions != test_dim_count) {
+		std::cerr << "Number of dimenstions specified does not match the number of those supplied" << std::endl;
 	}
-}
+}  
 
 void parseAgents(xmlNodePtr agentsChild) {
   xmlNodePtr curNode = NULL;
@@ -156,18 +188,35 @@ void parseAgents(xmlNodePtr agentsChild) {
   }
 
   // Resolve question and agent pointers in each answer
+  // and answer and agent pointers in each question
   for(auto& data : parser.answers_to_be_linked) {
     data.resolve_answer_links();
   }
   parser.answers_to_be_linked.clear();
+
+  // Make sure every question has an answer
+  bool did_fail = false;
+  for(auto& agent : abmodel.agents) {
+    for(auto& q : agent.getQuestions()) {
+      if(q->getAnswer() == nullptr) {
+        std::cerr << "Error: Question \'" << q->get_name() << "\' in agent \'" << agent.getName() << "\'" << " does not have an answer link." << std::endl;
+        did_fail = true;
+      }
+    }
+  }
+  if(did_fail) {
+    exit(-1);
+  }
 }
 
+// Every answer has a corresponding question so we will link
+// questions to the answer in this function as well.
 void
 ParserObject::answer_link_data::resolve_answer_links()
 {
   const AgentForm& agent = abmodel.find_agent_by_name(agent_name);
-  answer->set_agent(agent);
 
+  // find the question to link to the answer
   auto q_iter = std::find_if(
     agent.getQuestions().begin(),
     agent.getQuestions().end(),
@@ -178,7 +227,15 @@ ParserObject::answer_link_data::resolve_answer_links()
     std::cerr << "Error during answer linking. Could not find question \'" << question_name << "\'" << std::endl;
     exit(-1);
   }
-  answer->set_question(*(q_iter->get()));
+  Question& question = *(q_iter->get());
+
+  // resolve links on answer side
+  answer->set_agent(agent);
+  answer->set_question(question);
+
+  // resolve links on question side
+  question.set_agent(agent);
+  question.set_answer(*answer);
 }
 
 void newAgentDef(xmlNodePtr agent) {
@@ -212,7 +269,7 @@ void newAgentDef(xmlNodePtr agent) {
       std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl;
       return; // Return error
     }
-    parseBindings(toAdd.getAgentScopeBindingsMut(), curNode);
+    parseBindings(toAdd.getAgentScopeBindingsMut(), curNode, SymbolBindingScope::AgentLocal);
 
     // Get the agent states
     parser.set_state(ParserState::States);
@@ -298,7 +355,12 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
     while(curNode != NULL) {
       // Get the state variables
       if(xmlStrcmp(curNode->name, (const xmlChar*)"stateScope") == 0) {
-        parseBindings(newState.getStateScopeBindingsMut(), curNode);
+        parseBindings(newState.getStateScopeBindingsMut(), curNode, SymbolBindingScope::StateLocal);
+
+        // Link the bindings we just created with this state so we can use the info later
+        for(auto& binding : newState.getStateScopeBindingsMut()) {
+          binding.set_state(newState);
+        }
       } else if (xmlStrcmp(curNode->name, (const xmlChar*)"logic") == 0) {
         const ContextBindings ctxt = agent.genContextBindings(newState);
         std::unique_ptr<SourceAST> logic_ast = parser.parse_logic(ctxt, curNode);
@@ -313,7 +375,7 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
   }
 }
 
-void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
+void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode, SymbolBindingScope scope) {
    curNode = xmlFirstElementChild(curNode);
 
    while (curNode != NULL) {
@@ -365,7 +427,7 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
     } else {
       is_constant = false;
     }
-    bindings.emplace_back(symName, varType, val, is_constant);
+    bindings.emplace_back(symName, varType, val, is_constant, scope);
 
     curNode = xmlNextElementSibling(curNode);
    }
