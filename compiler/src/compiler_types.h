@@ -10,7 +10,6 @@ enum class VarTypeEnum {
   Bool,
   Integer,
   Real, // fixed-point on FPGA
-  String,
   State,
 };
 
@@ -42,8 +41,6 @@ struct VariableType {
         return std::string("int");
       case VarTypeEnum::Real:
         return std::string("real");
-      case VarTypeEnum::String:
-        return std::string("string");
       case VarTypeEnum::State:
         return std::string("AgentState");
     }
@@ -59,8 +56,6 @@ struct VariableType {
         return std::string("int");
       case VarTypeEnum::Real:
         return std::string("double");
-      case VarTypeEnum::String:
-        return std::string("const char *");
       case VarTypeEnum::State:
         return std::string("AgentState");
     }
@@ -100,6 +95,7 @@ public:
   SymbolBindingScope getScope() const { return scope; }
   const StateInstance& getScopeState() const;
   void set_state(const StateInstance& state) { this->state = &state; }
+  std::string gen_c_type_decl() const { return type.to_c_source(); }
 
   static std::string scope_to_string(SymbolBindingScope scope) {
     switch(scope) {

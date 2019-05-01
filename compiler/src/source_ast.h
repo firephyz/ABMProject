@@ -66,7 +66,7 @@ public:
 
   SourceAST() : next(nullptr) {}
   virtual ~SourceAST();
-  virtual std::string to_source() = 0;
+  virtual std::string to_source() const = 0;
   std::string to_source_start(SourceASTInfoType type, void * ptr);
   virtual std::string to_string() = 0;
   virtual ASTNodeType get_type() const = 0;
