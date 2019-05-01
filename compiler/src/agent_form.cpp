@@ -83,6 +83,7 @@ AgentForm::resolve_ask_links()
       if(q->get_name() == node->getQuestionName()) {
         // give ask node the shared_ptr to Question
         node->setQuestion(q);
+        q->set_ask_tag(*node);
         break;
       }
     }
@@ -100,7 +101,7 @@ AgentForm::resolve_ask_links()
 ContextBindings
 AgentForm::genContextBindings(StateInstance& state)
 {
-  ContextBindings result;
+  ContextBindings result(SymbolBindingScope::StateLocal);
   result.frames.push_back(&state.getStateScopeBindings());
   result.frames.push_back(&agent_scope_vars);
   return result;
@@ -109,7 +110,7 @@ AgentForm::genContextBindings(StateInstance& state)
 ContextBindings
 AgentForm::genContextBindings()
 {
-  ContextBindings result;
+  ContextBindings result(SymbolBindingScope::AgentLocal);
   result.frames.push_back(&agent_scope_vars);
   return result;
 }
@@ -179,14 +180,13 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   for(auto& variable : agent_scope_vars) {
     result << "\t" << variable.gen_declaration(*this) << "\n";
   }
-  result << "\tunion {\n";
   for(auto& state : states) {
     // place struct type declaration
-    result << "\t\tstruct mlm_data_" << agent_name << "_" << state.getName();
+    result << "\tstruct mlm_data_" << agent_name << "_" << state.getName();
     // place struct name
     result << " locals_" << state.getName() << ";\n";
   }
-  result << "\t};\n\n";
+  result << "\n";
   
   // constructor
   result << "\t" << gen_mlm_data_string() << "(const SimCell * sim_cell)\n";
@@ -206,7 +206,7 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   void receive_answers(answer_block * answer);\n\
   void process_questions();\n";
   for(auto& question : questions) {
-    result << "\tvoid process_question_" << question->get_name() << "();\n";
+    result << "\t" << question->gen_return_type() << " process_question_" << question->get_name() << "();\n";
   }
   result << "};\n";
   result << "struct answer_" << agent_name << " " << gen_mlm_data_string() << "::answers(AgentType::AGENT_" << agent_name << ");" << std::endl;

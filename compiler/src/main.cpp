@@ -16,6 +16,9 @@
 // TODO Change the generated agent mlm_data structs for the specific agents to have non-static
 //      answers and responses structs. This would allow multiple agents to be processed in parallel.
 //      Better yet, create them dynamically, one for each thread working on a region of the simulation.
+// TODO Many objects (AST, SymbolBindings, etc) may contain pointers to objects created on vectors.
+//      This needs to be fixed. Could presize the vectors to the needed length so the reference
+//      don't have a chance of getting invalidated.
 
 #include <iostream>
 #include <cstring>
@@ -28,6 +31,7 @@
 #include "agent_form.h"
 #include "abmodel.h"
 #include "parser.h"
+#include "util.h"
 
 struct program_args_t pargs;
 ABModel abmodel;
@@ -170,7 +174,7 @@ int main(int argc, char *argv[])
   // load and parse input model
   ABModel& model = parse_model(pargs.xml_model_path.c_str());
 
-  // std::cout << model.to_string();
+  std::cout << model.to_string();
 
   // write out ast as code to file
   std::string unique_id = std::to_string((int)time(NULL));

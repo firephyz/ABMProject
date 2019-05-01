@@ -3,13 +3,39 @@
 #include <sstream>
 #include <iostream>
 
+// static decls inits
 int SourceAST::print_depth = 0;
 int SourceAST::start_depth = 0;
+struct sourceast_info_t SourceAST::info;
 
 SourceAST::~SourceAST() {
   if(next != nullptr) {
     delete next.release();
   }
+}
+
+std::string
+SourceAST::to_source_start(SourceASTInfoType type, void * ptr) {
+  info.type = type;
+  switch(info.type) {
+    case SourceASTInfoType::None:
+      std::cerr << "Compiler runtime error. Cannot use SourceAST InfoType::None. What is info.data?\n";
+      exit(-1);
+      break;
+    case SourceASTInfoType::Question:
+      info.data.question = (Question *)ptr;
+      break;
+    case SourceASTInfoType::Answer:
+      info.data.answer = (Answer *)ptr;
+      break;
+    case SourceASTInfoType::StateInstance:
+      info.data.state = (StateInstance *)ptr;
+      break;
+  }
+  info.is_setup = true;
+  std::string result = this->to_source();
+  info.is_setup = false;
+  return result;
 }
 
 std::string

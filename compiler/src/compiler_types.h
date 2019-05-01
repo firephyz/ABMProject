@@ -69,14 +69,26 @@ struct VariableType {
   }
 };
 
+enum class SymbolBindingScope {
+  None,
+  StateLocal,
+  AgentLocal,
+  Question,
+  Answer,
+};
+
 class AgentForm;
+class StateInstance;
 class SymbolBinding {
   std::string name;
   struct VariableType type;
   std::string initial_value;
   bool is_constant;
+  SymbolBindingScope scope;
+  // If binding is in state scope, this will contain a pointer to that state
+  const StateInstance * state = nullptr;
 public:
-  SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant);
+  SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant, SymbolBindingScope scope);
 
   const std::string& getName() const { return name; }
   std::string to_string() const;
@@ -84,22 +96,47 @@ public:
   const std::string& gen_var_name() const { return name; }
   const VariableType& get_type() const { return type; }
   std::string gen_c_default_value() const;
-};
+  SymbolBindingScope getScope() const { return scope; }
+  const StateInstance& getScopeState() const;
+  void set_state(const StateInstance& state) { this->state = &state; }
 
-#include "agent_form.h"
+  static std::string scope_to_string(SymbolBindingScope scope) {
+    switch(scope) {
+      case SymbolBindingScope::None:
+        return std::string("None");
+      case SymbolBindingScope::StateLocal:
+        return std::string("StateLocal");
+      case SymbolBindingScope::AgentLocal:
+        return std::string("AgentLocal");
+      case SymbolBindingScope::Question:
+        return std::string("Question");
+      case SymbolBindingScope::Answer:
+        return std::string("Answer");
+    }
+    return std::string();
+  }
+};
 
 class ContextBindings {
 public:
+  SymbolBindingScope scope;
   std::vector<const std::vector<SymbolBinding> *> frames;
+
+  ContextBindings(SymbolBindingScope scope) : scope(scope) {}
+  SymbolBindingScope getScope() const { return scope; }
   const SymbolBinding& getBindingByName(const char * name) const;
   ContextBindings& extend(std::vector<SymbolBinding>& bindings);
 };
 
+#include "agent_form.h"
+
 #include "source_ast.h"
 
 class Answer;
+class SourceAST_ask;
 class Question {
   std::string question_name;
+  const SourceAST_ask * ask_tag = nullptr;
   const AgentForm * source_agent = nullptr;
   const Answer * answer = nullptr;
   std::vector<SymbolBinding> question_scope_vars;
@@ -112,13 +149,16 @@ public:
 
   void set_agent(const AgentForm& agent) { source_agent = &agent; }
   void set_answer(const Answer& answer) { this->answer = &answer; }
+  void set_ask_tag(const SourceAST_ask& ask) { this->ask_tag = &ask; }
   const Answer * getAnswer() const { return answer; }
+  const SourceAST_ask * get_ask_tag() const { return ask_tag; }
 
   std::string to_string() const;
 
   const std::string& get_name() const { return question_name; }
   std::string gen_response_declaration() const;
   std::string gen_question_process_code() const;
+  std::string gen_return_type() const;
 };
 
 class Answer {
@@ -140,6 +180,7 @@ public:
   const std::string& gen_name_as_struct_member() const;
   const std::string& gen_answer_source() const;
   std::string gen_declaration() const;
+  std::string gen_return_type() const;
 };
 
 #endif

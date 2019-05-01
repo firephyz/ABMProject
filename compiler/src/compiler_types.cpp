@@ -15,11 +15,12 @@
 
 extern struct program_args_t pargs;
 
-SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant)
+SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant, SymbolBindingScope scope)
   : name(name)
   , type(type)
   , initial_value(initial_value)
   , is_constant(is_constant)
+  , scope(scope)
 {
   // allocate and copy initial value
   if(pargs.target == OutputTarget::FPGA) {
@@ -94,6 +95,22 @@ SymbolBinding::gen_declaration(const AgentForm& agent) const
   return result.str();
 }
 
+const StateInstance&
+SymbolBinding::getScopeState() const
+{
+  if(state == nullptr) {
+    if(scope != SymbolBindingScope::StateLocal) {
+      std::cerr << "Error: Attempting to the get the state of variable \'" << name << "\'" << " which was not declared in state scope.\n";
+      exit(-1);
+    }
+    else {
+      std::cerr << "Compiler runtime error: Variable binding \'" << name << " declared in a state scope doesn't have a corresponding state link.\n";
+      exit(-1);
+    }
+  }
+  return *state;
+}
+
 const SymbolBinding&
 ContextBindings::getBindingByName(const char * name) const
 {
@@ -134,7 +151,7 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
   xmlNodePtr curNode = xmlFirstElementChild(node);
   while(curNode != NULL) {
     if(xmlStrcmp(curNode->name, (const xmlChar *)"scope") == 0) {
-      parseBindings(question_scope_vars, curNode);
+      parseBindings(question_scope_vars, curNode, SymbolBindingScope::Question);
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"body") == 0) {
       // change parser state so we limit the allowed AST
@@ -166,6 +183,7 @@ Question::to_string() const
 
   result << "\tQuestion name: " << question_name << std::endl;
   result << "\t\t         addr: " << this << std::endl;
+  result << "\t\tA addr: " << answer << std::endl;
   result << "\t\t\t------ Vars ------" << std::endl;
   for(auto& binding : question_scope_vars) {
     result << "\t\t\t\t" << binding.to_string();
@@ -180,9 +198,7 @@ Question::to_string() const
 std::string
 Question::gen_response_declaration() const
 {
-  std::string decl = std::string("int ") + question_name;
-  std::string name = source_agent->getName();
-
+  std::string decl = answer->gen_return_type() + " " + question_name;
   return std::move(decl);
 }
 
@@ -191,18 +207,46 @@ Question::gen_question_process_code() const
 {
   std::stringstream result;
 
-  result << "void\n";
+  result << this->gen_return_type() << "\n";
   result << source_agent->gen_mlm_data_string() << "::process_question_" << this->get_name() << "()\n";
   result << "{\n";
+
   // Gen local variables needed for question processing code
   for(auto& var : question_scope_vars) {
-    result << "\t" << var.gen_declaration(*source_agent);
+    // Needs to be static since the value needs to stay across calls to the
+    // process_question function. Only during a runtime tick (all agents done
+    // processing) will it be reset.
+    result << "\tstatic " << var.gen_declaration(*source_agent);
   }
   result << "\n";
-  result << question_source->to_source();
-  result << "}\n\n";
+
+  // Gen source
+  result << util::indent(question_source->to_source_start(SourceASTInfoType::Question, (void *)this));
+  result << "\n}\n\n";
 
   return result.str();
+}
+
+std::string
+Question::gen_return_type() const
+{
+  SourceAST * node = question_source.get();
+  while(node->get_type() != ASTNodeType::Node_return) {
+    node = node->next.get();
+    if(node == nullptr) {
+      std::cerr << "Error: Failed to get return type of surrounding context because a\
+  return node doesn't exist as a final statement.\n";
+      exit(-1);
+    }
+  }
+
+  if(node->next != nullptr) {
+    std::cerr << "Error: Return statement should be the final one in a sequence of code blocks.\n";
+    exit(-1);
+  }
+
+
+  return static_cast<SourceAST_return *>(node)->getValue().gen_type();
 }
 
 Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
@@ -229,7 +273,7 @@ Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
   xmlNodePtr curNode = xmlFirstElementChild(node);
   while(curNode != NULL) {
     if(xmlStrcmp(curNode->name, (const xmlChar *)"scope") == 0) {
-      parseBindings(answer_scope_vars, curNode);
+      parseBindings(answer_scope_vars, curNode, SymbolBindingScope::Answer);
     }
     else if(xmlStrcmp(curNode->name, (const xmlChar *)"body") == 0) {
       // change parser state so we limit the allowed AST
@@ -285,10 +329,17 @@ Answer::gen_answer_source() const
 std::string
 Answer::gen_declaration() const
 {
+  std::string type_str = gen_return_type();
   SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
-  std::string type_str = return_node.getValue().gen_type();
   std::string default_value = return_node.getValue().gen_c_default_value();
   return type_str + " " + gen_name_as_struct_member() + " = " + default_value;
+}
+
+std::string
+Answer::gen_return_type() const
+{
+  SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
+  return return_node.getValue().gen_type();
 }
 
 const std::string&

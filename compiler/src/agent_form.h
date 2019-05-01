@@ -9,7 +9,7 @@
 #include <memory>
 
 class Question;
-
+class SourceAST;
 class StateInstance {
   const std::string state_name;
   std::vector<SymbolBinding> state_scope_vars;
@@ -33,7 +33,7 @@ public:
 
 // forward declare
 struct CommsNeighborhood;
-
+class Answer;
 class AgentForm {
   const std::string agent_name;
   std::vector<SymbolBinding> agent_scope_vars;

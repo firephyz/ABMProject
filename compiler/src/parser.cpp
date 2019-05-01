@@ -237,7 +237,7 @@ void newAgentDef(xmlNodePtr agent) {
       std::cerr << "Improper Agent Definition: Missing Agent Scope" << std::endl;
       return; // Return error
     }
-    parseBindings(toAdd.getAgentScopeBindingsMut(), curNode);
+    parseBindings(toAdd.getAgentScopeBindingsMut(), curNode, SymbolBindingScope::AgentLocal);
 
     // Get the agent states
     parser.set_state(ParserState::States);
@@ -323,7 +323,12 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
     while(curNode != NULL) {
       // Get the state variables
       if(xmlStrcmp(curNode->name, (const xmlChar*)"stateScope") == 0) {
-        parseBindings(newState.getStateScopeBindingsMut(), curNode);
+        parseBindings(newState.getStateScopeBindingsMut(), curNode, SymbolBindingScope::StateLocal);
+
+        // Link the bindings we just created with this state so we can use the info later
+        for(auto& binding : newState.getStateScopeBindingsMut()) {
+          binding.set_state(newState);
+        }
       } else if (xmlStrcmp(curNode->name, (const xmlChar*)"logic") == 0) {
         const ContextBindings ctxt = agent.genContextBindings(newState);
         std::unique_ptr<SourceAST> logic_ast = parser.parse_logic(ctxt, curNode);
@@ -338,7 +343,7 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
   }
 }
 
-void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
+void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode, SymbolBindingScope scope) {
    curNode = xmlFirstElementChild(curNode);
 
    while (curNode != NULL) {
@@ -390,7 +395,7 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode) {
     } else {
       is_constant = false;
     }
-    bindings.emplace_back(symName, varType, val, is_constant);
+    bindings.emplace_back(symName, varType, val, is_constant, scope);
 
     curNode = xmlNextElementSibling(curNode);
    }
