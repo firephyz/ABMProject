@@ -115,11 +115,8 @@ void parse_dimensions(xmlNodePtr curNode)
       if(new_str_pos == std::string::npos) new_str_pos = dim_sizes_str.length();
       std::string dim_size_str = dim_sizes_str.substr(str_pos, new_str_pos - str_pos);
       abmodel.init.dimension_sizes.push_back(std::stoi(dim_size_str));
-
       str_pos = new_str_pos + 1;
     }
-
-    // TODO make sure number of dimension sizes matches the number of dimensions
   }
 }
 
@@ -172,7 +169,12 @@ void parseEnviroment(xmlNodePtr envChild) {
 
   // Check if the number of dimensions match the number supplied
   if (abmodel.numOfDimensions != test_dim_count) {
-		std::cerr << "Number of dimenstions specified does not match the number of those supplied" << std::endl;
+		std::cerr << "Number of dimenstions specified does not match the number of those supplied to enviroment tag" << std::endl;
+	}
+  
+  // Check if the number of inital dimension sizes matches the number supplied
+  if (abmodel.numOfDimensions != abs(abmodel.init.dimension_sizes.size())) {
+		std::cerr << "Number of dimensions specified does not match the number of initial dimensions supplied" << std::endl; 
 	}
 }  
 
