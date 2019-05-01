@@ -122,7 +122,7 @@ void parse_dimensions(xmlNodePtr curNode)
 
 void parseEnviroment(xmlNodePtr envChild) {
   auto value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
-  int test_dim_count = 0; 
+  uint test_dim_count = 0; 
   if (value_str == NULL) {
   	std::cerr << "No relational type specified for enivroment: " << envChild->name;
   }
@@ -173,7 +173,7 @@ void parseEnviroment(xmlNodePtr envChild) {
 	}
   
   // Check if the number of inital dimension sizes matches the number supplied
-  if (abmodel.numOfDimensions != abs(abmodel.init.dimension_sizes.size())) {
+  if (abmodel.numOfDimensions != abmodel.init.dimension_sizes.size()) {
 		std::cerr << "Number of dimensions specified does not match the number of initial dimensions supplied" << std::endl; 
 	}
 }  

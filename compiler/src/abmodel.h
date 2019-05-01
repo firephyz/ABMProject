@@ -26,7 +26,7 @@ struct ABModel {
   std::string model_name;  
   
   // Env variables
-  int numOfDimensions;	
+  uint numOfDimensions;	
 	std::string relationType;
   std::vector<int> dimension_sizes;	
 	
