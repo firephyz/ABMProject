@@ -53,15 +53,19 @@ class VisualSim {
       return;
     }
     
+    // Clear all gridSpaces
+    for (GridRow row : this.gridRows) {
+      for (GridSpace space : row.row) {
+        space.removeAll();  
+      }
+    }
+    
     for (Agent a : this.stampLog.get(curStep).agents) {
       moveAgent(a);  
     }
   }
   
   void moveAgent(Agent a) {
-    // Get the current gridspace the Agent was in previously and Remove the agent from that spaces's arrayList
-    a.curSpace.agents.remove(a);
-    
     // Set Hard Limits to prevent array access errors as well as wrap
     if (a.curPos.x <= 0) {
       a.curPos.x = envSize - 1; 

@@ -15,6 +15,10 @@ class GridSpace {
    this.agents.remove(agent);  
  }
  
+ void removeAll() {
+  this.agents.clear();   
+ }
+ 
  PVector getColor() {
    PVector colorAvg = new PVector(0, 0, 0);
    for (Agent a : this.agents) {
