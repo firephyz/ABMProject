@@ -16,7 +16,9 @@
     </agent> -->
   </initialState>
   <environment relationType="spatial">
-    <spatialRelation dimensions="2" wrap="true"/>
+    <spatialRelation dimensions="2" wrap="true">
+			<dimensions sizes='2 3'/> 
+		</spatialRelation>
   </environment>
   <agentDefinitions>
     <agent type='AgentType' log_en="true">

@@ -50,7 +50,7 @@ ABModel& parse_model(const char * xml_model_path)
         if (xmlStrcmp(child->name, (const xmlChar*)"environment") == 0){
           // change parser state so we limit the allowed AST
           parser.set_state(ParserState::Environment);
-//        parseEnviroment(child);
+          parseEnviroment(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){
           parseAgents(child);
         } else if(xmlStrcmp(child->name, (const xmlChar*)"initialState") == 0) {
@@ -124,25 +124,57 @@ void parse_dimensions(xmlNodePtr curNode)
 }
 
 void parseEnviroment(xmlNodePtr envChild) {
-  const char * value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
+  auto value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
+  int test_dim_count = 0; 
+  if (value_str == NULL) {
+  	std::cerr << "No relational type specified for enivroment: " << envChild->name;
+  }
   xmlNodePtr curNode = NULL;
   int numOfDim = 0;
-	bool wrap = 0;
 
-	if (value_str != NULL) {
-    std::string relationType(value_str);
-    if(relationType == "spatial") {
-		  curNode = xmlFirstElementChild(envChild);
-			if (xmlStrcmp(curNode->name, (const xmlChar*)"spatialRelation") == 0){
-                     	numOfDim = std::stoi((const char*)xmlGetAttribute(curNode, "dimensions")->children->content, NULL, 10);
-				wrap = stobool((const char*)(xmlGetAttribute(curNode, "wrap")->children->content)); // <====8
-				std::cout << numOfDim << "\n" << wrap << std::endl;
+  std::string relationType(value_str);
+    
+  if (relationType == "spatial") {
+		curNode = xmlFirstElementChild(envChild); 
+  	if (xmlStrcmp(curNode->name, (const xmlChar*)("spatialRelation")) == 0)     { 
+      xmlAttrPtr numOfDimensions = xmlGetAttribute(curNode, "dimensions");
+ 			if (numOfDimensions == NULL) {
+				std::cerr << "Error missing dimensions attr" << std::endl;
+			}
+			numOfDim = std::stoi(std::string((const char*)numOfDimensions->children->content));
+			curNode = xmlFirstElementChild(curNode);
+      xmlAttrPtr dim_sizes = xmlGetAttribute(curNode, "sizes");
+  		if (dim_sizes == NULL) {
+				std::cerr << "Improper sizes attribute" << std::endl;  
 			} else {
-				std::cout << "Invalid Enviroment Definiton" << std::endl;
+ 				std::string dim_sizes_str((const char *)dim_sizes->children->content);
+      	size_t str_pos = 0;
+				test_dim_count = 0;
+        while (str_pos < dim_sizes_str.length()) {
+					size_t new_str_pos = dim_sizes_str.find(" ", str_pos);
+					if (new_str_pos == std::string::npos) {
+						new_str_pos = dim_sizes_str.length(); 
+					}
+					std::string dim_size_str = dim_sizes_str.substr(str_pos, new_str_pos - str_pos); 
+				  abmodel.dimension_sizes.push_back(std::stoi(dim_size_str));
+					test_dim_count++;
+					str_pos = new_str_pos + 1;
+  			} 
       }
-		}
+		} else {
+    	std::cerr << "Error, mismatched relation definition" << std::endl;
+	  } 
+  } else {
+		std::cerr << "Error, other relatiion types are not supported at this time" << std::endl;
+   }
+  abmodel.relationType = relationType;
+	abmodel.numOfDimensions = numOfDim;
+
+  // Check if the number of dimensions match the number supplied
+  if (abmodel.numOfDimensions != test_dim_count) {
+		std::cerr << "Number of dimenstions specified does not match the number of those supplied" << std::endl;
 	}
-}
+}  
 
 void parseAgents(xmlNodePtr agentsChild) {
   xmlNodePtr curNode = NULL;

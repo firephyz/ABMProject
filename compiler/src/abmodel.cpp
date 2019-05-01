@@ -266,7 +266,16 @@ ABModel::gen_initial_agent_defs()
 std::string
 ABModel::gen_spatial_enum()
 {
-  return std::string("SpatialType::D2_Cartesian");
+	switch(numOfDimensions) {
+		case 1:
+			return "SpatialType::D1_Cartesian";
+    case 2:
+  		return "SpatialType::D2_Cartesian";
+		case 3:
+			return "SpatialType::D3_Cartesian";
+		default:
+			return "SpatialType::D2_Cartesian";
+  }
 }
 
 std::string
@@ -287,7 +296,7 @@ ABModel::gen_space_dims()
 std::string
 ABModel::gen_space_size()
 {
-  return std::string("2");
+	return std::to_string(numOfDimensions);
 }
 
 std::string
