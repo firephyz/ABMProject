@@ -96,6 +96,7 @@ public:
   const std::string& gen_var_name() const { return name; }
   const VariableType& get_type() const { return type; }
   std::string gen_c_default_value() const;
+  std::string gen_initial_value() const;
   SymbolBindingScope getScope() const { return scope; }
   const StateInstance& getScopeState() const;
   void set_state(const StateInstance& state) { this->state = &state; }
@@ -152,6 +153,7 @@ public:
   void set_ask_tag(const SourceAST_ask& ask) { this->ask_tag = &ask; }
   const Answer * getAnswer() const { return answer; }
   const SourceAST_ask * get_ask_tag() const { return ask_tag; }
+  const std::vector<SymbolBinding> getQuestionScopeBindings() const { return question_scope_vars; }
 
   std::string to_string() const;
 

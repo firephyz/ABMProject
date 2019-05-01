@@ -95,6 +95,12 @@ SymbolBinding::gen_declaration(const AgentForm& agent) const
   return result.str();
 }
 
+std::string
+SymbolBinding::gen_initial_value() const
+{
+  return std::string("INIT");
+}
+
 const StateInstance&
 SymbolBinding::getScopeState() const
 {

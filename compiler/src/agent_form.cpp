@@ -296,3 +296,25 @@ AgentForm::gen_answer_struct() const
   result << "\n";
   return result.str();
 }
+
+std::string
+AgentForm::gen_reset_locals_code() const
+{
+  std::stringstream result;
+  result << "\
+void\n\
+reset_locals_" << agent_name << "()\n";
+  result << "{\n";
+  for(auto& state : states) {
+    for(auto& binding : state.getStateScopeBindings()) {
+      result << "\tlocals_" << state.getName() << "." << binding.getName() << " = " << binding.gen_initial_value() << ";\n";
+    }
+  }
+  for(auto& question : questions) {
+    for(auto& binding : question->getQuestionScopeBindings()) {
+      result << "\t" << gen_mlm_data_string() << "::process_question_" << question->get_name() << "::" << binding.getName() << " = " << binding.gen_initial_value() << ";\n";
+    }
+  }
+  result << "}\n\n";
+  return result.str();
+}
