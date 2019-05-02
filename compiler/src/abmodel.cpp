@@ -162,7 +162,10 @@ void ABModel::add_to_econtext(int frameSelect, char * name, char * value, char *
 {
 	VariableType TYP;
 	TYP.type = strToEnum(std::string((const char*)type));
-	SymbolBinding temp = SymbolBinding(std::string(name), TYP, std::string(value) , cnst);
+	std::string tName = std::string(name);
+	std::string tValue = std::string(value);
+    SymbolBinding temp;
+    temp = SymbolBinding(tName , TYP, tValue , cnst);
 	this->environment.env.frames.at(frameSelect)->push_back(temp);
 }
 
@@ -233,4 +236,8 @@ ABModel::to_string()
   }
 
   return result.str();
+}
+
+int ABModel::num_agents() {
+    return (int) agents.size();
 }

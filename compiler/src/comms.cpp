@@ -5,7 +5,7 @@
 #include <string>
 
 extern ABModel abmodel;
-
+/*
 std::string
 CommsNeighborhood::base_c_source_wrapper(std::string&& derived_string) const
 {
@@ -14,7 +14,7 @@ CommsNeighborhood::base_c_source_wrapper(std::string&& derived_string) const
   result << "CommsNeighborhood neighborhood_" << agent.getName() << " = " << derived_string << ";";
   return result.str();
 }
-
+*/
 std::string
 Comms::NCube::to_c_source() const
 {

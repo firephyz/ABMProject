@@ -74,7 +74,7 @@ AgentForm::add_state(StateInstance&& state)
 ContextBindings
 AgentForm::genContextBindings(StateInstance& state)
 {
-  ContextBindings result;
+  ContextBindings result(0);
   result.frames.push_back(&state.getStateScopeBindings());
   result.frames.push_back(&agent_scope_vars);
   return result;
@@ -83,7 +83,8 @@ AgentForm::genContextBindings(StateInstance& state)
 ContextBindings
 AgentForm::genContextBindings()
 {
-  ContextBindings result;
+  ContextBindings result(0);
+
   result.frames.push_back(&agent_scope_vars);
   return result;
 }

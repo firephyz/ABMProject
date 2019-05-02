@@ -69,7 +69,7 @@ class SymbolBinding {
   std::string initial_value;
   bool is_constant;
 public:
-  SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant);
+  SymbolBinding(std::string name, struct VariableType type, std::string& initial_value, bool is_constant);
   SymbolBinding();
   const std::string& getName() const { return name; }
   std::string to_string();

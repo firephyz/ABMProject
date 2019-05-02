@@ -12,9 +12,9 @@
 
 using namespace std;
 #include <libxml2/libxml/parser.h>
-//#include <libxml/parser.h>
+#include <libxml/parser.h>
 #include <string>
-
+#include<stdio.h>
 #include <iomanip>
 #include <cctype>
 #include <vector>
@@ -138,9 +138,10 @@ void parseEnviroment(xmlNodePtr envChild) {
 	abmodel.setDim(numOfDim);
 	abmodel.setWrap(wrap);
 	
-	for (curNode; curNode; curNode = xmlNextElementSibling(curNode)) {
+	for (curNode; curNode != NULL; curNode = xmlNextElementSibling(curNode)) {
 		//curNode = xmlNextElementSibling(curNode);
-		if (curNode->name == "GlobalParameter") {
+
+		if (std::string((char*)curNode->name).compare(std::string("GlobalParameter")) == 0) {
 			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child in global tag 
 			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
 				char *tnm = (char*)xmlGetAttribute(temp, (const char *) "name")->children->content;           //->children->content; // temp name
@@ -165,7 +166,7 @@ void parseEnviroment(xmlNodePtr envChild) {
 				}
 			}
 		} //
-		else if (curNode->name == "localParameters") {
+		else if (std::string((char*)curNode->name).compare(std::string("localParameters")) == 0) {
 			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child of the local paramters
 			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
 				char* tnm =(char*) xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
@@ -195,21 +196,24 @@ void parseEnviroment(xmlNodePtr envChild) {
 	}
 	// rule xmlPtr and pointers to envSymbolBindings are stored as parsing occurs, then combinded here and stored in the overall environment
 	for (int i = 0; i < globalVar.size(); i++) {
-		globalVar.at(i)->updateEnvRule(parseEnvRule(globalRules.at(i)));
+		globalVar[i]->updateEnvRule(parse_logic(abmodel.get_env_context() ,globalRules[i]));
+
 
 		
 	}
 	for (int i = 0; i < localVar.size(); i++) {
-		localVar.at(i)->updateEnvRule(parseEnvRule(localRules.at(i)));
+		localVar[i]->updateEnvRule(parse_logic(abmodel.get_env_context() ,localRules[i]));
+
 	}
 }
 // manages code parsing for env variables
 // fairly sure that the full context is required to allow intra set referencing, so whole context goes through
+/*
 std::unique_ptr<SourceAST> parseEnvRule(xmlNodePtr varRule) {
-	return parse_logic(abmodel.get_env_context, varRule);
+	return parse_logic(abmodel->get_env_context(), varRule);
 
 }
-
+*/
 void parseAgents(xmlNodePtr agentsChild) {
   xmlNodePtr curNode = NULL;
 

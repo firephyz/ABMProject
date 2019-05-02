@@ -42,6 +42,8 @@ class ABModel {
 		std::string gen_space_size();
 		std::string gen_mlm_data_struct();
 
+		int num_agents();
+
 		void add_agent(AgentForm& agent);
 		void add_to_econtext(int frameSelect, char *name, char*value, char*type, bool cnst);
 		ContextBindings get_env_context();
