@@ -48,25 +48,24 @@ ABModel::to_c_source()
   //   result << agent.getNeighborhood().to_c_source() << "\n";
   // }
   // result << "\n";
-
-  // Declare agent types class with enum
-  result << "class AgentType {\n";
-  result << "	enum Type_t {";
+  
+  // Declare enum 
+ 	result << "enum class AgentType {\n";
 	for(auto& agent : agents) {
     result << "\t" << agent.gen_enum_type_name() << ",\n";
   }
   result << "};\n\n";
-	result << "\tType_t val;\n";
- 	result << "\tstd::string to_string() {\n";
-	result << "\t\tswitch(val) {\n";
-	for(auto& agent : agents) {
-		result << "\t\t\tcase " << agent.gen_enum_type_name() << ":\n";
-		result << "\t\t\t\treturn " << "\"agent.gen_enum_type_name()\" << ";\n";
-	} 
-	result << "\t\t}";
-  result << "}";
 
-  /*	
+  // Declare enum to_string funct
+	result << "std::string agentTypeToString(AgentType t) {\n";
+	result << "\tswitch(t) {\n";
+	for(auto& agent : agents) {
+		result << "\t\tcase AgentType::" << agent.gen_enum_type_name() << ":\n";
+		result << "\t\t\treturn \"" <<  agent.gen_enum_type_name() << "\";\n";
+	} 
+	result << "\t\t}\n}\n\n";  	
+
+
   // TODO split this following enum into multiple ones for each agent
   // Declare agent state enum
   result << "enum class AgentState {\n";
@@ -78,7 +77,7 @@ ABModel::to_c_source()
   }
   result << "};\n";
   result << "\n";
-  */
+  
  
   // Declare answer_block base class
   result << "struct answer_block {\n";
@@ -201,7 +200,7 @@ ABModel::gen_new_agent_func()
   // function for figuring out how much space the agent needs
   result << "\
 mlm_data *\n\
-allocate_agent_space(const uint type, const SimCell * cell)\n\
+allocate_agent_space(const uint type, SimCell * cell)\n\
 {\n\
   switch(type) {\n";
   for(auto& agent : agents) {
@@ -218,7 +217,7 @@ allocate_agent_space(const uint type, const SimCell * cell)\n\
   // Function that creates all the new agents
   result << "\
 mlm_data *\n\
-AgentModel::modelNewAgent(void * position, const SimCell * cell) {\n\
+AgentModel::modelNewAgent(void * position, SimCell * cell) {\n\
   auto agent_iter = std::find_if(initial_agents.begin(), initial_agents.end(),\n\
     [&](const auto& agent){\n\
       return agent.is_at_position(position);\n\
