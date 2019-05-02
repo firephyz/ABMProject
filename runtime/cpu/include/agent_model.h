@@ -63,8 +63,9 @@ class SimAgent {
 public:
   static const int num_dimensions = N_DIM;
 
-  constexpr SimAgent(const uint agent_type, const std::initializer_list<size_t>& position)
+  constexpr SimAgent(const uint agent_type, const std::initializer_list<size_t>& position, void * init_data)
     : agent_type(agent_type)
+    , init_data(init_data)
   {
     std::copy(position.begin(), position.end(), this->position);
   }
@@ -87,10 +88,12 @@ public:
   }
 
   uint getAgentType() const { return agent_type; }
+  void * getInitData() const { return init_data; }
 
 private:
   uint agent_type;
   size_t position[num_dimensions];
+  void * init_data;
 };
 
 class AgentModel {

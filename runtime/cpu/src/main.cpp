@@ -176,7 +176,7 @@ int main(int argc, char** argv) {
   log_file << "Enviroment_Size:" <<  loaded_model->dimensions[0] << std::endl;
   log_file << "Grid_Space:" << "10" << std::endl;
   log_file << "GridLines:" << "1" << std::endl;  
-  int limit = 3;
+  int limit = 100;
   log_file << "ColorByState:" << "1" << std::endl;
 
   int it = 0;

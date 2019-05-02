@@ -98,18 +98,6 @@ ABModel::to_c_source()
     result << "\t" << agent.gen_enum_type_name() << ",\n";
   }
   result << "};\n\n";
-
-  // TODO split this following enum into multiple ones for each agent
-  // Declare agent state enum
-  result << "enum class AgentState {\n";
-  result << "\tSTATE_NONE,\n";
-  for(auto& agent : agents) {
-    for(auto& state : agent.getStates()) {
-      result << "\t" << state.gen_state_enum_name(agent.getName()) << ",\n";
-    }
-  }
-  result << "};\n";
-  result << "\n"; 
  
   // Declare answer_block base class
   result << "struct answer_block {\n";
@@ -234,12 +222,12 @@ ABModel::gen_new_agent_func()
   // function for figuring out how much space the agent needs
   result << "\
 mlm_data *\n\
-allocate_agent_space(const uint type, SimCell * cell)\n\
+allocate_agent_space(const uint type, SimCell * cell, void * init_data)\n\
 {\n\
   switch(type) {\n";
   for(auto& agent : agents) {
     result << "\t\tcase " << agent_to_uint(agent) << \
-      ": return new " << agent.gen_mlm_data_string() << "(cell);\n";
+      ": return new " << agent.gen_mlm_data_string() << "(cell, (struct agent_init_" << agent.getName() << " *)init_data);\n";
   }
   result << "\t\tdefault:\n\t\t\tstd::cerr << \"Runtime failure. Unknown agent uint id.\" << std::endl;\n";
   result << "\t\t\texit(-1);\n";
@@ -257,7 +245,7 @@ AgentModel::modelNewAgent(void * position, SimCell * cell) {\n\
       return agent.is_at_position(position);\n\
     });\n\
   if(agent_iter != initial_agents.end()) {\n\
-    struct mlm_data * data = allocate_agent_space(agent_iter->getAgentType(), cell);\n\
+    struct mlm_data * data = allocate_agent_space(agent_iter->getAgentType(), cell, agent_iter->getInitData());\n\
     return data;\n\
   }\n\
 \n\
@@ -302,14 +290,14 @@ ABModel::gen_initial_agent_defs()
 {
   std::vector<std::string> result;
   for(auto& agent : init.agents) {
-    if(agent.position.is_region()) {
+    //if(agent.position.is_region()) {
       for(auto& single_agent : agent.enumerate()) {
         result.push_back(single_agent.gen_constructor());
       }
-    }
-    else {
-      result.push_back(agent.gen_constructor());
-    }
+    // }
+    // else {
+    //   result.push_back(agent.gen_constructor());
+    // }
   }
   return result;
 }

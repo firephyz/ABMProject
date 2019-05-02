@@ -221,8 +221,11 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   // constructor
   //result << "\t AgentType * typePtr = (AgentType*)malloc(sizeof(AgentType));\n";
 	//result << "\t *typePtr = AgentType::" << gen_enum_type_name() << ";\n";
-  result << "\t" << gen_mlm_data_string() << "(SimCell * sim_cell)\n";
-  result << "\t\t: mlm_data(sim_cell, AgentType::" << gen_enum_type_name()  << ", (CommsNeighborhood)" << neighborhood->gen_c_init_value() << ")\n";
+  result << "\t" << gen_mlm_data_string() << "(SimCell * sim_cell, struct agent_init_" << agent_name << " * init_data)\n";
+  result << "\t\t: mlm_data(sim_cell, AgentType::" << gen_enum_type_name()  << ", " << neighborhood->gen_c_init_value() << ")\n";
+  for(auto& var : agent_scope_vars) {
+    result << "\t\t, " << var.getName() << "(init_data->" << var.getName() << ")\n";
+  }
   result << "\t{\n";
   result << "\t\tanswers = answer_" << agent_name << "(AgentType::AGENT_" << agent_name << ");\n";
   result << "\t}\n";
@@ -236,7 +239,8 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   result << "\
   answer_block * give_answers() const { return (answer_block *)&answers; }\n\
   void receive_answers(answer_block * answer);\n\
-  void process_questions();\n";
+  void process_questions();\n\
+  void update_agent();\n";
 	result << "\tstd::string AgentTypeEnumToString();\n";	
 	result << "\tstd::string AgentStateEnumToString();\n";
 
