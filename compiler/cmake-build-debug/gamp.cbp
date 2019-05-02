@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="gamp"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gamp">
+				<Option output="/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/gamp" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 gamp"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="gamp/fast">
+				<Option output="/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/gamp" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 gamp/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/alex/Documents/449_final/ABMProject/compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/abmodel.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/abmodel.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/agent_form.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/agent_form.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/comms.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/comms.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/compiler_types.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/compiler_types.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/config.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/initial_agent.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/initial_agent.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/main.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/parser.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/parser.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/source_ast.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/source_ast.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/source_c.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/source_c.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/source_verilog.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/source_verilog.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/util.cpp">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/src/util.h">
+			<Option target="gamp"/>
+		</Unit>
+		<Unit filename="/home/alex/Documents/449_final/ABMProject/compiler/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

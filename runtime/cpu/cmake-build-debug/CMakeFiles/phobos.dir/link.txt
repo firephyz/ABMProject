@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   -rdynamic CMakeFiles/phobos.dir/src/communications.cpp.o CMakeFiles/phobos.dir/src/main.cpp.o CMakeFiles/phobos.dir/src/spatial.cpp.o  -o phobos -ldl 
