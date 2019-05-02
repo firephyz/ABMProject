@@ -26,7 +26,7 @@ if(varName == NULL) {\
 
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;
-mlm_data *          (*modelNewAgentPtr)(AgentModel * this_class, void *, const SimCell * sim_cell)                                  = NULL;
+mlm_data *          (*modelNewAgentPtr)(AgentModel * this_class, void *, SimCell * sim_cell)                                  = NULL;
 answer_block *      (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * mlm_data)                       = NULL;
 void                (*modelReceiveAnswerPtr)(AgentModel * this_class, mlm_data * data, answer_block * answer)     = NULL;
 const CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, mlm_data * data)                 = NULL;
@@ -106,7 +106,7 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
     DLSYM_ERROR_CHECK(modelGiveAnswerPtr, symbol);
   }
   else if(symbol.find("modelNewAgent") != std::string::npos) {
-    modelNewAgentPtr = (mlm_data * (*)(AgentModel *, void *, const SimCell * sim_cell))dlsym(model_handle, symbol.c_str());
+    modelNewAgentPtr = (mlm_data * (*)(AgentModel *, void *, SimCell * sim_cell))dlsym(model_handle, symbol.c_str());
     DLSYM_ERROR_CHECK(modelNewAgentPtr, symbol);
   }
   else if(symbol.find("modelGiveNeighborhood") != std::string::npos) {
