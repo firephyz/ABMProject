@@ -22,7 +22,7 @@ if(varName == NULL) {\
 //int SimAgent::num_dimensions = -1; // placeholder for actual number
 
 // TODO Allow setting this with command line arguments
-//const char * model_lib_path = "../../../models/test/test_model.so";
+const char * model_lib_path = "../../../models/test/test_model.so";
 
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;

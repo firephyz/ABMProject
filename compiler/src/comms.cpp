@@ -19,7 +19,7 @@ CommsNeighborhood::gen_c_declaration() const
 {
   return std::string("CommsNeighborhood neighborhood");
 }
-
+*/
 std::string
 Comms::NCube::gen_c_init_value() const
 {

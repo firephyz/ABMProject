@@ -101,7 +101,11 @@ AgentForm::resolve_ask_links()
 ContextBindings
 AgentForm::genContextBindings(StateInstance& state)
 {
+<<<<<<< HEAD
   ContextBindings result(SymbolBindingScope::StateLocal);
+=======
+  ContextBindings result(0);
+>>>>>>> alexs_branch
   result.frames.push_back(&state.getStateScopeBindings());
   result.frames.push_back(&agent_scope_vars);
   return result;

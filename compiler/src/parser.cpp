@@ -13,7 +13,7 @@
 using namespace std;
 #include <libxml2/libxml/parser.h>
 #include <string>
-
+#include<stdio.h>
 #include <iomanip>
 #include <cctype>
 #include <vector>
@@ -124,57 +124,186 @@ void parse_dimensions(xmlNodePtr curNode)
 }
 
 void parseEnviroment(xmlNodePtr envChild) {
-  auto value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
-  int test_dim_count = 0; 
-  if (value_str == NULL) {
-  	std::cerr << "No relational type specified for enivroment: " << envChild->name;
-  }
-  xmlNodePtr curNode = NULL;
+  const char * value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
+  xmlNodePtr curNode = NULL; 
+  vector<xmlNodePtr> localRules;
+  vector<xmlNodePtr> globalRules;
+  vector<EnvSymbolBinding*> localVar;
+  vector<EnvSymbolBinding*> globalVar;
   int numOfDim = 0;
 
-  std::string relationType(value_str);
-    
-  if (relationType == "spatial") {
-		curNode = xmlFirstElementChild(envChild); 
-  	if (xmlStrcmp(curNode->name, (const xmlChar*)("spatialRelation")) == 0)     { 
-      xmlAttrPtr numOfDimensions = xmlGetAttribute(curNode, "dimensions");
- 			if (numOfDimensions == NULL) {
-				std::cerr << "Error missing dimensions attr" << std::endl;
-			}
-			numOfDim = std::stoi(std::string((const char*)numOfDimensions->children->content));
-			curNode = xmlFirstElementChild(curNode);
-      xmlAttrPtr dim_sizes = xmlGetAttribute(curNode, "sizes");
-  		if (dim_sizes == NULL) {
-				std::cerr << "Improper sizes attribute" << std::endl;  
+	if (value_str != NULL) {
+    std::string relationType(value_str);
+       if(relationType == "spatial") {
+		  curNode = xmlFirstElementChild(envChild);
+			if (xmlStrcmp(curNode->name, (const xmlChar*)"spatialRelation") == 0){
+                     	numOfDim = std::stoi((const char*)xmlGetAttribute(curNode, "dimensions")->children->content, NULL, 10);
+				wrap = stobool((const char*)(xmlGetAttribute(curNode, "wrap")->children->content)); // <====8
+				std::cout << numOfDim << "\n" << wrap << std::endl;
 			} else {
- 				std::string dim_sizes_str((const char *)dim_sizes->children->content);
-      	size_t str_pos = 0;
-				test_dim_count = 0;
-        while (str_pos < dim_sizes_str.length()) {
-					size_t new_str_pos = dim_sizes_str.find(" ", str_pos);
-					if (new_str_pos == std::string::npos) {
-						new_str_pos = dim_sizes_str.length(); 
+				std::cout << "Invalid Enviroment Definiton" << std::endl;
+              }
+	   } 
+	} 
+	abmodel.setDim(numOfDim);
+	abmodel.setWrap(wrap);
+
+	while(curNode != NULL){
+
+
+		if (std::string((char*)curNode->name).compare(std::string("GlobalParameter")) == 0) {
+			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child in global tag 
+			//for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
+			while(temp != NULL){
+				char *tnm = (char*)xmlGetAttribute(temp, (const char *) "name")->children->content;           //->children->content; // temp name
+				char *tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
+				char *tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
+				//bool cns = true; // temp
+				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
+					xmlNodePtr rule = xmlFirstElementChild(curNode); 
+					if (rule != NULL) {
+						//cns = false;
+						globalRules.push_back(rule);
+						abmodel.add_to_econtext(1, tnm, tvl, tty, false);
+						globalVar.push_back(&((std::vector<EnvSymbolBinding>*)abmodel.get_env_context().frames.at(1))->at(0));
 					}
-					std::string dim_size_str = dim_sizes_str.substr(str_pos, new_str_pos - str_pos); 
-				  abmodel.dimension_sizes.push_back(std::stoi(dim_size_str));
-					test_dim_count++;
-					str_pos = new_str_pos + 1;
-  			} 
-      }
-		} else {
-    	std::cerr << "Error, mismatched relation definition" << std::endl;
-	  } 
-  } else {
-		std::cerr << "Error, other relatiion types are not supported at this time" << std::endl;
-   }
-  abmodel.relationType = relationType;
-	abmodel.numOfDimensions = numOfDim;
+					else {
+						abmodel.add_to_econtext(1, tnm, tvl, tty, true);
+					}
+					
+				}
+				else {
+					std::cout << "INVALID GLOBAL ENVIRONMENT VARIABLE" << std::endl;
+				}
+                temp = xmlNextElementSibling(temp);
+			}
+		}
+		else if (std::string((char*)curNode->name).compare(std::string("localParameters")) == 0) {
+			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child of the local paramters
+			while(temp != NULL){
+				char* tnm =(char*) xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
+				char* tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
+				char* tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
+
+				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
+					xmlNodePtr rule = xmlFirstElementChild(curNode);
+					if (rule != NULL) {
+						//cns = false;
+						localRules.push_back(rule);
+						abmodel.add_to_econtext(0, tnm, tvl, tty, false);
+						localVar.push_back(&((std::vector<EnvSymbolBinding>*)abmodel.get_env_context().frames.at(0))->at(0));
+
+					}
+					else {
+						abmodel.add_to_econtext(0, tnm, tvl, tty, true);
+
+				    }
 
   // Check if the number of dimensions match the number supplied
   if (abmodel.numOfDimensions != test_dim_count) {
 		std::cerr << "Number of dimenstions specified does not match the number of those supplied" << std::endl;
 	}
 }  
+=======
+  const char * value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
+  xmlNodePtr curNode = NULL; 
+  vector<xmlNodePtr> localRules;
+  vector<xmlNodePtr> globalRules;
+  vector<EnvSymbolBinding*> localVar;
+  vector<EnvSymbolBinding*> globalVar;
+  int numOfDim = 0;
+  bool wrap = 0;
+
+	if (value_str != NULL) {
+    std::string relationType(value_str);
+       if(relationType == "spatial") {
+		  curNode = xmlFirstElementChild(envChild);
+			if (xmlStrcmp(curNode->name, (const xmlChar*)"spatialRelation") == 0){
+                     	numOfDim = std::stoi((const char*)xmlGetAttribute(curNode, "dimensions")->children->content, NULL, 10);
+				wrap = stobool((const char*)(xmlGetAttribute(curNode, "wrap")->children->content)); // <====8
+				std::cout << numOfDim << "\n" << wrap << std::endl;
+			} else {
+				std::cout << "Invalid Enviroment Definiton" << std::endl;
+              }
+	   } 
+	} 
+	abmodel.setDim(numOfDim);
+	abmodel.setWrap(wrap);
+
+	while(curNode != NULL){
+
+
+		if (std::string((char*)curNode->name).compare(std::string("GlobalParameter")) == 0) {
+			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child in global tag 
+			//for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
+			while(temp != NULL){
+				char *tnm = (char*)xmlGetAttribute(temp, (const char *) "name")->children->content;           //->children->content; // temp name
+				char *tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
+				char *tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
+				//bool cns = true; // temp
+				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
+					xmlNodePtr rule = xmlFirstElementChild(curNode); 
+					if (rule != NULL) {
+						//cns = false;
+						globalRules.push_back(rule);
+						abmodel.add_to_econtext(1, tnm, tvl, tty, false);
+						globalVar.push_back(&((std::vector<EnvSymbolBinding>*)abmodel.get_env_context().frames.at(1))->at(0));
+					}
+					else {
+						abmodel.add_to_econtext(1, tnm, tvl, tty, true);
+					}
+					
+				}
+				else {
+					std::cout << "INVALID GLOBAL ENVIRONMENT VARIABLE" << std::endl;
+				}
+                temp = xmlNextElementSibling(temp);
+			}
+		}
+		else if (std::string((char*)curNode->name).compare(std::string("localParameters")) == 0) {
+			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child of the local paramters
+			while(temp != NULL){
+				char* tnm =(char*) xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
+				char* tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
+				char* tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
+
+				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
+					xmlNodePtr rule = xmlFirstElementChild(curNode);
+					if (rule != NULL) {
+						//cns = false;
+						localRules.push_back(rule);
+						abmodel.add_to_econtext(0, tnm, tvl, tty, false);
+						localVar.push_back(&((std::vector<EnvSymbolBinding>*)abmodel.get_env_context().frames.at(0))->at(0));
+
+					}
+					else {
+						abmodel.add_to_econtext(0, tnm, tvl, tty, true);
+
+				    }
+
+				}
+				else {
+					std::cout << "INVALID LOCAL ENVIRONMENT VARIABLE" << std::endl;
+				}
+                temp = xmlNextElementSibling(temp);
+			}
+		}
+        curNode = xmlNextElementSibling(curNode);
+	}
+	// rule xmlPtr and pointers to envSymbolBindings are stored as parsing occurs, then combined here and stored in the overall environment
+	for (int i = 0; i < globalVar.size(); i++) {
+
+        globalVar.at(1)->updateEnvRule(parse_logic(abmodel.get_env_context(), globalRules.at(i)));
+
+		
+	}
+	for (int i = 0; i < localVar.size(); i++) {
+
+		localVar.at(i)->updateEnvRule(parse_logic(abmodel.get_env_context(), localRules.at(i)));
+
+	}
+}
+>>>>>>> alexs_branch
 
 void parseAgents(xmlNodePtr agentsChild) {
   xmlNodePtr curNode = NULL;
@@ -438,7 +567,12 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
 {
   if(xmlStrcmp(node->name, (const xmlChar*)"if") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
+<<<<<<< HEAD
 //      return std::make_unique<SourceAST_if_Verilog>(ctxt, node);
+=======
+      //return std::make_unique<SourceAST_if_Verilog>(ctxt, node);
+
+>>>>>>> alexs_branch
     }
     else {
       return std::make_unique<SourceAST_if_C>(ctxt, node);
@@ -462,7 +596,8 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"operator") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-//      return std::make_unique<SourceAST_operator_Verilog>(ctxt, node);
+     // return std::make_unique<SourceAST_operator_Verilog>(ctxt, node);
+
     }
     else {
       return std::make_unique<SourceAST_operator_C>(ctxt, node);
@@ -470,7 +605,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"constant") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-//      return std::make_unique<SourceAST_constant_Verilog>(node);
+      //return std::make_unique<SourceAST_constant_Verilog>(node);
     }
     else {
       return std::make_unique<SourceAST_constant_C>(node);

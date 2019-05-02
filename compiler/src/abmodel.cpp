@@ -313,8 +313,34 @@ ABModel::gen_space_size()
 	return std::to_string(numOfDimensions);
 }
 
+<<<<<<< HEAD
 std::string
 ABModel::gen_logging_funct() 
+=======
+void
+ABModel::add_agent(AgentForm& agent)
+{
+  agents.push_back(std::move(agent));
+}
+
+void ABModel::add_to_econtext(int frameSelect, char * name, char * value, char * type, bool cnst) // check on symbolbinding definition
+{
+	VariableType TYP;
+	TYP.type = strToEnum(std::string((const char*)type));
+	std::string tName = std::string(name);
+	std::string tValue = std::string(value);
+    SymbolBinding temp;
+    temp = SymbolBinding(tName , TYP, tValue , cnst);
+	this->environment.env.frames.at(frameSelect)->push_back(temp);
+}
+
+ContextBindings ABModel::get_env_context()
+{
+	return this->environment.env;
+}
+/*
+void ABModel::add_LRAST(std::unique_ptr<SourceAST> tempLR)
+>>>>>>> alexs_branch
 {
   std::stringstream result; 
   result <<"\
@@ -371,13 +397,49 @@ ABModel::find_agent_by_name(const std::string& name) const
       return agent.getName() == name;
     });
 
-  if(agent_iter == agents.end()) {
-    std::cerr << "Failed to convert agent name \'" << name << "\' into uint.";
-    std::cerr << " Could not find corresponding agent." << std::endl;
-    exit(-1);
-  }
+std::vector<std::unique_ptr<SourceAST>> ABModel::get_GRAST()
+{
+	return this->environment.GR_AST;
+}
+*/
+/*void ABModel::add_to_econtext(int frameSelect, std::string& name, struct VariableType type, void * initial_value, bool is_constant) {
+	SymbolBinding temp = SymbolBinding(name, type, initial_value, is_constant);
+	ABModel.Environment[frameSelect].push_back(temp);
+}
+*/
+ContextBindings EnvironmentParameters::genEnvironmentContext() {
+	
+	 // frame 0 = local data, frame 1 = global data
+	this->env = ContextBindings(2, "ENV");
+	
+}
 
-  return *agent_iter;
+bool ABModel::wrapState()
+{
+	return this->environment.wrap;
+}
+int ABModel::dimCount()
+{
+	return this->environment.dims;
+}
+
+bool ABModel::wrapState()
+{
+	return this->environment.wrap;
+}
+int ABModel::dimCount()
+{
+	return this->environment.dims;
+}
+
+void ABModel::setDim(int D) 
+{
+	this->environment.dims = D;
+}
+
+void ABModel::setWrap(bool W) 
+{
+	this->environment.wrap = W;
 }
 
 std::string
@@ -390,4 +452,8 @@ ABModel::to_string()
   }
 
   return result.str();
+}
+
+int ABModel::num_agents() {
+    return (int) agents.size();
 }

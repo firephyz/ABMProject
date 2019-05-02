@@ -15,6 +15,7 @@
 
 extern struct program_args_t pargs;
 
+<<<<<<< HEAD
 SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant, SymbolBindingScope scope)
   : name(name)
   , type(type)
@@ -30,6 +31,22 @@ SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::s
 }
 
 VarTypeEnum strToEnum(std::string& str){
+=======
+SymbolBinding::SymbolBinding(std::string name, struct VariableType type, std::string& initial_value, bool is_constant)
+	: name(name)
+	, type(type)
+	, initial_value(initial_value)
+	, is_constant(is_constant)
+{
+	// allocate and copy initial value
+	if (pargs.target == OutputTarget::FPGA) {
+		std::cerr << "Symbol bindings for FPGA target not yet implemented\n";
+		exit(-1);
+	}
+}
+
+VarTypeEnum strToEnum(std::string str) {
+>>>>>>> alexs_branch
   if (str == "int")
     return VarTypeEnum::Integer;
   if (str == "bool")
@@ -38,11 +55,22 @@ VarTypeEnum strToEnum(std::string& str){
     return VarTypeEnum::Real;
   if (str == "String")
     return VarTypeEnum::String;
+<<<<<<< HEAD
   if (str == "state")
     return VarTypeEnum::State;
   
   std::cerr << "Unknown type string \'" << str <<"\'." << std::endl;
   exit(-1);
+=======
+  return VarTypeEnum::Integer;
+}
+
+SymbolBinding::SymbolBinding()
+{
+	this->name = "";
+	this->is_constant = true;
+	
+>>>>>>> alexs_branch
 }
 
 std::string
@@ -201,6 +229,7 @@ Question::to_string() const
   return result.str();
 }
 
+<<<<<<< HEAD
 std::string
 Question::gen_response_declaration() const
 {
@@ -245,6 +274,31 @@ Question::gen_return_type() const
       exit(-1);
     }
   }
+=======
+ContextBindings::ContextBindings(int frameCount) {
+	for (int i = 0; i < frameCount; i++) {
+		std::vector<SymbolBinding> *SB;
+		ContextBindings::frames.push_back(SB);
+	}
+
+} 
+
+ContextBindings::ContextBindings(int frameCount, std::string conType) {
+	if (strcmp(conType.c_str(), "ENV")) {
+        for (int i = 0; i < frameCount; i++) {
+            std::vector<EnvSymbolBinding> *v;
+            this->frames.push_back((std::vector<SymbolBinding> *) v);
+
+        }
+    }else {
+        for (int i = 0; i < frameCount; i++) {
+            for (int i = 0; i < frameCount; i++) {
+                std::vector<SymbolBinding> *SB;
+                this->frames.push_back(SB);
+            }
+        }
+    }
+>>>>>>> alexs_branch
 
   if(node->next != nullptr) {
     std::cerr << "Error: Return statement should be the final one in a sequence of code blocks.\n";
@@ -351,8 +405,12 @@ Answer::gen_return_type() const
 const std::string&
 Answer::gen_name_as_struct_member() const
 {
+<<<<<<< HEAD
   static std::string name = target_agent->getName() + "_" + question->get_name();
   return name;
+=======
+	this->EnvRule.reset(sast.get());
+>>>>>>> alexs_branch
 }
 
 std::string

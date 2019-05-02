@@ -162,7 +162,14 @@ public:
   std::string gen_question_process_code() const;
   std::string gen_return_type() const;
 };
-
+class EnvSymbolBinding : public SymbolBinding {
+	std::unique_ptr<SourceAST> EnvRule;
+	public:
+		EnvSymbolBinding(std::string& name, struct VariableType type, std::string initial_value, std::unique_ptr<SourceAST> rulePrt);
+		EnvSymbolBinding(std::string& name, struct VariableType type, std::string initial_value);
+		void updateEnvRule(std::unique_ptr<SourceAST> sast);
+	
+};
 class Answer {
   const AgentForm * target_agent = nullptr;
   const Question * question = nullptr;
