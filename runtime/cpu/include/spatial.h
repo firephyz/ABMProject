@@ -29,7 +29,7 @@ public:
   bool operator!=(SimCell& other);
   bool is_empty() { return data == NULL; }
   std::string readPosition() const;
-
+  size_t * get_position() const { return position; }
 };
 
 // Forward declare
