@@ -1,19 +1,24 @@
+import java.util.Iterator;
+
 class VisualSim {
   ArrayList<GridRow> gridRows;
   ArrayList<TimeStamp> stampLog;
+  Map<String, PVector> colorMap;
   int envSize;
   int stepSize;
   int curStep;
   int simSize;
+  int colorByStates_n;
   String simName;
   boolean noGridLines;
   
-  VisualSim(String simName, int envSize, int stepSize, int simSize, int gridLines,  ArrayList<TimeStamp> timeStamps) {
+  VisualSim(String simName, int envSize, int stepSize, int simSize, int gridLines,  ArrayList<TimeStamp> timeStamps, Map<String, PVector> map, int colorBool) {
     this.simName = simName;
     this.envSize = envSize;
     this.stepSize = stepSize;
     this.curStep = 0;
     this.simSize = simSize;
+    this.colorByStates_n = colorBool;
     
     // Set whether the simualtion should show gridlines or not (Really only needed for boids)
     if (gridLines == 0) {
@@ -33,13 +38,16 @@ class VisualSim {
     for (TimeStamp t : timeStamps) {  
       this.stampLog.add(t);  
     }
+    
+    // Make deep copy of ColorMap 
+    this.colorMap = map;
   }
   
   // Adds agent to gridSpace
   void placeAgent(Agent a) {
      int rowNum = (int)a.curPos.x;
      int colNum = (int)a.curPos.y;
-     this.gridRows.get(rowNum).row.get(colNum).agents.add(a); // Add the agent a to the appropriate gridSpace
+     this.gridRows.get(rowNum).row.get(colNum).addAgent(a); // Add the agent a to the appropriate gridSpace
      a.curSpace = this.gridRows.get(rowNum).row.get(colNum);
   }
   
@@ -47,10 +55,8 @@ class VisualSim {
     System.out.println(curStep);
     if (this.curStep >= (this.simSize - 1)) { // End of simulation
       this.curStep = this.simSize - 1;
-      return;  
     } else if (this.curStep < 0) {
       this.curStep = 0;
-      return;
     }
     
     // Clear all gridSpaces
