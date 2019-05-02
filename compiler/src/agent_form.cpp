@@ -327,18 +327,19 @@ AgentForm::gen_agent_update_code() const
     result << "\n\t\tbreak;\n";
   }
   result << "\t}\n";
-  result << "}\n\n";
-  return result.str();
-}
 
-std::string
-AgentForm::gen_reset_question_locals_code() const
-{
-  std::stringstream result;
-  for(auto& question : questions) {
-    for(auto& binding : question->getQuestionScopeBindings()) {
-      result << "\t" << "mlm_data_" << agent_name << "_questions." << question->get_name() << "." << binding.getName() << " = " << binding.gen_c_default_value() << ";\n";
+  // reset question and state locals
+  for(auto& state : states) {
+    for(auto& binding : state.getStateScopeBindings()) {
+      result << "\t" << "locals_" << state.getName() << "." << binding.getName() << " = " << binding.gen_c_default_value() << ";\n";
     }
   }
+  for(auto& question : questions) {
+    for(auto& binding : question->getQuestionScopeBindings()) {
+      result << "\t" << "q_locals." << question->get_name() << "." << binding.getName() << " = " << binding.gen_c_default_value() << ";\n";
+    }
+  }
+  result << "}\n\n";
+
   return result.str();
 }

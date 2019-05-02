@@ -77,7 +77,6 @@ public:
   std::string gen_answer_struct() const;
   std::string gen_receive_answer_code() const;
   std::string gen_responses_struct() const;
-  std::string gen_reset_question_locals_code() const;
   std::string gen_agent_update_code() const;
  
   std::string to_string();
