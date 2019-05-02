@@ -34,7 +34,6 @@ void                (*modelUpdateAgentPtr)(AgentModel * this_class, mlm_data * d
 std::string         (*modelLogPtr)(AgentModel * this_class, mlm_data * data);
 void                (*modelTickPtr)(AgentModel * this_class);
 
-
 // Output mangled symbols to temporary file to read in later
 // TODO Make this better so we for sure only grab the symbols we need.
 // Then nm grep won't need occassional adjusting (as mentioned below
@@ -177,7 +176,7 @@ int main(int argc, char** argv) {
   log_file << "Grid_Space:" << "10" << std::endl;
   log_file << "GridLines:" << "1" << std::endl;  
   int limit = 3;
-  log_file << "Sim_Size:" << limit << std::endl;
+  log_file << "ColorByState:" << "1" << std::endl;
 
   int it = 0;
   while(it < limit) {
@@ -201,12 +200,12 @@ int main(int argc, char** argv) {
       if(cell.is_empty()) continue; // skip empty cells
       loaded_model->updateAgent(cell.data);
     }
-
+	
     log_file << it;
     // Call log function for each cell containing an agent
     for(auto& cell : space.cells) {
       if(cell.is_empty()) continue; // skip empty cells
-      log_file << cell.data->*AgentType << loaded_model->Log(cell.data);
+			log_file << loaded_model->Log(cell.data);
     } 
 
     log_file << std::endl;

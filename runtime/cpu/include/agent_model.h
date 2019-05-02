@@ -36,6 +36,9 @@ struct mlm_data {
   virtual answer_block * give_answers() const = 0;
   virtual void receive_answers(answer_block * answer) = 0;
   virtual void process_questions() = 0;
+	virtual std::string AgentTypeEnumToString() = 0;
+	virtual std::string AgentStateEnumToString() = 0;
+
 };
 
 // Must be outside class to be resolved by dlsym
@@ -46,6 +49,7 @@ extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, mlm
 extern const CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, mlm_data * data);
 extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, mlm_data * data);
 extern std::string         (*modelLogPtr)(AgentModel * this_class, mlm_data * data);
+extern std::string 				 (*modelAgentTypeEnumToStringPtr)(AgentModel * this_class, AgentType type);
 extern void                (*modelTickPtr)(AgentModel * this_class);
 /**********************************************************
  * The following class is only constructed in the MLM cpp files.
@@ -130,7 +134,7 @@ public:
   inline const CommsNeighborhood& giveNeighborhood(mlm_data * data) { return (*modelGiveNeighborhoodPtr)(this, data); }
   inline void updateAgent(mlm_data * data) { return (*modelUpdateAgentPtr)(this, data); }
   inline std::string Log(mlm_data * data) { return (*modelLogPtr)(this, data); }
-  inline void Tick() { return (*modelTickPtr)(this); }
+	inline void Tick() { return (*modelTickPtr)(this); }
 };
 
 #endif

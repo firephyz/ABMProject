@@ -221,6 +221,8 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   answer_block * give_answers() const { return (answer_block *)&answers; }\n\
   void receive_answers(answer_block * answer);\n\
   void process_questions();\n";
+	result << "\tstd::string AgentTypeEnumToString();\n";	
+	result << "\tstd::string AgentStateEnumToString();\n";
   for(auto& question : questions) {
     result << "\t" << question->gen_return_type() << " process_question_" << question->get_name();
     result << "(" << "mlm_data_" << this->getName() << "_questions::" << question->get_name() << "_t * locals)\n;";
@@ -285,10 +287,8 @@ std::string
 AgentForm::gen_log_code() const 
 {
 	std::stringstream result;  
-  result <<"\
-	if (*(data->type) == AgentType::" << gen_enum_type_name() << ") {\n\
-		logStr << \":\" << \"\\\\\" << data->sim_cell->readPosition();\n\
-	}";
+  result << "if (*(data->type) == AgentType::" << gen_enum_type_name() << ") {\n";
+	result << "logStr << \":\" << data->AgentTypeEnumToString() << \"%\" << data->AgentStateEnumToString() << \"\\\\\" << data->sim_cell->readPosition();\n}";
   return result.str();
 }
 

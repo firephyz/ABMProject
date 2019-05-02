@@ -56,16 +56,6 @@ ABModel::to_c_source()
   }
   result << "};\n\n";
 
-  // Declare enum to_string funct
-	result << "std::string agentTypeToString(AgentType t) {\n";
-	result << "\tswitch(t) {\n";
-	for(auto& agent : agents) {
-		result << "\t\tcase AgentType::" << agent.gen_enum_type_name() << ":\n";
-		result << "\t\t\treturn \"" <<  agent.gen_enum_type_name() << "\";\n";
-	} 
-	result << "\t\t}\n}\n\n";  	
-
-
   // TODO split this following enum into multiple ones for each agent
   // Declare agent state enum
   result << "enum class AgentState {\n";
@@ -76,8 +66,7 @@ ABModel::to_c_source()
     }
   }
   result << "};\n";
-  result << "\n";
-  
+  result << "\n"; 
  
   // Declare answer_block base class
   result << "struct answer_block {\n";
@@ -90,6 +79,7 @@ ABModel::to_c_source()
   // Declare mlm_data structure and the derived ones for each agents
   result << gen_mlm_data_structs();
 
+	result << gen_enum_to_strings();
   // Declare agent constructors
   result << gen_new_agent_func() << "\n";
   result << "\n";
@@ -393,3 +383,32 @@ ABModel::to_string()
 
   return result.str();
 }
+
+std::string
+ABModel::gen_enum_to_strings() 
+{
+	std::stringstream result;
+	// Declare enum to_string funct
+	for(auto& agent : agents) {
+		result << "std::string mlm_data_" << agent.agent_name <<"::AgentTypeEnumToString() {\n";
+		result << "\tswitch(*(this->type)) {\n";
+		result << "\t\tcase AgentType::" << agent.gen_enum_type_name() << ":\n";
+		result << "\t\t\treturn \"" <<  agent.gen_enum_type_name() << "\";\n";
+	} 
+	result << "\t\t}\n}\n\n";  	
+
+ 
+  // Declare enum to_string funct
+for(auto& agent : agents) {
+		result << "std::string mlm_data_" << agent.agent_name << "::AgentStateEnumToString() {\n";
+	  result << "\tswitch(this->state) {\n";
+	for(auto& state : agent.getStates()) {
+			result << "\t\tcase AgentState::" << state.gen_state_enum_name(agent.getName()) << ":\n";
+			result << "\t\t\treturn \"" <<  state.gen_state_enum_name(agent.getName()) << "\";\n";
+	  } 
+  }
+	result << "\t\t}\n}\n\n";  	
+	
+	return result.str();
+}
+

@@ -48,7 +48,8 @@ struct ABModel {
   std::string gen_give_neighborhood_code();
   std::string gen_update_agent_code();
   std::string gen_tick_code();
-
+	std::string gen_enum_to_strings();
+	
   void add_agent(AgentForm& agent);
   size_t num_agents() const { return agents.size(); }
   AgentForm& get_agent_by_index(const size_t index) { return agents[index]; }
