@@ -1,0 +1,21 @@
+build/
+.vs/
+commit-message.txt
+BUILD/
+<<<<<<< HEAD
+*.so
+*.o
+log_file
+tags
+=======
+/x64/Debug/ABMProject.tlog
+/x64/Debug/vc141.idb
+/x64/Debug/vc141.pdb
+/x64/Debug/ABMProject.log
+/packages.config
+/ABMProject.vcxproj.user
+/ABMProject.vcxproj.filters
+/ABMProject.vcxproj
+/ABMProject.sln
+/packages
+>>>>>>> alexs_branch
