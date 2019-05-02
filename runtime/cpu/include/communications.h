@@ -1,7 +1,6 @@
 #ifndef COMMUNICATIONS_INCLUDED
 #define COMMUNICATIONS_INCLUDED
 
-#include "spatial.h"
 #include <cstdlib>
 
 #include <string>
@@ -27,6 +26,7 @@ typedef struct comms_neighborhood_t {
 /***********************************************************************
  * Model specifc elements done                                         *
  ***********************************************************************/
+#include "spatial.h"
 
 // These are the available neighborhood predicates
 bool is_in_ncube(SimSpace& space, SimCell& receiver, SimCell& sender, int size);

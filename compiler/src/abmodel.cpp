@@ -48,13 +48,23 @@ ABModel::to_c_source()
   //   result << agent.getNeighborhood().to_c_source() << "\n";
   // }
   // result << "\n";
-
-  // Declare agent types enum
-  result << "enum class AgentType {\n";
-  for(auto& agent : agents) {
+  
+  // Declare enum 
+ 	result << "enum class AgentType {\n";
+	for(auto& agent : agents) {
     result << "\t" << agent.gen_enum_type_name() << ",\n";
   }
   result << "};\n\n";
+
+  // Declare enum to_string funct
+	result << "std::string agentTypeToString(AgentType t) {\n";
+	result << "\tswitch(t) {\n";
+	for(auto& agent : agents) {
+		result << "\t\tcase AgentType::" << agent.gen_enum_type_name() << ":\n";
+		result << "\t\t\treturn \"" <<  agent.gen_enum_type_name() << "\";\n";
+	} 
+	result << "\t\t}\n}\n\n";  	
+
 
   // TODO split this following enum into multiple ones for each agent
   // Declare agent state enum
@@ -67,7 +77,8 @@ ABModel::to_c_source()
   }
   result << "};\n";
   result << "\n";
-
+  
+ 
   // Declare answer_block base class
   result << "struct answer_block {\n";
   result << "\tAgentType type_tag;\n\n";
@@ -190,7 +201,7 @@ ABModel::gen_new_agent_func()
   // function for figuring out how much space the agent needs
   result << "\
 mlm_data *\n\
-allocate_agent_space(const uint type, const SimCell * cell)\n\
+allocate_agent_space(const uint type, SimCell * cell)\n\
 {\n\
   switch(type) {\n";
   for(auto& agent : agents) {
@@ -207,7 +218,7 @@ allocate_agent_space(const uint type, const SimCell * cell)\n\
   // Function that creates all the new agents
   result << "\
 mlm_data *\n\
-AgentModel::modelNewAgent(void * position, const SimCell * cell) {\n\
+AgentModel::modelNewAgent(void * position, SimCell * cell) {\n\
   auto agent_iter = std::find_if(initial_agents.begin(), initial_agents.end(),\n\
     [&](const auto& agent){\n\
       return agent.is_at_position(position);\n\
@@ -227,6 +238,7 @@ std::string
 ABModel::gen_mlm_data_structs()
 {
   std::stringstream result;
+/*
   result <<"\
 struct mlm_data {\n\
   const SimCell * sim_cell;\n\
@@ -244,7 +256,7 @@ struct mlm_data {\n\
   virtual void process_questions() = 0;\n\
   virtual void update_agent() = 0;\n\
 };\n" << "\n";
-
+*/
   for(auto& agent : agents) {
     result << agent.gen_mlm_data_struct() << "\n";
   }

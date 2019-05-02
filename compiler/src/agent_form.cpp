@@ -204,8 +204,10 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   result << "\n";
   
   // constructor
-  result << "\t" << gen_mlm_data_string() << "(const SimCell * sim_cell)\n";
-  result << "\t\t: mlm_data(sim_cell, AgentType::" << gen_enum_type_name() << ", (CommsNeighborhood)" << neighborhood->gen_c_init_value() << ")\n";
+  //result << "\t AgentType * typePtr = (AgentType*)malloc(sizeof(AgentType));\n";
+	//result << "\t *typePtr = AgentType::" << gen_enum_type_name() << ";\n";
+  result << "\t" << gen_mlm_data_string() << "(SimCell * sim_cell)\n";
+  result << "\t\t: mlm_data(sim_cell, AgentType::" << gen_enum_type_name()  << ", (CommsNeighborhood)" << neighborhood->gen_c_init_value() << ")\n";
   result << "\t{\n";
   result << "\t\tanswers = answer_" << agent_name << "(AgentType::AGENT_" << agent_name << ");\n";
   result << "\t}\n";
@@ -286,7 +288,7 @@ AgentForm::gen_log_code() const
 {
 	std::stringstream result;  
   result <<"\
-	if (data->type == AgentType::" << gen_enum_type_name() << ") {\n\
+	if (*(data->type) == AgentType::" << gen_enum_type_name() << ") {\n\
 		logStr << \":\" << \"\\\\\" << data->sim_cell->readPosition();\n\
 	}";
   return result.str();
