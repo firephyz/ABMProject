@@ -272,6 +272,9 @@ void newAgentDef(xmlNodePtr agent) {
       return; // Return error
     }
     parseBindings(toAdd.getAgentScopeBindingsMut(), curNode, SymbolBindingScope::AgentLocal);
+    for(auto& binding : toAdd.getAgentScopeBindingsMut()) {
+      binding.set_agent_index(abmodel.agents.size());
+    }
 
     // Get the agent states
     parser.set_state(ParserState::States);

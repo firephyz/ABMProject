@@ -1,19 +1,28 @@
 <!-- Simulation provided getDistance(agentA, agentB) function -->
 <ABM name='GameOfLife'>
   <initialState>
-    <dimensions sizes='3 3'/>
+    <dimensions sizes='5 5'/>
     <!-- fill space with default agents -->
     <!-- <agent location='all all' type='AgentType'/> -->
     <!-- specify other agents with different values -->
     <!-- <agent location='&gt;=0,&lt;2 &gt;=0,&lt;=2' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent> -->
-    <agent location='all all' type='AgentType'>
+    <!-- <agent location='all all' type='AgentType'>
       <var id='is-alive' value='true'/>
-    </agent>
+    </agent> -->
     <!-- <agent location='0 4' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent> -->
+    <agent location='&lt;=1,&gt;=3 0' type='AgentType'>
+      <var state='Alive' id='is_alive' value='true'/>
+    </agent>
+    <agent location='0 1' type='AgentType'>
+      <var id='is_alive' value='false'/>
+    </agent>
+    <agent location='all 1' type='AgentType'>
+      <var id='is_alive' value='true'/>
+    </agent>
   </initialState>
   <environment relationType="spatial">
     <spatialRelation dimensions="2" wrap="true">

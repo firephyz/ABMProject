@@ -4,6 +4,7 @@
 #include "util.h"
 #include "parser.h"
 #include "agent_form.h"
+#include "abmodel.h"
 
 #include <string>
 #include <cstring>
@@ -13,10 +14,12 @@
 #include <memory>
 #include <sstream>
 
+extern ABModel abmodel;
 extern struct program_args_t pargs;
 
 SymbolBinding::SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant, SymbolBindingScope scope)
   : name(name)
+  , agent_index(0xA5A5A5A5)
   , type(type)
   , initial_value(initial_value)
   , is_constant(is_constant)
@@ -69,9 +72,24 @@ SymbolBinding::gen_c_default_value() const
     }
   }
   else {
-    return initial_value;
+    if(type.type == VarTypeEnum::State) {
+      return std::string("AgentState::STATE_") + getAgent().getName() + "_" + initial_value;
+    }
+    else {
+      return initial_value;
+    }
   }
   return std::string();
+}
+
+const AgentForm&
+SymbolBinding::getAgent() const
+{
+  if(agent_index == 0xA5A5A5A5) {
+    std::cerr << "Compiler runtime error: Attempting to get an agent from a SymbolBinding which doesn't have an associated agent.\n";
+    exit(-1);
+  }
+  return abmodel.agents[agent_index];
 }
 
 std::string

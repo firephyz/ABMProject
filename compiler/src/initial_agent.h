@@ -8,8 +8,8 @@
 // overrides the initial values of the vars decared in agent_scopes.
 // used during simulation initialization
 struct VarValueOverride {
-  std::string var_id; // will link and type check once we move onto code gen phase
-  std::string value;
+  std::string name; // will link and type check once we move onto code gen phase
+  std::string init_value;
 
   VarValueOverride(xmlNodePtr node);
 };
@@ -148,6 +148,7 @@ struct ConcreteInitialAgent : public InitialAgent {
 
   std::string agent_type;
   std::vector<VarValueOverride> vars;
+  int unique_id;
 };
 
 #endif

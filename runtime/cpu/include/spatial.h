@@ -18,7 +18,7 @@ class SimSpace;
 struct mlm_data;
 
 class SimCell {
-  static SimSpace& space;
+  static SimSpace * space;
 public:
   size_t * position;
   mlm_data * data;
@@ -34,7 +34,9 @@ public:
   size_t * get_position() const { return position; }
   size_t position_to_index(const size_t * pos) const;
   // Moves mlm_data from this cell to a different sim cell
-  const size_t * move_mlm_data(size_t * new_pos);
+  bool move_mlm_data(size_t * new_pos);
+
+  static void set_space(SimSpace * space) { SimCell::space = space; }
 };
 
 // Forward declare

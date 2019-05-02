@@ -54,6 +54,7 @@ public:
   std::vector<StateInstance>& getStates() { return states; }
   const std::vector<StateInstance>& getStates() const { return states; }
   const std::string& getName() const { return agent_name; }
+  const SymbolBinding& getSymbolBindingByName(const std::string& name) const;
 
   const std::vector<std::shared_ptr<Question>>& getQuestions() const { return questions; }
   std::vector<std::shared_ptr<Question>>& getQuestionsMut() { return questions; }

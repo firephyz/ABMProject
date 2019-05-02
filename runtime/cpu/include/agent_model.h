@@ -36,6 +36,7 @@ struct mlm_data {
   virtual answer_block * give_answers() const = 0;
   virtual void receive_answers(answer_block * answer) = 0;
   virtual void process_questions() = 0;
+  virtual void update_agent() = 0;
 };
 
 // Must be outside class to be resolved by dlsym

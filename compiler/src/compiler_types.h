@@ -76,6 +76,7 @@ class AgentForm;
 class StateInstance;
 class SymbolBinding {
   std::string name;
+  size_t agent_index;
   struct VariableType type;
   std::string initial_value;
   bool is_constant;
@@ -96,6 +97,9 @@ public:
   const StateInstance& getScopeState() const;
   void set_state(const StateInstance& state) { this->state = &state; }
   std::string gen_c_type_decl() const { return type.to_c_source(); }
+
+  void set_agent_index(size_t index) { this->agent_index = index; }
+  const AgentForm& getAgent() const;
 
   static std::string scope_to_string(SymbolBindingScope scope) {
     switch(scope) {

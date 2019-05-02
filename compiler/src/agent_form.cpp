@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 extern ABModel abmodel;
 
@@ -67,6 +68,20 @@ const std::vector<SymbolBinding>&
 AgentForm::getAgentScopeBindings() const
 {
   return agent_scope_vars;
+}
+
+const SymbolBinding&
+AgentForm::getSymbolBindingByName(const std::string& name) const
+{
+  auto iter = std::find_if(agent_scope_vars.begin(), agent_scope_vars.end(),
+    [&](const SymbolBinding& sym) {
+      return sym.getName() == name;
+  });
+  if(iter == agent_scope_vars.end()) {
+    std::cerr << "Error: Could not find symbol binding \'" << name << "\' in agent \'" << agent_name << "\'.\n";
+    exit(-1);
+  }
+  return *iter;
 }
 
 StateInstance&

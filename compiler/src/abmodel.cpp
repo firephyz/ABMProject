@@ -19,6 +19,49 @@ ABModel::to_c_source()
   result << "\u0023include <sstream>\n";
   result << "\n";
 
+  // TODO split this following enum into multiple ones for each agent
+  // Declare agent state enum
+  result << "enum class AgentState {\n";
+  result << "\tSTATE_NONE,\n";
+  for(auto& agent : agents) {
+    for(auto& state : agent.getStates()) {
+      result << "\t" << state.gen_state_enum_name(agent.getName()) << ",\n";
+    }
+  }
+  result << "};\n";
+  result << "\n";
+
+  // Generate structs for holding agent initial data
+  for(auto& agent : agents) {
+    result << "struct agent_init_" << agent.getName() << " {\n";
+    for(auto& var : agent.getAgentScopeBindings()) {
+      result << "\t" << var.get_type().to_string() << " " << var.gen_var_name() << ";\n";
+    }
+    result << "};\n\n";
+  }
+
+  for(auto& ag : init.agents) {
+    result << "struct agent_init_" << ag.agent_type << " init_" << ag.unique_id;
+    result << " = {";
+    for(auto& var : find_agent_by_name(ag.agent_type).getAgentScopeBindings()) {
+      auto init_var = std::find_if(ag.vars.begin(), ag.vars.end(),
+        [&](const VarValueOverride& other)
+        {
+          return other.name == var.getName();
+      });
+
+      if(init_var == ag.vars.end()) {
+        result << var.gen_c_default_value();
+      }
+      else {
+        result << init_var->init_value;
+      }
+      result << ", ";
+    }
+    result << "};\n";
+  }
+  result << "\n";
+
   // Declare space for initial agents.
   // This does not fill in the initial values for each agent specified. It only notifies the runtime
   // which simulation cells need to have agents in them at the start of the simulation
@@ -63,21 +106,7 @@ ABModel::to_c_source()
 		result << "\t\tcase AgentType::" << agent.gen_enum_type_name() << ":\n";
 		result << "\t\t\treturn \"" <<  agent.gen_enum_type_name() << "\";\n";
 	} 
-	result << "\t\t}\n}\n\n";  	
-
-
-  // TODO split this following enum into multiple ones for each agent
-  // Declare agent state enum
-  result << "enum class AgentState {\n";
-  result << "\tSTATE_NONE,\n";
-  for(auto& agent : agents) {
-    for(auto& state : agent.getStates()) {
-      result << "\t" << state.gen_state_enum_name(agent.getName()) << ",\n";
-    }
-  }
-  result << "};\n";
-  result << "\n";
-  
+	result << "\t\t}\n}\n\n";
  
   // Declare answer_block base class
   result << "struct answer_block {\n";
