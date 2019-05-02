@@ -15,7 +15,7 @@
 #include "parser.h"
 
 struct program_args_t pargs;
-ABModel abmodel;
+ABModel abmodel();
 
 void printUsage()
 {

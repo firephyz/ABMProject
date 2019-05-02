@@ -137,13 +137,14 @@ void parseEnviroment(xmlNodePtr envChild) {
 	} 
 	abmodel.setDim(numOfDim);
 	abmodel.setWrap(wrap);
-	
-	for (curNode; curNode != NULL; curNode = xmlNextElementSibling(curNode)) {
-		//curNode = xmlNextElementSibling(curNode);
+
+	while(curNode != NULL){
+
 
 		if (std::string((char*)curNode->name).compare(std::string("GlobalParameter")) == 0) {
 			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child in global tag 
-			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
+			//for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
+			while(temp != NULL){
 				char *tnm = (char*)xmlGetAttribute(temp, (const char *) "name")->children->content;           //->children->content; // temp name
 				char *tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
 				char *tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
@@ -164,15 +165,16 @@ void parseEnviroment(xmlNodePtr envChild) {
 				else {
 					std::cout << "INVALID GLOBAL ENVIRONMENT VARIABLE" << std::endl;
 				}
+                temp = xmlNextElementSibling(temp);
 			}
-		} //
+		}
 		else if (std::string((char*)curNode->name).compare(std::string("localParameters")) == 0) {
 			xmlNodePtr temp = xmlFirstElementChild(curNode); // grabs the first child of the local paramters
-			for (temp; temp; temp = xmlNextElementSibling(temp)) { // accessing all global parameters
+			while(temp != NULL){
 				char* tnm =(char*) xmlGetAttribute(temp, (const char *) "name")->children->content; // temp name
 				char* tvl = (char*)xmlGetAttribute(temp, (const char *) "value")->children->content; // temp value
 				char* tty = (char*)xmlGetAttribute(temp, (const char *) "type")->children->content; // temp type
-				//bool cns = true;
+
 				if (tnm != NULL && tvl != NULL && tty != NULL) { // checking variable validity
 					xmlNodePtr rule = xmlFirstElementChild(curNode);
 					if (rule != NULL) {
@@ -184,36 +186,32 @@ void parseEnviroment(xmlNodePtr envChild) {
 					}
 					else {
 						abmodel.add_to_econtext(0, tnm, tvl, tty, true);
+
 				    }
 
 				}
 				else {
 					std::cout << "INVALID LOCAL ENVIRONMENT VARIABLE" << std::endl;
 				}
+                temp = xmlNextElementSibling(temp);
 			}
 		}
-		
+        curNode = xmlNextElementSibling(curNode);
 	}
-	// rule xmlPtr and pointers to envSymbolBindings are stored as parsing occurs, then combinded here and stored in the overall environment
+	// rule xmlPtr and pointers to envSymbolBindings are stored as parsing occurs, then combined here and stored in the overall environment
 	for (int i = 0; i < globalVar.size(); i++) {
-		globalVar[i]->updateEnvRule(parse_logic(abmodel.get_env_context() ,globalRules[i]));
 
+        globalVar.at(1)->updateEnvRule(parse_logic(abmodel.get_env_context(), globalRules.at(i)));
 
 		
 	}
 	for (int i = 0; i < localVar.size(); i++) {
-		localVar[i]->updateEnvRule(parse_logic(abmodel.get_env_context() ,localRules[i]));
+
+		localVar.at(i)->updateEnvRule(parse_logic(abmodel.get_env_context(), localRules.at(i)));
 
 	}
 }
-// manages code parsing for env variables
-// fairly sure that the full context is required to allow intra set referencing, so whole context goes through
-/*
-std::unique_ptr<SourceAST> parseEnvRule(xmlNodePtr varRule) {
-	return parse_logic(abmodel->get_env_context(), varRule);
 
-}
-*/
 void parseAgents(xmlNodePtr agentsChild) {
   xmlNodePtr curNode = NULL;
 
@@ -406,7 +404,8 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
 {
   if(xmlStrcmp(node->name, (const xmlChar*)"if") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_if_Verilog>(ctxt, node);
+      //return std::make_unique<SourceAST_if_Verilog>(ctxt, node);
+
     }
     else {
       return std::make_unique<SourceAST_if_C>(ctxt, node);
@@ -414,7 +413,8 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"assign") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_assignment_Verilog>(ctxt, node);
+      //return std::make_unique<SourceAST_assignment_Verilog>(ctxt, node);
+
     }
     else {
       return std::make_unique<SourceAST_assignment_C>(ctxt, node);
@@ -422,7 +422,8 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"var") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_var_Verilog>(ctxt, node);
+      //return std::make_unique<SourceAST_var_Verilog>(ctxt, node);
+
     }
     else {
       return std::make_unique<SourceAST_var_C>(ctxt, node);
@@ -430,7 +431,8 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"operator") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_operator_Verilog>(ctxt, node);
+     // return std::make_unique<SourceAST_operator_Verilog>(ctxt, node);
+
     }
     else {
       return std::make_unique<SourceAST_operator_C>(ctxt, node);
@@ -438,7 +440,7 @@ dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node)
   }
   else if(xmlStrcmp(node->name, (const xmlChar*)"constant") == 0) {
     if(pargs.target == OutputTarget::FPGA) {
-      return std::make_unique<SourceAST_constant_Verilog>(node);
+      //return std::make_unique<SourceAST_constant_Verilog>(node);
     }
     else {
       return std::make_unique<SourceAST_constant_C>(node);

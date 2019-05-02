@@ -22,7 +22,7 @@ if(varName == NULL) {\
 //int SimAgent::num_dimensions = -1; // placeholder for actual number
 
 // TODO Allow setting this with command line arguments
-//const char * model_lib_path = "../../../models/test/test_model.so";
+const char * model_lib_path = "../../../models/test/test_model.so";
 
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;
@@ -31,8 +31,7 @@ void *              (*modelGiveAnswerPtr)(AgentModel * this_class, void * mlm_da
 void                (*modelReceiveAnswerPtr)(AgentModel * this_class, void * mlm_data, void * answer)     = NULL;
 CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, void * mlm_data)                 = NULL;
 void                (*modelUpdateAgentPtr)(AgentModel * this_class, void * mlm_data)                      = NULL;
-void                (*modelLogPtr)(AgentModel * this_class, void * mlm_data);
-
+void                (*modelLogPtr)(AgentModel * this_class, voi
 
 // Output mangled symbols to temporary file to read in later
 // TODO Make this better so we for sure only grab the symbols we need.
