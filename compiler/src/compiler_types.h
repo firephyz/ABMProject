@@ -82,7 +82,7 @@ class SymbolBinding {
   bool is_constant;
   SymbolBindingScope scope;
   // If binding is in state scope, this will contain a pointer to that state
-  const StateInstance * state = nullptr;
+  size_t state_index = 0xA5A5A5A5;
 public:
   SymbolBinding(std::string& name, struct VariableType type, std::string& initial_value, bool is_constant, SymbolBindingScope scope);
 
@@ -95,7 +95,7 @@ public:
   std::string gen_initial_value() const;
   SymbolBindingScope getScope() const { return scope; }
   const StateInstance& getScopeState() const;
-  void set_state(const StateInstance& state) { this->state = &state; }
+  void set_state_index(size_t index) { this->state_index = index; }
   std::string gen_c_type_decl() const { return type.to_c_source(); }
 
   void set_agent_index(size_t index) { this->agent_index = index; }

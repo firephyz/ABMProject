@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "util.h"
 #include "debug.h"
+#include "abmodel.h"
 
 #include <libxml2/libxml/parser.h>
 #include <string>
@@ -14,6 +15,8 @@
 #error "Code which has the potential to utilize VERBOSE_AST_GEN debug\
  option does not have it defined."
 #endif
+
+extern ABModel abmodel;
 
 SourceAST_if_C::SourceAST_if_C(const ContextBindings& ctxt, xmlNodePtr node)
 {
@@ -174,6 +177,9 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
   else if(strcmp(type_string, "bool") == 0) {
     type = ConstantType::Bool;
   }
+  else if(strcmp(type_string, "state") == 0) {
+    type = ConstantType::State;
+  }
   else {
     std::cerr << "<" << xmlGetLineNo(node) << "> " << "Constant is of unknown type \'" << type_string << "\'" << std::endl;
     exit(-1);
@@ -185,31 +191,35 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
     exit(-1);
   }
 
-  // // TODO add type checking for the value attr content strings for the integers and reals
-  // switch(type) {
-  //   case ConstantType::NoInit:
-  //     break; // won't get here
-  //   case ConstantType::Integer:
-  //     content = malloc(sizeof(int));
-  //     *(int *)content = atoi((const char *)xml_attr->children->content);
-  //     break;
-  //   case ConstantType::Real:
-  //     content = malloc(sizeof(double));
-  //     *(double *)content = atof((const char *)xml_attr->children->content);
-  //     break;
-  //   case ConstantType::Bool:
-  //     if(xmlStrcmp(xml_attr->children->content, (const xmlChar *)"false") == 0) {
-  //       *(bool *)content = false;
-  //     }
-  //     else if(xmlStrcmp(xml_attr->children->content, (const xmlChar *)"true") == 0) {
-  //       *(bool *)content = true;
-  //     }
-  //     else {
-  //       std::cerr << "<" << xmlGetLineNo(node) << "> " << "Bool constant has invalid value." << std::endl;
-  //       exit(-1);
-  //     }
-  //     break;
   value = std::string((const char *)xml_attr->children->content);
+
+  xml_attr = xmlGetAttribute(node, "agent");
+  if(xml_attr == NULL) {
+    if(type == ConstantType::State) {
+      if(info.type == SourceASTInfoType::StateInstance) {
+        // TODO If parsing agent states, questions won't currently exist yet to be
+        // in info.data. Must find the agent reference some other way. *Also, 
+        // be careful the agent reference you get isn't temporary...
+        // std::string agent_name = info.data.state->getName();
+        // states_agent = &abmodel.find_agent_by_name(agent_name);
+      }
+      else {
+        util::error(node) << "Constant of type \'State\' requires an \'agent\' attribute.\n";
+        exit(-1);
+      }
+    }
+  }
+  
+  if(xml_attr != NULL) {
+    if(type == ConstantType::State) {
+      std::string agent_name((const char *)xml_attr->children->content);
+      states_agent = &abmodel.find_agent_by_name(agent_name);
+    }
+    else {
+      util::error(node) << "Constant of type \'" << type_string << "\' does not need an \'agent\' attribute.\n";
+      exit(-1);
+    }
+  }
 
   #if VERBOSE_AST_GEN
     std::cout << "Constant: " << type_string << ", " << value << std::endl;
@@ -221,7 +231,12 @@ SourceAST_constant_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
-  return value;
+  if(type == ConstantType::State) {
+    return "AgentState::STATE_" + states_agent->getName() + "_" + value;
+  }
+  else {
+    return value;
+  }
 }
 
 std::string
@@ -242,8 +257,17 @@ SourceAST_constant_C::to_string()
     case ConstantType::Bool:
       result << "bool";
       break;
+    case ConstantType::State:
+      result << "state";
+      break;
   }
-  result << "\' value=\'" << value << "\'" << std::endl;
+  result << "\' value=\'" << value << "\'";
+
+  if(type == ConstantType::State) {
+    result << " agent=\'" << states_agent->getName() << "\'";
+  }
+
+  result << std::endl;
 
   return result.str();
 }

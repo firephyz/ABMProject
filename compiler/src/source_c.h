@@ -23,6 +23,7 @@ public:
 };
 
 class SourceAST_constant_C : public SourceAST_constant {
+  const AgentForm * states_agent = nullptr;
 protected:
   std::string to_source() const;
 public:

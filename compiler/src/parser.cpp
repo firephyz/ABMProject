@@ -127,45 +127,24 @@ void parseEnviroment(xmlNodePtr envChild) {
   	std::cerr << "No relational type specified for enivroment: " << envChild->name;
   }
   xmlNodePtr curNode = NULL;
-  int numOfDim = 0;
 
   std::string relationType(value_str);
+  abmodel.relationType = relationType;
     
   if (relationType == "spatial") {
 		curNode = xmlFirstElementChild(envChild); 
   	if (xmlStrcmp(curNode->name, (const xmlChar*)("spatialRelation")) == 0)     { 
-      xmlAttrPtr numOfDimensions = xmlGetAttribute(curNode, "dimensions");
- 			if (numOfDimensions == NULL) {
-				std::cerr << "Error missing dimensions attr" << std::endl;
-			}
-			numOfDim = std::stoi(std::string((const char*)numOfDimensions->children->content));
-			curNode = xmlFirstElementChild(curNode);
-      xmlAttrPtr dim_sizes = xmlGetAttribute(curNode, "sizes");
-  		if (dim_sizes == NULL) {
-				std::cerr << "Improper sizes attribute" << std::endl;  
-			} else {
- 				std::string dim_sizes_str((const char *)dim_sizes->children->content);
-      	size_t str_pos = 0;
-				test_dim_count = 0;
-        while (str_pos < dim_sizes_str.length()) {
-					size_t new_str_pos = dim_sizes_str.find(" ", str_pos);
-					if (new_str_pos == std::string::npos) {
-						new_str_pos = dim_sizes_str.length(); 
-					}
-					std::string dim_size_str = dim_sizes_str.substr(str_pos, new_str_pos - str_pos); 
-				  abmodel.dimension_sizes.push_back(std::stoi(dim_size_str));
-					test_dim_count++;
-					str_pos = new_str_pos + 1;
-  			} 
+      xmlAttrPtr numOfDim_node = xmlGetAttribute(curNode, "dimensions");
+      if (numOfDim_node == NULL) {
+        std::cerr << "Error missing dimensions attr" << std::endl;
       }
+      abmodel.numOfDimensions = std::stoi(std::string((const char*)numOfDim_node->children->content));
 		} else {
     	std::cerr << "Error, mismatched relation definition" << std::endl;
 	  } 
   } else {
 		std::cerr << "Error, other relatiion types are not supported at this time" << std::endl;
    }
-  abmodel.relationType = relationType;
-	abmodel.numOfDimensions = numOfDim;
 
   // Check if the number of dimensions match the number supplied
   if (abmodel.numOfDimensions != test_dim_count) {
@@ -245,25 +224,26 @@ void newAgentDef(xmlNodePtr agent) {
  
   // Check that the first tag is Agent and go ahead and grab the name
   if (xmlStrcmp(curNode->name, (const xmlChar*)"agent") == 0) {
-    std::string name((const char*)(xmlGetAttribute(curNode, "type")->children->content));  
-  AgentForm toAdd(name);
+    std::string name((const char*)(xmlGetAttribute(curNode, "type")->children->content));
+    abmodel.agents.emplace_back(name);
+    AgentForm& toAdd = abmodel.agents[abmodel.agents.size() - 1];
   
-  // Check for log attr for agent if not present preset to false and type check   
-	auto xml_log_attr = xmlGetAttribute(curNode, "log_en");
-	if(xml_log_attr == NULL) {
-		 toAdd.log_en = false;
-	} else {
- 		std::string log_en((const char*)xml_log_attr->children->content);
+    // Check for log attr for agent if not present preset to false and type check   
+  	auto xml_log_attr = xmlGetAttribute(curNode, "log_en");
+  	if(xml_log_attr == NULL) {
+  		 toAdd.log_en = false;
+  	} else {
+   		std::string log_en((const char*)xml_log_attr->children->content);
 
-  	if (log_en == "true") {
-    	toAdd.log_en = true;
-   	} else if (log_en == "false") {
-    	toAdd.log_en = false;
-		} else {
-			// Type error
-		std::cerr << "Improper logging attr type (Agent)" << std::endl;
-		}
-  }
+    	if (log_en == "true") {
+      	toAdd.log_en = true;
+     	} else if (log_en == "false") {
+      	toAdd.log_en = false;
+  		} else {
+  			// Type error
+  		std::cerr << "Improper logging attr type (Agent)" << std::endl;
+  		}
+    }
 
     // Get Agent Vars
     curNode = xmlFirstElementChild(curNode);
@@ -273,7 +253,7 @@ void newAgentDef(xmlNodePtr agent) {
     }
     parseBindings(toAdd.getAgentScopeBindingsMut(), curNode, SymbolBindingScope::AgentLocal);
     for(auto& binding : toAdd.getAgentScopeBindingsMut()) {
-      binding.set_agent_index(abmodel.agents.size());
+      binding.set_agent_index(abmodel.agents.size() - 1);
     }
 
     // Get the agent states
@@ -283,7 +263,12 @@ void newAgentDef(xmlNodePtr agent) {
       std::cerr << "Missing rules tag in agent definition" << std::endl;
       exit(-1);
     }
-    parseAgentStates(toAdd, xmlFirstElementChild(curNode));
+
+    xmlNodePtr state_node = xmlFirstElementChild(curNode);
+    while(state_node != NULL) {
+      parseAgentState(toAdd, abmodel.agents.size() - 1, state_node);
+      state_node = xmlNextElementSibling(state_node);
+    }
 
     // Get the Comms interface
     curNode = xmlNextElementSibling(curNode);
@@ -316,8 +301,6 @@ void newAgentDef(xmlNodePtr agent) {
 
     // Resolve ask-question links in state logic ast
     toAdd.resolve_ask_links();
-
-    abmodel.add_agent(toAdd);
   } else {
     std::cerr << "Improper Agent Definition: Missing Agent Tag" << std::endl;
     exit(-1);
@@ -350,7 +333,7 @@ parse_neighborhood(const size_t agent_index, const char * n)
   return std::unique_ptr<CommsNeighborhood>(nullptr);
 }
 
-void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
+void parseAgentState(AgentForm& agent, size_t agent_index, xmlNodePtr curNode) {
 
   if (xmlStrcmp(curNode->name, (const xmlChar*)"state") == 0) {
     std::string name((const char*)xmlGetAttribute(curNode, "name")->children->content);
@@ -364,9 +347,11 @@ void parseAgentStates(AgentForm& agent, xmlNodePtr curNode) {
 
         // Link the bindings we just created with this state so we can use the info later
         for(auto& binding : newState.getStateScopeBindingsMut()) {
-          binding.set_state(newState);
+          binding.set_agent_index(agent_index);
+          binding.set_state_index(agent.getStates().size() - 1);
         }
       } else if (xmlStrcmp(curNode->name, (const xmlChar*)"logic") == 0) {
+// TODO the references in this context may be invalidated if the agent is moved in its vector
         const ContextBindings ctxt = agent.genContextBindings(newState);
         std::unique_ptr<SourceAST> logic_ast = parser.parse_logic(ctxt, curNode);
         newState.add_logic(std::move(logic_ast));

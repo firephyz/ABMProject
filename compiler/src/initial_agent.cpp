@@ -501,7 +501,6 @@ LogicalInitialAgent::next()
 std::string
 LogicalInitialAgent::gen_constructor() const
 {
-  std::cout << "LogicalInitialAgent\n";
   std::stringstream result;
   result << "InitAgent(" << abmodel.agent_to_uint_by_name(getAgentName()) << ", {";
 

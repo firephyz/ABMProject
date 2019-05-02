@@ -54,7 +54,12 @@ ABModel::to_c_source()
         result << var.gen_c_default_value();
       }
       else {
-        result << init_var->init_value;
+        if(init_var->name == "state") {
+          result << "AgentState::STATE_" << ag.agent_type << "_" << init_var->init_value;
+        }
+        else {
+          result << init_var->init_value;
+        }
       }
       result << ", ";
     }
@@ -207,8 +212,8 @@ ABModel::gen_tick_code()
   std::stringstream result;
   result << "\
 void\n\
-AgentModel::modelTick() {\n\
-  std::cout << \"Tick.. \" << std::endl;\n";
+AgentModel::modelTick() {\n";
+  //result << "std::cout << \"Tick.. \" << std::endl;\n";
   result << "}\n";
   result << "\n";
   return result.str();

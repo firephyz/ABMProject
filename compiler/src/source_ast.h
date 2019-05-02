@@ -177,6 +177,7 @@ public:
     Integer,
     Real,
     Bool,
+    State,
   };
 
   SourceAST_constant()
@@ -196,6 +197,8 @@ public:
         return std::string("double");
       case ConstantType::Bool:
         return std::string("bool");
+      case ConstantType::State:
+        return std::string("AgentState");
     }
     return std::string();
   }

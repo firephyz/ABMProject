@@ -345,7 +345,8 @@ AgentForm::gen_agent_update_code() const
   for(auto& state : states) {
     result << "\tcase AgentState::" << state.gen_state_enum_name(agent_name) << ":\n";
     result << util::indent(state.getSource()->to_source_start(SourceASTInfoType::StateInstance, (void *)this), 2);
-    result << "\n\t\tbreak;\n";
+    //result << "if(state == AgentState::STATE_GOL_Alive) { std::cout << sim_cell->get_position()[0] << \", \" << sim_cell->get_position()[1] << std::endl;}\n";
+    result << "\t\tbreak;\n";
   }
   result << "\t}\n";
 

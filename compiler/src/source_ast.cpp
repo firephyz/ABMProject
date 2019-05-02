@@ -106,6 +106,8 @@ SourceAST_constant::gen_c_default_value() const
       return "0.0";
     case ConstantType::Bool:
       return "false";
+    case ConstantType::State:
+      return "AgentState::STATE_NONE";
   }
   return std::string();
 }

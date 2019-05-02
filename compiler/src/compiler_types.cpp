@@ -73,7 +73,9 @@ SymbolBinding::gen_c_default_value() const
   }
   else {
     if(type.type == VarTypeEnum::State) {
-      return std::string("AgentState::STATE_") + getAgent().getName() + "_" + initial_value;
+      std::string agent_name = getAgent().getName();
+      std::cout << agent_name << std::endl;
+      return std::string("AgentState::STATE_") + agent_name + "_" + initial_value;
     }
     else {
       return initial_value;
@@ -117,9 +119,9 @@ SymbolBinding::gen_declaration(const AgentForm& agent) const
 const StateInstance&
 SymbolBinding::getScopeState() const
 {
-  if(state == nullptr) {
+  if(state_index == 0xA5A5A5A5) {
     if(scope != SymbolBindingScope::StateLocal) {
-      std::cerr << "Error: Attempting to the get the state of variable \'" << name << "\'" << " which was not declared in state scope.\n";
+      std::cerr << "Error: Attempting to get the state of variable \'" << name << "\'" << " which was not declared in state scope or is was not handled properly in code.\n";
       exit(-1);
     }
     else {
@@ -127,7 +129,7 @@ SymbolBinding::getScopeState() const
       exit(-1);
     }
   }
-  return *state;
+  return abmodel.agents[agent_index].getStates()[state_index];
 }
 
 const SymbolBinding&

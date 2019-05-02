@@ -87,6 +87,6 @@ std::unique_ptr<CommsNeighborhood> parse_neighborhood(const size_t agent_index, 
 
 std::unique_ptr<SourceAST> dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node);
 void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode, SymbolBindingScope scope); 
-void parseAgentStates(AgentForm& agent, xmlNodePtr curNode);
+void parseAgentState(AgentForm& agent, size_t agent_index, xmlNodePtr curNode);
 
 #endif
