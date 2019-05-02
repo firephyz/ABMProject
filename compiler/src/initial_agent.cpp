@@ -251,6 +251,7 @@ AgentPosition::dimension::end(int dim_index) const
     case type_t::None:
       break;
     case type_t::Absolute_Position:
+      result.first_value += 1;
       break;
     case type_t::Relational_Position:
       switch(relation) {
@@ -291,6 +292,7 @@ AgentPosition::dimension::next(const AgentPosition::dimension& region_dim) const
     case type_t::None:
       break;
     case type_t::Absolute_Position:
+      result.first_value += 1;
       break;
     case type_t::Relational_Position:
       switch(region_dim.relation) {
@@ -376,15 +378,11 @@ AgentPosition
 AgentPosition::end() const
 {
   std::vector<dimension> end_pos;
-  for(uint dim_index = 0; dim_index < dimensions.size(); ++dim_index) {
-    auto& dim = dimensions[dim_index];
-    if(dim_index == dimensions.size() - 1) {
-      end_pos.push_back(dim.end(dim_index));
-    }
-    else {
-      end_pos.push_back(dim.begin());
-    }
+  uint max_dim = dimensions.size() - 1;
+  for(uint dim_index = 0; dim_index < max_dim; ++dim_index) {
+    end_pos.push_back(dimensions[dim_index].begin());
   }
+  end_pos.push_back(dimensions[max_dim].end(max_dim));
   return AgentPosition(end_pos);
 }
 
@@ -396,7 +394,7 @@ VarValueOverride::VarValueOverride(xmlNodePtr node)
     exit(-1);
   }
 
-  var_id = std::string((const char *)xml_attr->children->content);
+  name = std::string((const char *)xml_attr->children->content);
 
   xml_attr = xmlGetAttribute(node, "value");
   if(xml_attr == NULL) {
@@ -404,7 +402,7 @@ VarValueOverride::VarValueOverride(xmlNodePtr node)
     exit(-1);
   }
 
-  value = std::string((const char *)xml_attr->children->content);
+  init_value = std::string((const char *)xml_attr->children->content);
 }
 
 // only call if you're sure the AgentPosition isn't a region
@@ -444,6 +442,10 @@ bool InitialAgent::operator<(const InitialAgent& other) const {
 
 ConcreteInitialAgent::ConcreteInitialAgent(xmlNodePtr node)
 {
+  static int unique_id = 0;
+  this->unique_id = unique_id;
+  ++unique_id;
+
   xmlAttrPtr xml_attr = xmlGetAttribute(node, "location");
   if(xml_attr == NULL) {
     std::cerr << "<" << xmlGetLineNo(node) << "> " << "Initial agent declaration is missing its \'location\' attribute." << std::endl;
@@ -501,14 +503,14 @@ void
 LogicalInitialAgent::next()
 {
   for(uint dim_index = 0; dim_index < position.dimensions.size(); ++dim_index) {
-    auto& dim = position.dimensions[dim_index];
-    auto& region_dim = actual.position.dimensions[dim_index];
+    const AgentPosition::dimension region_dim = actual.position.dimensions[dim_index];
+    auto dim = position.dimensions[dim_index].next(region_dim);
     // Let the last dimension roll over so we can encounter the region.end()
     if(dim == region_dim.end(dim_index) && dim_index != position.dimensions.size() - 1) {
-      dim = region_dim.begin();
+      this->position.dimensions[dim_index] = region_dim.begin();
     }
     else {
-      dim = dim.next(region_dim);
+      this->position.dimensions[dim_index] = dim;
       break;
     }
   }

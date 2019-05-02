@@ -2,10 +2,12 @@
 #include "source_ast.h"
 #include "comms.h"
 #include "abmodel.h"
+#include "util.h"
 
 #include <memory>
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 extern ABModel abmodel;
 
@@ -66,6 +68,20 @@ const std::vector<SymbolBinding>&
 AgentForm::getAgentScopeBindings() const
 {
   return agent_scope_vars;
+}
+
+const SymbolBinding&
+AgentForm::getSymbolBindingByName(const std::string& name) const
+{
+  auto iter = std::find_if(agent_scope_vars.begin(), agent_scope_vars.end(),
+    [&](const SymbolBinding& sym) {
+      return sym.getName() == name;
+  });
+  if(iter == agent_scope_vars.end()) {
+    std::cerr << "Error: Could not find symbol binding \'" << name << "\' in agent \'" << agent_name << "\'.\n";
+    exit(-1);
+  }
+  return *iter;
 }
 
 StateInstance&
@@ -223,6 +239,7 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   void process_questions();\n";
 	result << "\tstd::string AgentTypeEnumToString();\n";	
 	result << "\tstd::string AgentStateEnumToString();\n";
+
   for(auto& question : questions) {
     result << "\t" << question->gen_return_type() << " process_question_" << question->get_name();
     result << "(" << "mlm_data_" << this->getName() << "_questions::" << question->get_name() << "_t * locals)\n;";
@@ -315,13 +332,31 @@ AgentForm::gen_answer_struct() const
 }
 
 std::string
-AgentForm::gen_reset_question_locals_code() const
+AgentForm::gen_agent_update_code() const
 {
   std::stringstream result;
-  for(auto& question : questions) {
-    for(auto& binding : question->getQuestionScopeBindings()) {
-      result << "\t" << "mlm_data_" << agent_name << "_questions." << question->get_name() << "." << binding.getName() << " = " << binding.gen_c_default_value() << ";\n";
+  result << "void\n";
+  result << gen_mlm_data_string() << "::update_agent() {\n";
+  result << "\tswitch(state) {\n";
+  for(auto& state : states) {
+    result << "\tcase AgentState::" << state.gen_state_enum_name(agent_name) << ":\n";
+    result << util::indent(state.getSource()->to_source_start(SourceASTInfoType::StateInstance, (void *)this), 2);
+    result << "\n\t\tbreak;\n";
+  }
+  result << "\t}\n";
+
+  // reset question and state locals
+  for(auto& state : states) {
+    for(auto& binding : state.getStateScopeBindings()) {
+      result << "\t" << "locals_" << state.getName() << "." << binding.getName() << " = " << binding.gen_c_default_value() << ";\n";
     }
   }
+  for(auto& question : questions) {
+    for(auto& binding : question->getQuestionScopeBindings()) {
+      result << "\t" << "q_locals." << question->get_name() << "." << binding.getName() << " = " << binding.gen_c_default_value() << ";\n";
+    }
+  }
+  result << "}\n\n";
+
   return result.str();
 }

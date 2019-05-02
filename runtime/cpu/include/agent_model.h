@@ -38,12 +38,12 @@ struct mlm_data {
   virtual void process_questions() = 0;
 	virtual std::string AgentTypeEnumToString() = 0;
 	virtual std::string AgentStateEnumToString() = 0;
-
+  virtual void update_agent() = 0;
 };
 
 // Must be outside class to be resolved by dlsym
 // Declared and defined in main during model loading with libdl
-extern mlm_data *          (*modelNewAgentPtr)(AgentModel * this_class, void * position, const SimCell * cell);
+extern mlm_data *          (*modelNewAgentPtr)(AgentModel * this_class, void * position, SimCell * cell);
 extern answer_block *      (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * data);
 extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, mlm_data * data, answer_block * answer);
 extern const CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, mlm_data * data);
@@ -82,8 +82,6 @@ public:
         position_str << ", ";
       }
     }
-
-    std::cout << "Making Agent: " << position_str.str() << std::endl;
   
     return true;
   }
@@ -128,7 +126,7 @@ public:
   {}
 
   // So we can call these functions in runtime code nicely
-  inline mlm_data * newAgent(void * position, const SimCell * cell) { return (*modelNewAgentPtr)(this, position, cell); }
+  inline mlm_data * newAgent(void * position, SimCell * cell) { return (*modelNewAgentPtr)(this, position, cell); }
   inline answer_block * giveAnswer(mlm_data * data) { return (*modelGiveAnswerPtr)(this, data); }
   inline void receiveAnswer(mlm_data * data, answer_block * answer) { return (*modelReceiveAnswerPtr)(this, data, answer); }
   inline const CommsNeighborhood& giveNeighborhood(mlm_data * data) { return (*modelGiveNeighborhoodPtr)(this, data); }

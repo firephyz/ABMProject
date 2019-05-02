@@ -76,6 +76,7 @@ class AgentForm;
 class StateInstance;
 class SymbolBinding {
   std::string name;
+  size_t agent_index;
   struct VariableType type;
   std::string initial_value;
   bool is_constant;
@@ -96,6 +97,9 @@ public:
   const StateInstance& getScopeState() const;
   void set_state(const StateInstance& state) { this->state = &state; }
   std::string gen_c_type_decl() const { return type.to_c_source(); }
+
+  void set_agent_index(size_t index) { this->agent_index = index; }
+  const AgentForm& getAgent() const;
 
   static std::string scope_to_string(SymbolBindingScope scope) {
     switch(scope) {
@@ -138,6 +142,7 @@ class Question {
   const Answer * answer = nullptr;
   std::vector<SymbolBinding> question_scope_vars;
   std::unique_ptr<SourceAST> question_source;
+  std::unique_ptr<SourceAST> return_var;
 public:
   Question(ContextBindings& ctxt, xmlNodePtr node);
   Question(ContextBindings&& ctxt, xmlNodePtr node);
@@ -157,6 +162,7 @@ public:
   std::string gen_response_declaration() const;
   std::string gen_question_process_code() const;
   std::string gen_return_type() const;
+  const SourceAST& getReturnNode() const { return *return_var; }
 };
 
 class Answer {
@@ -164,6 +170,7 @@ class Answer {
   const Question * question = nullptr;
   std::vector<SymbolBinding> answer_scope_vars;
   std::unique_ptr<SourceAST> answer_source;
+  std::unique_ptr<SourceAST> return_var;
 public:
   Answer(ContextBindings& ctxt, xmlNodePtr node);
   Answer(ContextBindings&& ctxt, xmlNodePtr node) : Answer(ctxt, node) {}
@@ -179,6 +186,7 @@ public:
   const std::string& gen_answer_source() const;
   std::string gen_declaration() const;
   std::string gen_return_type() const;
+  const SourceAST& getReturnNode() const { return *return_var; }
 };
 
 #endif

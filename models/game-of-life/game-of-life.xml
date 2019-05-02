@@ -8,12 +8,21 @@
     <!-- <agent location='&gt;=0,&lt;2 &gt;=0,&lt;=2' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent> -->
-    <agent location='4 all' type='AgentType'>
+    <!-- <agent location='all all' type='AgentType'>
       <var id='is-alive' value='true'/>
-    </agent>
+    </agent> -->
     <!-- <agent location='0 4' type='AgentType'>
       <var id='is-alive' value='true'/>
     </agent> -->
+    <agent location='&lt;=1,&gt;=3 0' type='AgentType'>
+      <var state='Alive' id='is_alive' value='true'/>
+    </agent>
+    <agent location='0 1' type='AgentType'>
+      <var id='is_alive' value='false'/>
+    </agent>
+    <agent location='all 1' type='AgentType'>
+      <var id='is_alive' value='true'/>
+    </agent>
   </initialState>
   <environment relationType="spatial">
     <spatialRelation dimensions="2" wrap="true">
@@ -111,20 +120,16 @@
                   </assign>
                 </then>
               </if>
-              <return>
-                <var id='count'/>
-              </return>
             </logic>
           </body>
+          <return>
+            <var id='count'/>
+          </return>
         </question>
         <answer agent='AgentType' question='living_neighbors'>
-          <body>
-            <logic>
-              <return>
-                <var id='is_alive'/>
-              </return>
-            </logic>
-          </body>
+          <return>
+            <var id='is_alive'/>
+          </return>
         </answer>
       </commsInterface>
     </agent>

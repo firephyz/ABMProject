@@ -4,13 +4,14 @@
 #include <vector>
 #include <sstream>
 
+extern SimSpace * space_ptr;
 extern AgentModel * loaded_model;
 
 // Required model info
 //   - Explicit or implicit spatial data:
 //       - Explicit: sim space data is outside of agents
 //       - Implicit: sim space data is internal to agents. Moves processing to agent internals
-
+SimSpace * SimCell::space;
 SimCell::SimCell(SimSpace& space, int position_index)
   : position(new size_t[space.num_dimensions])
   , data(NULL)
@@ -46,6 +47,37 @@ std::string SimCell::readPosition() const {
   return os.str();
 }
 
+size_t
+SimCell::position_to_index(const size_t * pos) const
+{
+  size_t result = 0;
+  for(int i = 0; i < space->num_dimensions; ++i) {
+    result += pos[i] * space->dimensions[i];
+  }
+  return result;
+}
+
+bool
+SimCell::move_mlm_data(size_t * new_pos)
+{
+  size_t new_index = position_to_index(new_pos);
+  SimCell& new_cell = space->cells[new_index];
+
+  if(new_cell.data != nullptr) {
+    return false;
+  }
+  else if(&new_cell == this) {
+    return true;
+  }
+  else {
+    this->data->sim_cell = &new_cell;
+    new_cell.data = this->data;
+    this->data = NULL;
+  }
+
+  return true;
+}
+
 SimSpace::SimSpace(AgentModel& model) 
   : space_type(model.space_type)
   , num_dimensions(model.num_dimensions)
@@ -64,5 +96,4 @@ SimSpace::SimSpace(AgentModel& model)
   }
 }
 
-SimSpace::~SimSpace() {
-}
+SimSpace::~SimSpace() {}

@@ -19,6 +19,49 @@ ABModel::to_c_source()
   result << "\u0023include <sstream>\n";
   result << "\n";
 
+  // TODO split this following enum into multiple ones for each agent
+  // Declare agent state enum
+  result << "enum class AgentState {\n";
+  result << "\tSTATE_NONE,\n";
+  for(auto& agent : agents) {
+    for(auto& state : agent.getStates()) {
+      result << "\t" << state.gen_state_enum_name(agent.getName()) << ",\n";
+    }
+  }
+  result << "};\n";
+  result << "\n";
+
+  // Generate structs for holding agent initial data
+  for(auto& agent : agents) {
+    result << "struct agent_init_" << agent.getName() << " {\n";
+    for(auto& var : agent.getAgentScopeBindings()) {
+      result << "\t" << var.get_type().to_string() << " " << var.gen_var_name() << ";\n";
+    }
+    result << "};\n\n";
+  }
+
+  for(auto& ag : init.agents) {
+    result << "struct agent_init_" << ag.agent_type << " init_" << ag.unique_id;
+    result << " = {";
+    for(auto& var : find_agent_by_name(ag.agent_type).getAgentScopeBindings()) {
+      auto init_var = std::find_if(ag.vars.begin(), ag.vars.end(),
+        [&](const VarValueOverride& other)
+        {
+          return other.name == var.getName();
+      });
+
+      if(init_var == ag.vars.end()) {
+        result << var.gen_c_default_value();
+      }
+      else {
+        result << init_var->init_value;
+      }
+      result << ", ";
+    }
+    result << "};\n";
+  }
+  result << "\n";
+
   // Declare space for initial agents.
   // This does not fill in the initial values for each agent specified. It only notifies the runtime
   // which simulation cells need to have agents in them at the start of the simulation
@@ -114,7 +157,6 @@ ABModel::gen_give_answer_code()
   result << "\
 answer_block *\n\
 AgentModel::modelGiveAnswer(mlm_data * data) {\n\
-  std::cout << \"Agent: Giving answer...\" << std::endl;\n\
   data->record_answers();\n\
   return data->give_answers();\n\
 }";
@@ -131,7 +173,6 @@ void\n\
 AgentModel::modelReceiveAnswer(mlm_data * data, answer_block * answer) {\n\
   data->receive_answers(answer);\n\
   data->process_questions();\n\
-  std::cout << \"Agent: Receiving answer...\" << std::endl;\n\
 }\n";
   result << "\n";
 
@@ -149,7 +190,6 @@ ABModel::gen_give_neighborhood_code()
   result << "\
 const CommsNeighborhood&\n\
 AgentModel::modelGiveNeighborhood(mlm_data * data) {\n\
-  std::cout << \"Agent: Giving neighborhood...\" << std::endl;\n\
   return data->neighborhood;\n\
 }\n";
   result << "\n";
@@ -163,9 +203,13 @@ ABModel::gen_update_agent_code()
   result << "\
 void\n\
 AgentModel::modelUpdateAgent(mlm_data * data) {\n\
-  std::cout << \"Agent: Updating...\" << std::endl;\n\
+  data->update_agent();\n\
 }\n";
   result << "\n";
+
+  for(auto& agent : agents) {
+    result << agent.gen_agent_update_code();
+  }
   return result.str();
 }
 
@@ -243,6 +287,7 @@ struct mlm_data {\n\
   virtual answer_block * give_answers() const = 0;\n\
   virtual void receive_answers(answer_block * answer) = 0;\n\
   virtual void process_questions() = 0;\n\
+  virtual void update_agent() = 0;\n\
 };\n" << "\n";
 */
   for(auto& agent : agents) {

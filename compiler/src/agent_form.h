@@ -27,6 +27,7 @@ public:
 
   std::string gen_state_enum_name(const std::string& str) const;
   const std::string& getName() const { return state_name; }
+  const std::unique_ptr<SourceAST>& getSource() const { return source; }
 
   std::string to_string();
 };
@@ -53,6 +54,7 @@ public:
   std::vector<StateInstance>& getStates() { return states; }
   const std::vector<StateInstance>& getStates() const { return states; }
   const std::string& getName() const { return agent_name; }
+  const SymbolBinding& getSymbolBindingByName(const std::string& name) const;
 
   const std::vector<std::shared_ptr<Question>>& getQuestions() const { return questions; }
   std::vector<std::shared_ptr<Question>>& getQuestionsMut() { return questions; }
@@ -76,7 +78,7 @@ public:
   std::string gen_answer_struct() const;
   std::string gen_receive_answer_code() const;
   std::string gen_responses_struct() const;
-  std::string gen_reset_question_locals_code() const;
+  std::string gen_agent_update_code() const;
  
   std::string to_string();
 };
