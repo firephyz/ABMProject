@@ -59,8 +59,6 @@ public:
         position_str << ", ";
       }
     }
-
-    std::cout << "Making Agent: " << position_str.str() << std::endl;
   
     return true;
   }

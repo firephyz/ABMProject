@@ -158,12 +158,15 @@ void * loadModel(const char * model_path) {
   return model_handle;
 }
 
+SimSpace * space_ptr = NULL;
+
 int main(int argc, char** argv) {
   
   const char* model_lib_path;
   model_lib_path = *(argv + 1);
   void * model_handle = loadModel(model_lib_path);
   SimSpace space(*loaded_model);
+  space_ptr = &space;
  
   // Open output file for logging
   std::string log_file_path = std::string("./log_file");

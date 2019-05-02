@@ -88,6 +88,10 @@ public:
     std::cerr << "Cannot call \'get_var_c_name\' function on a SourceAST node of type \'" << this->type_to_string() << "\'" << std::endl;
     exit(-1);
   }
+  virtual const SymbolBinding& getBinding() const {
+    std::cerr << "Cannot call \'getBinding\' function on a SourceAST node of type \'" << this->type_to_string() << "\'" << std::endl;
+    exit(-1);
+  }
   std::string type_to_string() const {
     switch(this->get_type()) {
       case ASTNodeType::Node_if:
@@ -302,7 +306,6 @@ public:
     }
   }
   ASTNodeType get_type() const { return ASTNodeType::Node_return; }
-  const SourceAST& getValue() const { return *value; }
 protected:
   std::unique_ptr<SourceAST> value;
 };

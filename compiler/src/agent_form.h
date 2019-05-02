@@ -27,6 +27,7 @@ public:
 
   std::string gen_state_enum_name(const std::string& str) const;
   const std::string& getName() const { return state_name; }
+  const std::unique_ptr<SourceAST>& getSource() const { return source; }
 
   std::string to_string();
 };
@@ -76,7 +77,7 @@ public:
   std::string gen_answer_struct() const;
   std::string gen_receive_answer_code() const;
   std::string gen_responses_struct() const;
-  std::string gen_reset_question_locals_code() const;
+  std::string gen_agent_update_code() const;
  
   std::string to_string();
 };
