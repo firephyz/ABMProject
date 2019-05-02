@@ -24,7 +24,7 @@ std::string
 Comms::NCube::gen_c_init_value() const
 {
   std::stringstream result;
-  result << "(CommsNeighborhood){NeighborhoodType::NCube, " << size << "}";
+  result << "(CommsNeighborhood){NeighborhoodType::NCube, " << abmodel.numOfDimensions << "}";
   return result.str();
 }
 
