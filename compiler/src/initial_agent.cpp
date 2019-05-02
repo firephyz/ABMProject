@@ -405,25 +405,6 @@ VarValueOverride::VarValueOverride(xmlNodePtr node)
   init_value = std::string((const char *)xml_attr->children->content);
 }
 
-// only call if you're sure the AgentPosition isn't a region
-std::string
-InitialAgent::gen_constructor() const
-{
-  std::stringstream result;
-  result << "InitAgent(" << abmodel.agent_to_uint_by_name(getAgentName()) << ", {";
-
-  uint index = 0;
-  for(auto& dim : position.dimensions) {
-    result << dim.first_value;
-    if(index != position.dimensions.size() - 1) {
-      result << ", ";
-    }
-    index++;
-  }
-  result << "})";
-  return result.str();
-}
-
 bool
 InitialAgent::base_neq(const InitialAgent& a, const InitialAgent& other) {
   for(uint dim_index = 0; dim_index < a.position.dimensions.size(); ++dim_index) {
@@ -514,6 +495,26 @@ LogicalInitialAgent::next()
       break;
     }
   }
+}
+
+// only call if you're sure the AgentPosition isn't a region
+std::string
+LogicalInitialAgent::gen_constructor() const
+{
+  std::cout << "LogicalInitialAgent\n";
+  std::stringstream result;
+  result << "InitAgent(" << abmodel.agent_to_uint_by_name(getAgentName()) << ", {";
+
+  uint index = 0;
+  for(auto& dim : position.dimensions) {
+    result << dim.first_value;
+    if(index != position.dimensions.size() - 1) {
+      result << ", ";
+    }
+    index++;
+  }
+  result << "}, &init_" << actual.unique_id << ")";
+  return result.str();
 }
 
 bool

@@ -4,6 +4,7 @@
 #include <libxml2/libxml/parser.h>
 #include <vector>
 #include <string>
+#include <iostream>
 
 // overrides the initial values of the vars decared in agent_scopes.
 // used during simulation initialization
@@ -105,7 +106,10 @@ struct AgentPosition {
 
 // stores location information and variable overrides for the starting start of an agent
 struct InitialAgent {
-  std::string gen_constructor() const;
+  virtual std::string gen_constructor() const {
+    std::cerr << "Compiler runtime error: Failed to call derived class InitialAgent::gen_constructor.\n";
+    exit(-1);
+  }
   bool operator<(const InitialAgent& other) const;
   static bool base_neq(const InitialAgent& a, const InitialAgent& other);
   virtual const std::string& getAgentName() const = 0;
@@ -119,6 +123,7 @@ struct ConcreteInitialAgent;
 // whose position region contains this agent
 struct LogicalInitialAgent : public InitialAgent {
   LogicalInitialAgent(const ConcreteInitialAgent& agent);
+  std::string gen_constructor() const;
   void next(); // increments position to next in the concrete agent region
   bool operator!=(const LogicalInitialAgent& other) const;
   const std::string& getAgentName() const;
@@ -142,6 +147,10 @@ public:
 // the var overrides and agent type
 struct ConcreteInitialAgent : public InitialAgent {
   ConcreteInitialAgent(xmlNodePtr node);
+  std::string gen_constructor() const {
+    std::cout << "ConcreteInitialAgent\n";
+    return std::string();
+  }
   InitialAgentIterator enumerate() const;
   bool operator!=(const ConcreteInitialAgent& other) const;
   const std::string& getAgentName() const { return agent_type; }
