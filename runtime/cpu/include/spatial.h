@@ -32,7 +32,7 @@ public:
   std::string readPosition() const;
   
   size_t * get_position() const { return position; }
-  size_t position_to_index(const size_t * pos);
+  size_t position_to_index(const size_t * pos) const;
   // Moves mlm_data from this cell to a different sim cell
   const size_t * move_mlm_data(size_t * new_pos);
 };

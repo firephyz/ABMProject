@@ -49,7 +49,7 @@ std::string SimCell::readPosition() const {
 }
 
 size_t
-SimCell::position_to_index(const size_t * pos)
+SimCell::position_to_index(const size_t * pos) const
 {
   size_t result = 0;
   for(int i = 0; i < space.num_dimensions; ++i) {
