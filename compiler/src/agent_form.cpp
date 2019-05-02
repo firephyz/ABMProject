@@ -2,6 +2,7 @@
 #include "source_ast.h"
 #include "comms.h"
 #include "abmodel.h"
+#include "util.h"
 
 #include <memory>
 #include <string>
@@ -218,7 +219,8 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   result << "\
   answer_block * give_answers() const { return (answer_block *)&answers; }\n\
   void receive_answers(answer_block * answer);\n\
-  void process_questions();\n";
+  void process_questions();\n\
+  void update_agent();\n";
   for(auto& question : questions) {
     result << "\t" << question->gen_return_type() << " process_question_" << question->get_name();
     result << "(" << "mlm_data_" << this->getName() << "_questions::" << question->get_name() << "_t * locals)\n;";
@@ -309,6 +311,23 @@ AgentForm::gen_answer_struct() const
   result << "\t" << struct_name << "(AgentType type) : answer_block(type) {}\n";
   result << "};\n";
   result << "\n";
+  return result.str();
+}
+
+std::string
+AgentForm::gen_agent_update_code() const
+{
+  std::stringstream result;
+  result << "void\n";
+  result << gen_mlm_data_string() << "::update_agent() {\n";
+  result << "\tswitch(state) {\n";
+  for(auto& state : states) {
+    result << "\tcase AgentState::" << state.gen_state_enum_name(agent_name) << ":\n";
+    result << util::indent(state.getSource()->to_source_start(SourceASTInfoType::StateInstance, (void *)this), 2);
+    result << "\n\t\tbreak;\n";
+  }
+  result << "\t}\n";
+  result << "}\n\n";
   return result.str();
 }
 

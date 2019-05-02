@@ -159,6 +159,14 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
       parser.set_state(ParserState::Questions);
       question_source = parser.parse_logic(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
     }
+    else if(xmlStrcmp(curNode->name, (const xmlChar *)"return") == 0) {
+      parser.set_state(ParserState::Questions);
+      return_var = dispatch_on_logic_tag(ctxt.extend(question_scope_vars), xmlFirstElementChild(curNode));
+      if(return_var->get_type() != ASTNodeType::Node_var) {
+        util::error(curNode) << "Question return must be a var tag type.\n";
+        exit(-1);
+      }
+    }
     else {
       std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Unrecognized tag in question \'" << question_name << "\'." << std::endl;
       exit(-1);
@@ -167,6 +175,7 @@ Question::Question(ContextBindings& ctxt, xmlNodePtr node)
     curNode = xmlNextElementSibling(curNode);
   }
 
+  // Questions need bodies to return responses
   if(question_source.get() == nullptr) {
     std::cerr << "<" << xmlGetLineNo(node) << "> " << "Question is missing the question body logic. Needs a \'body\' tag." << std::endl;
     exit(-1);
@@ -192,6 +201,9 @@ Question::to_string() const
   result << "\t\t\t------ Question Source ------" << std::endl;
   SourceAST::set_start_depth(4);
   result << question_source->print_tree();
+  result << "\t\t\t------ Question Return ------" << std::endl;
+  SourceAST::set_start_depth(4);
+  result << return_var->print_tree();
 
   return result.str();
 }
@@ -223,23 +235,7 @@ Question::gen_question_process_code() const
 std::string
 Question::gen_return_type() const
 {
-  SourceAST * node = question_source.get();
-  while(node->get_type() != ASTNodeType::Node_return) {
-    node = node->next.get();
-    if(node == nullptr) {
-      std::cerr << "Error: Failed to get return type of surrounding context because a\
-  return node doesn't exist as a final statement.\n";
-      exit(-1);
-    }
-  }
-
-  if(node->next != nullptr) {
-    std::cerr << "Error: Return statement should be the final one in a sequence of code blocks.\n";
-    exit(-1);
-  }
-
-
-  return static_cast<SourceAST_return *>(node)->getValue().gen_type();
+  return return_var->gen_type();
 }
 
 Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
@@ -273,6 +269,14 @@ Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
       parser.set_state(ParserState::Questions);
       answer_source = parser.parse_logic(ctxt.extend(answer_scope_vars), xmlFirstElementChild(curNode));
     }
+    else if(xmlStrcmp(curNode->name, (const xmlChar *)"return") == 0) {
+      parser.set_state(ParserState::Questions);
+      return_var = dispatch_on_logic_tag(ctxt.extend(answer_scope_vars), xmlFirstElementChild(curNode));
+      if(return_var->get_type() != ASTNodeType::Node_var) {
+        util::error(curNode) << "Question return must be a var tag type.\n";
+        exit(-1);
+      }
+    }
     else {
       std::cerr << "<" << xmlGetLineNo(curNode) << "> " << "Unrecognized tag in answer: \'" << xml_attr->children->content << "\'" << std::endl;
       exit(-1);
@@ -281,19 +285,19 @@ Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
     curNode = xmlNextElementSibling(curNode);
   }
 
-  if(answer_source.get() == nullptr) {
-    std::cerr << "<" << xmlGetLineNo(node) << "> " << "Answer is missing the answer body logic. Needs a \'body\' tag." << std::endl;
-    exit(-1);
-  }
+  // Answers don't need bodies. They can just return stuff
+  // if(answer_source.get() == nullptr) {
+  //   std::cerr << "<" << xmlGetLineNo(node) << "> " << "Answer is missing the answer body logic. Needs a \'body\' tag." << std::endl;
+  //   exit(-1);
+  // }
 
-  // Make sure answer source has a correct form. Can only return a constant or variable
-  if(answer_source->get_type() != ASTNodeType::Node_return) {
-    util::error(node) << "Answer body must immediately return its result.\n";
-    exit(-1);
-  }
+  // // Make sure answer source has a correct form. Can only return a constant or variable
+  // if(answer_source->get_type() != ASTNodeType::Node_return) {
+  //   util::error(node) << "Answer body must immediately return its result.\n";
+  //   exit(-1);
+  // }
 
-  SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
-  ASTNodeType type = return_node.getValue().get_type();
+  ASTNodeType type = return_var->get_type();
   if((type != ASTNodeType::Node_var) &&
      (type != ASTNodeType::Node_constant)) {
     util::error(node) << "Answer body can only return a constant or variable.\n";
@@ -304,13 +308,12 @@ Answer::Answer(ContextBindings& ctxt, xmlNodePtr node)
 const std::string&
 Answer::gen_answer_source() const
 {
-  SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
-  if(return_node.getValue().get_type() == ASTNodeType::Node_constant) {
-    SourceAST_constant& constant_node = *(SourceAST_constant *)&return_node.getValue();
+  if(return_var->get_type() == ASTNodeType::Node_constant) {
+    SourceAST_constant& constant_node = *(SourceAST_constant *)return_var.get();
     return constant_node.getValue();
   }
-  else if(return_node.getValue().get_type() == ASTNodeType::Node_var) {
-    SourceAST_var& var_node = *(SourceAST_var *)&return_node.getValue();
+  else if(return_var->get_type() == ASTNodeType::Node_var) {
+    SourceAST_var& var_node = *(SourceAST_var *)return_var.get();
     return var_node.getBinding().gen_var_name();
   }
   else {
@@ -323,16 +326,14 @@ std::string
 Answer::gen_declaration() const
 {
   std::string type_str = gen_return_type();
-  SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
-  std::string default_value = return_node.getValue().gen_c_default_value();
+  std::string default_value = return_var->gen_c_default_value();
   return type_str + " " + gen_name_as_struct_member() + " = " + default_value;
 }
 
 std::string
 Answer::gen_return_type() const
 {
-  SourceAST_return& return_node = *(SourceAST_return *)answer_source.get();
-  return return_node.getValue().gen_type();
+  return return_var->gen_type();
 }
 
 const std::string&
@@ -355,8 +356,14 @@ Answer::to_string() const
     result << "\t\t\t\t" << binding.to_string();
   }
   result << "\t\t\t------ Answer Source -------" << std::endl;
+  if(answer_source != nullptr) {
+    SourceAST::set_start_depth(4);
+    result << answer_source->print_tree();
+  }
+
+  result << "\t\t\t------ Answer Return ------" << std::endl;
   SourceAST::set_start_depth(4);
-  result << answer_source->print_tree();
+  result << return_var->print_tree();
 
   return result.str();
 }

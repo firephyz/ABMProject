@@ -113,7 +113,6 @@ ABModel::gen_give_answer_code()
   result << "\
 answer_block *\n\
 AgentModel::modelGiveAnswer(mlm_data * data) {\n\
-  std::cout << \"Agent: Giving answer...\" << std::endl;\n\
   data->record_answers();\n\
   return data->give_answers();\n\
 }";
@@ -130,7 +129,6 @@ void\n\
 AgentModel::modelReceiveAnswer(mlm_data * data, answer_block * answer) {\n\
   data->receive_answers(answer);\n\
   data->process_questions();\n\
-  std::cout << \"Agent: Receiving answer...\" << std::endl;\n\
 }\n";
   result << "\n";
 
@@ -148,7 +146,6 @@ ABModel::gen_give_neighborhood_code()
   result << "\
 const CommsNeighborhood&\n\
 AgentModel::modelGiveNeighborhood(mlm_data * data) {\n\
-  std::cout << \"Agent: Giving neighborhood...\" << std::endl;\n\
   return data->neighborhood;\n\
 }\n";
   result << "\n";
@@ -162,9 +159,13 @@ ABModel::gen_update_agent_code()
   result << "\
 void\n\
 AgentModel::modelUpdateAgent(mlm_data * data) {\n\
-  std::cout << \"Agent: Updating...\" << std::endl;\n\
+  data->update_agent();\n\
 }\n";
   result << "\n";
+
+  for(auto& agent : agents) {
+    result << agent.gen_agent_update_code();
+  }
   return result.str();
 }
 
@@ -241,6 +242,7 @@ struct mlm_data {\n\
   virtual answer_block * give_answers() const = 0;\n\
   virtual void receive_answers(answer_block * answer) = 0;\n\
   virtual void process_questions() = 0;\n\
+  virtual void update_agent() = 0;\n\
 };\n" << "\n";
 
   for(auto& agent : agents) {

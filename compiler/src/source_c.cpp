@@ -128,6 +128,11 @@ SourceAST_assignment_C::to_source() const
         value_answer->to_source()) :
       "NoInit");
   result << var_binding->to_source() << " = " << value_string << ";";
+
+  if(next != nullptr) {
+    result << next->to_source();
+  }
+  
   return result.str();
 }
 
@@ -136,15 +141,15 @@ SourceAST_assignment_C::to_string()
 {
   std::stringstream result;
 
-  result << "ASSIGN var=\'" << var_binding->getBinding().getName() << "\'" << std::endl;
+  result << "ASSIGN var=\'" << var_binding->getBinding().getName() << "\' type=\'";
   switch(type) {
     case AssignmentValueType::NoInit:
       break;
     case AssignmentValueType::Expression:
-      result << value_expr->print_tree();
+      result << "Expression\'\n" << value_expr->print_tree();
       break;
     case AssignmentValueType::CommsAnswer:
-      result << value_answer->print_tree();
+      result << "CommsAnswer\'\n" << value_answer->print_tree();
       break;
   }
 
@@ -336,8 +341,7 @@ SourceAST_ask_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
-  // TODO finish
-  return std::string();
+  return std::string("q_locals.") + question->get_name() + "." + question->getReturnNode().getBinding().getName();
 }
 
 std::string
@@ -448,6 +452,10 @@ SourceAST_operator_C::to_source() const
     exit(-1);
   }
 
+  if(next != nullptr) {
+    result << next->to_source();
+  }
+
   return result.str();
 }
 
@@ -494,8 +502,11 @@ SourceAST_return_C::to_source() const
 {
   CHECK_AST_CODE_GEN_READY();
 
+  std::cerr << "Error: Should not code-gen a return tag. You probabaly placed a return tag in an invalid location.\n";
+  exit(-1);
+
   std::stringstream result;
-  result << info.data.question->get_ask_tag()->get_target_var_c_name() << " = " << value->to_source() << ";";
+  //result << "q_locals." << info.data.question->get_name() << "." << value->getBinding().getName() << " = " << value->to_source() << ";";
   return result.str();
 }
 

@@ -111,20 +111,16 @@
                   </assign>
                 </then>
               </if>
-              <return>
-                <var id='count'/>
-              </return>
             </logic>
           </body>
+          <return>
+            <var id='count'/>
+          </return>
         </question>
         <answer agent='AgentType' question='living_neighbors'>
-          <body>
-            <logic>
-              <return>
-                <var id='is_alive'/>
-              </return>
-            </logic>
-          </body>
+          <return>
+            <var id='is_alive'/>
+          </return>
         </answer>
       </commsInterface>
     </agent>

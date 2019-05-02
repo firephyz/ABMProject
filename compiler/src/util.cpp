@@ -40,31 +40,31 @@ util::error(xmlNodePtr node)
 std::string
 util::indent(std::string code)
 {
-  // trim input string
-  int start_index = 0;
-  std::find_if(code.begin(), code.end(),
-    [&](const char& c){
-      if ((c != ' ') && (c != '\t') && (c != '\n')) {
-        return true;
-      }
-      else {
-        ++start_index;
-        return false;
-      }
-  });
-  code = code.substr(start_index);
-  int end_index = code.length() - 1;
-  std::find_if(code.rbegin(), code.rend(),
-    [&](const char& c){
-      if ((c != ' ') && (c != '\t') && (c != '\n')) {
-        return true;
-      }
-      else {
-        --end_index;
-        return false;
-      }
-  });
-  code = code.substr(0, end_index + 1);
+  // // trim input string
+  // int start_index = 0;
+  // std::find_if(code.begin(), code.end(),
+  //   [&](const char& c){
+  //     if ((c != ' ') && (c != '\t') && (c != '\n')) {
+  //       return true;
+  //     }
+  //     else {
+  //       ++start_index;
+  //       return false;
+  //     }
+  // });
+  // code = code.substr(start_index);
+  // int end_index = code.length() - 1;
+  // std::find_if(code.rbegin(), code.rend(),
+  //   [&](const char& c){
+  //     if ((c != ' ') && (c != '\t') && (c != '\n')) {
+  //       return true;
+  //     }
+  //     else {
+  //       --end_index;
+  //       return false;
+  //     }
+  // });
+  // code = code.substr(0, end_index + 1);
 
   // indent
   std::stringstream result;
@@ -79,4 +79,14 @@ util::indent(std::string code)
   }
 
   return result.str();
+}
+
+std::string
+util::indent(std::string str, int num)
+{
+  while(num != 0) {
+    str = util::indent(str);
+    --num;
+  }
+  return str;
 }

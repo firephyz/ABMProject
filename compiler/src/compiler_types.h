@@ -138,6 +138,7 @@ class Question {
   const Answer * answer = nullptr;
   std::vector<SymbolBinding> question_scope_vars;
   std::unique_ptr<SourceAST> question_source;
+  std::unique_ptr<SourceAST> return_var;
 public:
   Question(ContextBindings& ctxt, xmlNodePtr node);
   Question(ContextBindings&& ctxt, xmlNodePtr node);
@@ -157,6 +158,7 @@ public:
   std::string gen_response_declaration() const;
   std::string gen_question_process_code() const;
   std::string gen_return_type() const;
+  const SourceAST& getReturnNode() const { return *return_var; }
 };
 
 class Answer {
@@ -164,6 +166,7 @@ class Answer {
   const Question * question = nullptr;
   std::vector<SymbolBinding> answer_scope_vars;
   std::unique_ptr<SourceAST> answer_source;
+  std::unique_ptr<SourceAST> return_var;
 public:
   Answer(ContextBindings& ctxt, xmlNodePtr node);
   Answer(ContextBindings&& ctxt, xmlNodePtr node) : Answer(ctxt, node) {}
@@ -179,6 +182,7 @@ public:
   const std::string& gen_answer_source() const;
   std::string gen_declaration() const;
   std::string gen_return_type() const;
+  const SourceAST& getReturnNode() const { return *return_var; }
 };
 
 #endif

@@ -11,6 +11,7 @@ std::string xtos(const xmlChar* toString);
 namespace util {
   std::ostream& error(xmlNodePtr node);
   std::string indent(std::string code);
+  std::string indent(std::string code, int n);
 }
 
 #endif
