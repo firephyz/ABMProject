@@ -36,14 +36,13 @@ public:
 struct CommsNeighborhood;
 class Answer;
 class AgentForm {
+public:
+  const std::string agent_name; 
   std::vector<SymbolBinding> agent_scope_vars;
   std::vector<StateInstance> states;
   std::vector<std::shared_ptr<Question>> questions;
   std::vector<std::shared_ptr<Answer>> answers;
   std::unique_ptr<CommsNeighborhood> neighborhood;
-
-public:
-  const std::string agent_name; 
   bool log_en;
   AgentForm(const std::string& name);
   AgentForm(const AgentForm&) = delete;
