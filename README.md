@@ -8,19 +8,25 @@ The general flow for using the tools provided is as follows:
 3. Run PHOBOS, the CPU runtime to simulate the model on a CPU target.
 ## Build instructions
 ### XML models
+```
 gamp -runtime-path <path-to-runtime-root> <xml-model> -o <output-name>.cpp
 g++ -g -c -std=c++14 -o <output-name>.o -fPIC -I<runtime-include-path> <output-name>.cpp
 g++ -g -shared -o <model-name>.so <output-name>.o
+```
 ### GAMP
+```
 cd compiler
 mkdir build && cd build
 cmake ..
 make
+```
 ### Phobos
+```
 cd runtime/cpu
 mkdir build && cd build
 cmake ..
 make
+```
 ### XML Models
 Every model to be compiled and simulated needs to have an XML file created which specifies the type of environment within which the simulation takes place and the update rules specific to each agent kind or state.
 See https://docs.google.com/document/d/1rTIuANcLehnYA-dHvYjS5EHK8xtV4vUDP5kjVS6xR2k/ for a full description of the XML model language.
