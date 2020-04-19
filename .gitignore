@@ -1,8 +1,7 @@
-build/
-.vs/
-commit-message.txt
-BUILD/
-*.so
-*.o
-log_file
-tags
+VisualTool/testFiles/*
+
+.tags
+.tags1
+
+compiler/build
+runtime/cpu/build

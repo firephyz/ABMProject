@@ -4,10 +4,12 @@ project(gamp)
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Add executable
-file(GLOB sources src/*)
+file(GLOB sources src/* src/agent/* src/source_tree/*)
+file(GLOB includes src)
 add_executable(gamp ${sources})
 
 # set_target_properties()
+target_include_directories(gamp PUBLIC ${includes})
 target_compile_options(gamp PUBLIC -std=c++14 -Wall -g)
 target_link_libraries(gamp xml2)
 

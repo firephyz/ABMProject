@@ -3,13 +3,13 @@
   <initialState>
     <dimensions sizes='25 25'/>
     <agent location='all all' type='GOL'/>
-    <agent location='1 0' type='GOL'>
-      <var id='state' value='Alive'/>
-    </agent>
     <agent location='2 1' type='GOL'>
       <var id='state' value='Alive'/>
     </agent>
-    <agent location='&gt;=0,&lt;=2 2' type='GOL'>
+    <agent location='3 2' type='GOL'>
+      <var id='state' value='Alive'/>
+    </agent>
+    <agent location='&gt;=1,&lt;=3 3' type='GOL'>
       <var id='state' value='Alive'/>
     </agent>
   </initialState>

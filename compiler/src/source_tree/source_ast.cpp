@@ -1,4 +1,4 @@
-#include "source_ast.h"
+#include "source_tree/source_ast.h"
 
 #include <sstream>
 #include <iostream>
@@ -72,7 +72,7 @@ SourceAST_var::gen_type() const
   return binding->get_type().to_c_source();
 }
 
-std::string 
+std::string
 SourceAST_var::gen_declaration() const
 {
   std::stringstream result;
@@ -86,7 +86,7 @@ SourceAST_var::gen_c_default_value() const
   return binding->gen_c_default_value();
 }
 
-std::string 
+std::string
 SourceAST_constant::gen_declaration() const
 {
   std::stringstream result;

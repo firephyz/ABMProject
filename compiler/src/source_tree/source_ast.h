@@ -131,8 +131,6 @@ public:
   std::string print_tree();
 };
 
-#include "compiler_types.h"
-
 class SourceAST_if : public SourceAST {
 public:
   ~SourceAST_if() = default;
@@ -164,7 +162,7 @@ protected:
   std::unique_ptr<const SourceAST_var> var_binding;
   AssignmentValueType type;
   union {
-    // TODO adjust Q/A Answer element. Haven't 
+    // TODO adjust Q/A Answer element. Haven't
     std::unique_ptr<SourceAST> value_answer;
     std::unique_ptr<SourceAST> value_expr;
   };

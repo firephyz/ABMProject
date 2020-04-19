@@ -2,7 +2,7 @@
 #define AGENT_FORM_INCLUDED
 
 #include "compiler_types.h"
-#include "source_ast.h"
+#include "source_tree/source_ast.h"
 
 #include <vector>
 #include <string>
@@ -37,7 +37,7 @@ struct CommsNeighborhood;
 class Answer;
 class AgentForm {
 public:
-  const std::string agent_name; 
+  const std::string agent_name;
   std::vector<SymbolBinding> agent_scope_vars;
   std::vector<StateInstance> states;
   std::vector<std::shared_ptr<Question>> questions;
@@ -78,7 +78,7 @@ public:
   std::string gen_receive_answer_code() const;
   std::string gen_responses_struct() const;
   std::string gen_agent_update_code() const;
- 
+
   std::string to_string();
 };
 

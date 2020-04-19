@@ -1,4 +1,5 @@
 #include "abmodel.h"
+#include "agent/concrete_agent.h"
 
 #include <string>
 #include <sstream>
@@ -96,14 +97,14 @@ ABModel::to_c_source()
   //   result << agent.getNeighborhood().to_c_source() << "\n";
   // }
   // result << "\n";
-  
-  // Declare enum 
+
+  // Declare enum
  	result << "enum class AgentType {\n";
 	for(auto& agent : agents) {
     result << "\t" << agent.gen_enum_type_name() << ",\n";
   }
   result << "};\n\n";
- 
+
   // Declare answer_block base class
   result << "struct answer_block {\n";
   result << "\tAgentType type_tag;\n\n";
@@ -157,7 +158,7 @@ AgentModel::modelGiveAnswer(mlm_data * data) {\n\
   return result.str();
 }
 
-std::string 
+std::string
 ABModel::gen_receive_answer_code()
 {
   std::stringstream result;
@@ -344,21 +345,21 @@ ABModel::gen_space_size()
 }
 
 std::string
-ABModel::gen_logging_funct() 
+ABModel::gen_logging_funct()
 {
-  std::stringstream result; 
+  std::stringstream result;
   result <<"\
 std::string \
 AgentModel::modelLog(mlm_data * data) {\n\
 	std::stringstream logStr;"\
-  << std::endl;  
+  << std::endl;
 
-  for (auto &agent : agents) { 
-  	if (agent.log_en == true) { 
+  for (auto &agent : agents) {
+  	if (agent.log_en == true) {
    		result << agent.gen_log_code() << std::endl;
-    } 
+    }
   }
- 
+
   result << "	return logStr.str();\n}" << std::endl;
   result << "\n";
 	return result.str();
@@ -423,7 +424,7 @@ ABModel::to_string()
 }
 
 std::string
-ABModel::gen_enum_to_strings() 
+ABModel::gen_enum_to_strings()
 {
 	std::stringstream result;
 	// Declare enum to_string funct
@@ -432,10 +433,10 @@ ABModel::gen_enum_to_strings()
 		result << "\tswitch(*(this->type)) {\n";
 		result << "\t\tcase AgentType::" << agent.gen_enum_type_name() << ":\n";
 		result << "\t\t\treturn \"" <<  agent.gen_enum_type_name() << "\";\n";
-	} 
-	result << "\t\t}\n}\n\n";  	
+	}
+	result << "\t\t}\n}\n\n";
 
- 
+
   // Declare enum to_string funct
 for(auto& agent : agents) {
 		result << "std::string mlm_data_" << agent.agent_name << "::AgentStateEnumToString() {\n";
@@ -443,10 +444,9 @@ for(auto& agent : agents) {
 	for(auto& state : agent.getStates()) {
 			result << "\t\tcase AgentState::" << state.gen_state_enum_name(agent.getName()) << ":\n";
 			result << "\t\t\treturn \"" <<  state.gen_state_enum_name(agent.getName()) << "\";\n";
-	  } 
+	  }
   }
-	result << "\t\t}\n}\n\n";  	
-	
+	result << "\t\t}\n}\n\n";
+
 	return result.str();
 }
-

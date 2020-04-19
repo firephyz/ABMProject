@@ -1,7 +1,7 @@
 #ifndef SOURCE_VERILOG_INCLUDED
 #define SOURCE_VERILOG_INCLUDED
 
-#include "source_ast.h"
+#include "source_tree/source_ast.h"
 
 #include <libxml/parser.h>
 

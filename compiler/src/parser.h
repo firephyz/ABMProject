@@ -59,7 +59,7 @@ struct ParserObject {
   std::vector<struct answer_link_data> answers_to_be_linked;
 
   std::unique_ptr<SourceAST> parse_logic(const ContextBindings& ctxt, xmlNodePtr node);
-  void set_state(ParserState s) { 
+  void set_state(ParserState s) {
     state = s;
 
     #if VERBOSE_AST_GEN
@@ -68,7 +68,7 @@ struct ParserObject {
   }
 };
 
-#include "source_ast.h"
+#include "source_tree/source_ast.h"
 #include "compiler_types.h"
 class SymbolBinding;
 class ParserContext {
@@ -86,7 +86,7 @@ void parse_init_agent(xmlNodePtr node);
 std::unique_ptr<CommsNeighborhood> parse_neighborhood(const size_t agent_index, const char * n);
 
 std::unique_ptr<SourceAST> dispatch_on_logic_tag(const ContextBindings& ctxt, xmlNodePtr node);
-void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode, SymbolBindingScope scope); 
+void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode, SymbolBindingScope scope);
 void parseAgentState(AgentForm& agent, size_t agent_index, xmlNodePtr curNode);
 
 #endif

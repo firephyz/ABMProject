@@ -1,6 +1,6 @@
 #include "compiler_types.h"
 #include "config.h"
-#include "source_ast.h"
+#include "source_tree/source_ast.h"
 #include "util.h"
 #include "parser.h"
 #include "agent_form.h"
@@ -41,7 +41,7 @@ VarTypeEnum strToEnum(std::string& str){
     return VarTypeEnum::Real;
   if (str == "state")
     return VarTypeEnum::State;
-  
+
   std::cerr << "Unknown type string \'" << str <<"\'." << std::endl;
   exit(-1);
 }
@@ -232,7 +232,7 @@ std::string
 Question::gen_response_declaration() const
 {
   std::string decl = answer->gen_return_type() + " " + question_name;
-  return std::move(decl);
+  return decl;
 }
 
 std::string

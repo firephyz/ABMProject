@@ -1,7 +1,7 @@
 #ifndef SOURCE_C_INCLUDED
 #define SOURCE_C_INCLUDED
 
-#include "source_ast.h"
+#include "source_tree/source_ast.h"
 #include "compiler_types.h"
 
 #include <libxml2/libxml/parser.h>

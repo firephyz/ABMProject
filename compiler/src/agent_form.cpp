@@ -1,5 +1,5 @@
 #include "agent_form.h"
-#include "source_ast.h"
+#include "source_tree/source_ast.h"
 #include "comms.h"
 #include "abmodel.h"
 #include "util.h"
@@ -217,7 +217,7 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
     // place struct name
   }
   result << "\n";
-  
+
   // constructor
   //result << "\t AgentType * typePtr = (AgentType*)malloc(sizeof(AgentType));\n";
 	//result << "\t *typePtr = AgentType::" << gen_enum_type_name() << ";\n";
@@ -241,7 +241,7 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   void receive_answers(answer_block * answer);\n\
   void process_questions();\n\
   void update_agent();\n";
-	result << "\tstd::string AgentTypeEnumToString();\n";	
+	result << "\tstd::string AgentTypeEnumToString();\n";
 	result << "\tstd::string AgentStateEnumToString();\n";
 
   for(auto& question : questions) {
@@ -304,16 +304,16 @@ AgentForm::gen_receive_answer_code() const
   return result.str();
 }
 
-std::string 
-AgentForm::gen_log_code() const 
+std::string
+AgentForm::gen_log_code() const
 {
-	std::stringstream result;  
+	std::stringstream result;
   result << "if (*(data->type) == AgentType::" << gen_enum_type_name() << ") {\n";
 	result << "logStr << \":\" << data->AgentTypeEnumToString() << \"%\" << data->AgentStateEnumToString() << \"\\\\\" << data->sim_cell->readPosition();\n}";
   return result.str();
 }
 
-std::string 
+std::string
 AgentForm::gen_mlm_data_string() const
 {
 	return std::string("mlm_data_") + agent_name;

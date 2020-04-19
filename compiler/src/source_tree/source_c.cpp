@@ -1,4 +1,4 @@
-#include "source_c.h"
+#include "source_tree/source_c.h"
 #include "parser.h"
 #include "util.h"
 #include "debug.h"
@@ -20,10 +20,10 @@ extern ABModel abmodel;
 
 SourceAST_if_C::SourceAST_if_C(const ContextBindings& ctxt, xmlNodePtr node)
 {
-  xmlNodePtr child = xmlFirstElementChild(node);   
+  xmlNodePtr child = xmlFirstElementChild(node);
 
-  while (child != NULL) { 
-    if (xmlStrcmp(child->name, (const xmlChar*)"predicate") == 0) { 
+  while (child != NULL) {
+    if (xmlStrcmp(child->name, (const xmlChar*)"predicate") == 0) {
       predicate = parser.parse_logic(ctxt, child);
     }
     else if(xmlStrcmp(child->name, (const xmlChar*)"then") == 0) {
@@ -123,7 +123,7 @@ SourceAST_assignment_C::to_source() const
   CHECK_AST_CODE_GEN_READY();
 
   std::stringstream result;
-  std::string value_string = type == AssignmentValueType::Expression ? 
+  std::string value_string = type == AssignmentValueType::Expression ?
     value_expr->to_source() :
     (type == AssignmentValueType::CommsAnswer ?
       (value_answer.get() == nullptr ?
@@ -135,7 +135,7 @@ SourceAST_assignment_C::to_source() const
   if(next != nullptr) {
     result << next->to_source();
   }
-  
+
   return result.str();
 }
 
@@ -198,7 +198,7 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
     if(type == ConstantType::State) {
       if(info.type == SourceASTInfoType::StateInstance) {
         // TODO If parsing agent states, questions won't currently exist yet to be
-        // in info.data. Must find the agent reference some other way. *Also, 
+        // in info.data. Must find the agent reference some other way. *Also,
         // be careful the agent reference you get isn't temporary...
         // std::string agent_name = info.data.state->getName();
         // states_agent = &abmodel.find_agent_by_name(agent_name);
@@ -209,7 +209,7 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
       }
     }
   }
-  
+
   if(xml_attr != NULL) {
     if(type == ConstantType::State) {
       std::string agent_name((const char *)xml_attr->children->content);

@@ -130,8 +130,7 @@ public:
 };
 
 #include "agent_form.h"
-
-#include "source_ast.h"
+#include "source_tree/source_ast.h"
 
 class Answer;
 class SourceAST_ask;

@@ -5,10 +5,10 @@
 #include "parser.h"
 #include "abmodel.h"
 #include "config.h"
-#include "source_c.h"
-#include "source_verilog.h"
 #include "util.h"
 #include "comms.h"
+#include "source_tree/source_c.h"
+#include "source_tree/source_verilog.h"
 
 using namespace std;
 #include <libxml2/libxml/parser.h>
@@ -37,13 +37,13 @@ ABModel& parse_model(const char * xml_model_path)
     xmlNodePtr root = xmlDocGetRootElement(inputDoc);
 
     // Get the model name or set to default
-    auto model_name = xmlGetAttribute(root, "name");    
+    auto model_name = xmlGetAttribute(root, "name");
     if (model_name != NULL) {
-    	abmodel.model_name = std::string((const char*)model_name->children->content);	
+    	abmodel.model_name = std::string((const char*)model_name->children->content);
     } else {
     	abmodel.model_name = std::string("DEFAULT_NAME");
     }
-	
+
     xmlNodePtr child = xmlFirstElementChild(root);
 
     while (child != NULL) {
@@ -122,7 +122,7 @@ void parse_dimensions(xmlNodePtr curNode)
 
 void parseEnviroment(xmlNodePtr envChild) {
   auto value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
-  uint test_dim_count = 0; 
+  uint test_dim_count = 0;
   if (value_str == NULL) {
   	std::cerr << "No relational type specified for enivroment: " << envChild->name;
   }
@@ -130,10 +130,10 @@ void parseEnviroment(xmlNodePtr envChild) {
 
   std::string relationType(value_str);
   abmodel.relationType = relationType;
-    
+
   if (relationType == "spatial") {
-		curNode = xmlFirstElementChild(envChild); 
-  	if (xmlStrcmp(curNode->name, (const xmlChar*)("spatialRelation")) == 0)     { 
+		curNode = xmlFirstElementChild(envChild);
+  	if (xmlStrcmp(curNode->name, (const xmlChar*)("spatialRelation")) == 0)     {
       xmlAttrPtr numOfDim_node = xmlGetAttribute(curNode, "dimensions");
       if (numOfDim_node == NULL) {
         std::cerr << "Error missing dimensions attr" << std::endl;
@@ -141,7 +141,7 @@ void parseEnviroment(xmlNodePtr envChild) {
       abmodel.numOfDimensions = std::stoi(std::string((const char*)numOfDim_node->children->content));
 		} else {
     	std::cerr << "Error, mismatched relation definition" << std::endl;
-	  } 
+	  }
   } else {
 		std::cerr << "Error, other relatiion types are not supported at this time" << std::endl;
    }
@@ -150,12 +150,12 @@ void parseEnviroment(xmlNodePtr envChild) {
   if (abmodel.numOfDimensions != test_dim_count) {
 		std::cerr << "Number of dimenstions specified does not match the number of those supplied to enviroment tag" << std::endl;
 	}
-  
+
   // Check if the number of inital dimension sizes matches the number supplied
   if (abmodel.numOfDimensions != abmodel.init.dimension_sizes.size()) {
-		std::cerr << "Number of dimensions specified does not match the number of initial dimensions supplied" << std::endl; 
+		std::cerr << "Number of dimensions specified does not match the number of initial dimensions supplied" << std::endl;
 	}
-}  
+}
 
 void parseAgents(xmlNodePtr agentsChild) {
   xmlNodePtr curNode = NULL;
@@ -221,14 +221,14 @@ ParserObject::answer_link_data::resolve_answer_links()
 
 void newAgentDef(xmlNodePtr agent) {
   xmlNodePtr curNode = agent;
- 
+
   // Check that the first tag is Agent and go ahead and grab the name
   if (xmlStrcmp(curNode->name, (const xmlChar*)"agent") == 0) {
     std::string name((const char*)(xmlGetAttribute(curNode, "type")->children->content));
     abmodel.agents.emplace_back(name);
     AgentForm& toAdd = abmodel.agents[abmodel.agents.size() - 1];
-  
-    // Check for log attr for agent if not present preset to false and type check   
+
+    // Check for log attr for agent if not present preset to false and type check
   	auto xml_log_attr = xmlGetAttribute(curNode, "log_en");
   	if(xml_log_attr == NULL) {
   		 toAdd.log_en = false;
@@ -294,7 +294,7 @@ void newAgentDef(xmlNodePtr agent) {
       else {
         util::error(curNode) << "Expecting a \'question\' tag node but received a \'" << commsSearch->name << "\' tag node." << std::endl;
         exit(-1);
-      }      
+      }
 
       commsSearch = xmlNextElementSibling(commsSearch);
     }
@@ -386,13 +386,13 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode, Sym
       util::error(curNode) << "Variables cannot use the dash \'-\' in their \'id\' attribute." << std::endl;
       exit(-1);
     }
-    
+
 		auto xml_log_attr = xmlGetAttribute(curNode, "log");
 		if(xml_log_attr == NULL) {
 		 varType.log_en = false;
 		} else {
  			std::string log_en((const char*)xml_log_attr->children->content);
-	
+
   	  if (log_en == "true") {
     		varType.log_en = true;
    	  } else if (log_en == "false") {
@@ -402,7 +402,7 @@ void parseBindings(std::vector<SymbolBinding>& bindings, xmlNodePtr curNode, Sym
 			std::cerr << "Improper logging attr type" << std::endl;
 		  }
     }
-	
+
     // Check if the var has a val attribute and if so use that else set default
     xml_attr = xmlGetAttribute(curNode, "value");
     if (xml_attr == NULL) {
@@ -507,7 +507,7 @@ ParserObject::parse_logic(const ContextBindings& ctxt, xmlNodePtr node)
   }
   (*last_node)->append_next(std::unique_ptr<SourceAST>(nullptr));
 
-  return std::move(result);
+  return result;
 }
 
 #if VERBOSE_AST_GEN

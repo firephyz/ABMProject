@@ -1,8 +1,0 @@
-GameOfLife
-Enviroment_Size:5
-Grid_Space:10
-GridLines:1
-ColorByState:1
-0:AGENT_AgentType%STATE_AgentType_Alive\4,0:AGENT_AgentType%STATE_AgentType_Alive\4,1:AGENT_AgentType%STATE_AgentType_Alive\4,2:AGENT_AgentType%STATE_AgentType_Alive\4,3:AGENT_AgentType%STATE_AgentType_Alive\4,4
-1:AGENT_AgentType%STATE_AgentType_Alive\4,0:AGENT_AgentType%STATE_AgentType_Alive\4,1:AGENT_AgentType%STATE_AgentType_Alive\4,2:AGENT_AgentType%STATE_AgentType_Alive\4,3:AGENT_AgentType%STATE_AgentType_Alive\4,4
-2:AGENT_AgentType%STATE_AgentType_Alive\4,0:AGENT_AgentType%STATE_AgentType_Alive\4,1:AGENT_AgentType%STATE_AgentType_Alive\4,2:AGENT_AgentType%STATE_AgentType_Alive\4,3:AGENT_AgentType%STATE_AgentType_Alive\4,4

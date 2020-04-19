@@ -2,7 +2,7 @@
  * AGASC - Auto-Generated ABM Simulator and Compiler
  * Senior Design Project
  *   Prasidh Arora, Kyle Burge, Logan Johnson, Alex Lee
- * 
+ *
  * Usage Notes:
  *
  *********************************************************************************
@@ -46,7 +46,7 @@ void printUsage()
   std::cout << "\t-target <(cpu|cluster|fpga)>\n\t\tSelects the output target for the compiler. Defaults to \'cpu\'.\n\n";
   std::cout << "\t-runtime-path <path>\n\t\tPoints GAMP to the runtime directory that contains the various target runtime sources.\n\t\tDefaults to \'./runtime/\'.\n";
   std::cout << "\t-o <output-lib-name>\n\t\tSpecifies the output library file name. This can be used with the runtime to simulate the model.\n\t\t";
-    std::cout << "Defaults to the name of the xml input file but with a file extension of \'.so\'\n";
+  std::cout << "Defaults to the name of the xml input file but with a file extension of \'.so\'\n";
   std::cout << std::endl;
 }
 
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
   // load and parse input model
   ABModel& model = parse_model(pargs.xml_model_path.c_str());
 
-  std::cout << model.to_string();
+//  std::cout << model.to_string();
 
   // write out ast as code to file
   std::string unique_id = std::to_string((int)time(NULL));
