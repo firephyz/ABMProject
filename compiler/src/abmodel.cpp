@@ -1,13 +1,49 @@
 #include "abmodel.h"
 #include "agent/concrete_agent.h"
+#include "agent/agent_iterator.h"
+#include "agent/logical_init_agent.h"
 
 #include <string>
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <fstream>
+
+extern ABModel abmodel;
+
+void
+InitialState::resolveInitAgentLinks()
+{
+  for(auto& ag : agents) {
+    const AgentForm& agent_form = abmodel.find_agent_by_name(ag.getName());
+    ag.agent = &agent_form;
+  }
+}
+
+void
+InitialState::sortInitAgents()
+{
+  // sort initial_agents by type vector
+  std::sort(abmodel.init.agents_by_type.begin(),
+            abmodel.init.agents_by_type.end(),
+            [](auto& a, auto& b) {
+    return abmodel.init.agents[a].type_unique_id < abmodel.init.agents[b].type_unique_id;
+  });
+
+  // sort initial agents by position vector
+  std::sort(abmodel.init.agents_by_position.begin(),
+            abmodel.init.agents_by_position.end(),
+            [](auto& a, auto& b) {
+    return abmodel.init.agents[a].position < abmodel.init.agents[b].position;
+  });
+  // sort by largest to smallest so more specific init decls get
+  // processed last
+  std::reverse(abmodel.init.agents_by_position.begin(),
+               abmodel.init.agents_by_position.end());
+}
 
 std::string
-ABModel::to_c_source()
+ABModel::to_c_source(long gen_unique_id)
 {
   std::stringstream result;
 
@@ -15,9 +51,11 @@ ABModel::to_c_source()
   result << "\u0023include \"agent_model.h\"\n";
   result << "\u0023include \"communications.h\"\n";
   result << "\u0023include <algorithm>\n";
-  result << "\u0023include <array>\n";
+  result << "\u0023include <vector>\n";
   result << "\u0023include <iostream>\n";
   result << "\u0023include <sstream>\n";
+  result << "\u0023include <array>\n";
+  result << "\n\u0023define UNIQUE_ID " << gen_unique_id << "\n";
   result << "\n";
 
   // TODO split this following enum into multiple ones for each agent
@@ -32,7 +70,7 @@ ABModel::to_c_source()
   result << "};\n";
   result << "\n";
 
-  // Generate structs for holding agent initial data
+  // Generate structs defs for holding agent initial data
   for(auto& agent : agents) {
     result << "struct agent_init_" << agent.getName() << " {\n";
     for(auto& var : agent.getAgentScopeBindings()) {
@@ -41,54 +79,21 @@ ABModel::to_c_source()
     result << "};\n\n";
   }
 
-  for(auto& ag : init.agents) {
-    result << "struct agent_init_" << ag.agent_type << " init_" << ag.unique_id;
-    result << " = {";
-    for(auto& var : find_agent_by_name(ag.agent_type).getAgentScopeBindings()) {
-      auto init_var = std::find_if(ag.vars.begin(), ag.vars.end(),
-        [&](const VarValueOverride& other)
-        {
-          return other.name == var.getName();
-      });
-
-      if(init_var == ag.vars.end()) {
-        result << var.gen_c_default_value();
-      }
-      else {
-        if(init_var->name == "state") {
-          result << "AgentState::STATE_" << ag.agent_type << "_" << init_var->init_value;
-        }
-        else {
-          result << init_var->init_value;
-        }
-      }
-      result << ", ";
-    }
-    result << "};\n";
+  // Generate initial data array for different initial states
+  for(auto& ag : agents) {
+    result << gen_init_array(ag);
   }
-  result << "\n";
 
   // Declare space for initial agents.
   // This does not fill in the initial values for each agent specified. It only notifies the runtime
   // which simulation cells need to have agents in them at the start of the simulation
   result << "constexpr int num_dimensions = " << gen_space_size() << ";\n";
-  result << "template class SimAgent<num_dimensions>;\n";
-  result << "using InitAgent = SimAgent<num_dimensions>;\n";
-  std::vector<std::string> initial_agent_defs = gen_initial_agent_defs();
-  result << "const std::array<InitAgent, " << initial_agent_defs.size() << "> initial_agents {";
-  for(uint index = 0; index < initial_agent_defs.size(); index++) {
-     auto & agent = initial_agent_defs[index];
-     result << agent;
-     if(index != initial_agent_defs.size() - 1) {
-       result << ", ";
-     }
-  }
-  result << "};\n";
-  result << "\n";
 
   // Declare spatial info and model
   result << "size_t dimensions[] = " << gen_space_dims() << ";\n";
-  result << "AgentModel loaded_model(\"" << model_name << "\", " << gen_spatial_enum() << ", num_dimensions, dimensions);\n";
+  result << "AgentModel loaded_model(\""
+    << model_name << "\", " << gen_spatial_enum()
+    << ", num_dimensions, dimensions, \"init-" << gen_unique_id << "\");\n";
   result << "\n";
 
   // Moved declaration into each agent specific mlm_data struct
@@ -143,6 +148,104 @@ ABModel::to_c_source()
   return result.str();
 }
 
+void
+ABModel::write_init_file(long unique_id)
+{
+  std::string filename = std::string("init-").append(std::to_string(unique_id));
+  std::ofstream fileout(filename);
+
+  // calculate size of simulation space
+  int space_size = 1;
+  for(auto& width : dimension_sizes) {
+    space_size *= width;
+  }
+
+  // fill temporary simulation space with enumerated agents
+  // more specific position decls will get processed last
+  std::vector<LogicalInitialAgent> ag_space;
+  ag_space.assign(space_size, LogicalInitialAgent());
+  for(auto& ag_index : init.agents_by_position) {
+    auto& agent = init.agents[ag_index];
+    for(auto& single_agent : agent.enumerate()) {
+      ag_space[single_agent.position.to_integer()] = LogicalInitialAgent(single_agent);
+    }
+  }
+
+  // output init data
+  fileout << space_size << std::endl;
+  for(auto& ag : ag_space) {
+    fileout << ag.gen_init_data() << std::endl;
+  }
+}
+
+std::string
+ABModel::gen_init_array(const AgentForm& ag)
+{
+  std::stringstream result;
+
+  // Find where the agent vector is partited along different agent types
+  std::vector<size_t> partitions = {0};
+  // Iterate through agent type ids
+  for(size_t ag_type_index = 0; ag_type_index < agents.size(); ++ag_type_index) {
+    auto part = std::find_if(init.agents_by_type.begin(),
+                             init.agents_by_type.end(),
+                             [&](auto ag_index) {
+      // look for next type to find boundary
+      return init.agents[ag_index].type_unique_id == ag_type_index + 1;
+    });
+    size_t index = part - init.agents_by_type.begin();
+    partitions.push_back(index);
+  }
+
+  // For each partition along agent type, generate an array of possible
+  // initial states.
+  auto start_index = partitions.begin();
+  auto end_index = partitions.begin() + 1;
+  for(; start_index != partitions.end() - 1; ++start_index,++end_index) {
+    // get agent for naming the array
+    auto& concrete_agent = init.agents[init.agents_by_type[*start_index]];
+    result << "std::array<struct agent_init_" << concrete_agent.agent_type << ", " << init.agents.size() << "> ";
+    result << "init_states_" << concrete_agent.agent_type << " = {\n";
+
+    // iterate through agents of this type to enumerate possible init states
+    for(auto ag_index = *start_index; ag_index != *end_index; ++ag_index) {
+      auto& agent_of_type = init.agents[ag_index];
+      result << "\t(struct agent_init_" << concrete_agent.agent_type << "){ ";
+
+      // Generate an initial value for each variable in scope
+      for(auto& symbol : agent_of_type.getAgentScopeBindings()) {
+        // get var value override for concrete agent if present
+        auto init_var = std::find_if(agent_of_type.vars.begin(), agent_of_type.vars.end(),
+        [&](const VarValueOverride& other) {
+          return other.name == symbol.getName();
+        });
+
+        if(init_var == agent_of_type.vars.end()) {
+          result << symbol.gen_c_default_value();
+        }
+        else {
+          if(init_var->name == "state") {
+            result << "AgentState::STATE_" << agent_of_type.agent_type << "_" << init_var->init_value;
+          }
+          else {
+            result << init_var->init_value;
+          }
+        }
+
+
+        result << ", ";
+      }
+      result.seekp(result.tellp() - (std::streamoff)2);
+      result << " },\n";
+    }
+    result.seekp(result.tellp() - (std::streamoff)2);
+    result << "\n";
+  }
+  result << "};\n\n";
+
+  return result.str();
+}
+
 std::string
 ABModel::gen_give_answer_code()
 {
@@ -167,6 +270,7 @@ void\n\
 AgentModel::modelReceiveAnswer(mlm_data * data, answer_block * answer) {\n\
   data->receive_answers(answer);\n\
   data->process_questions();\n\
+  return;\n\
 }\n";
   result << "\n";
 
@@ -198,6 +302,7 @@ ABModel::gen_update_agent_code()
 void\n\
 AgentModel::modelUpdateAgent(mlm_data * data) {\n\
   data->update_agent();\n\
+  return;\n\
 }\n";
   result << "\n";
 
@@ -215,6 +320,7 @@ ABModel::gen_tick_code()
 void\n\
 AgentModel::modelTick() {\n";
   //result << "std::cout << \"Tick.. \" << std::endl;\n";
+  result << "return;\n";
   result << "}\n";
   result << "\n";
   return result.str();
@@ -228,12 +334,12 @@ ABModel::gen_new_agent_func()
   // function for figuring out how much space the agent needs
   result << "\
 mlm_data *\n\
-allocate_agent_space(const uint type, SimCell * cell, void * init_data)\n\
+allocate_agent_space(const uint type, SimCell * cell, size_t init_index)\n\
 {\n\
   switch(type) {\n";
   for(auto& agent : agents) {
     result << "\t\tcase " << agent_to_uint(agent) << \
-      ": return new " << agent.gen_mlm_data_string() << "(cell, (struct agent_init_" << agent.getName() << " *)init_data);\n";
+      ": return new " << agent.gen_mlm_data_string() << "(cell, &init_states_" << agent.getName() << "[init_index]);\n";
   }
   result << "\t\tdefault:\n\t\t\tstd::cerr << \"Runtime failure. Unknown agent uint id.\" << std::endl;\n";
   result << "\t\t\texit(-1);\n";
@@ -245,17 +351,10 @@ allocate_agent_space(const uint type, SimCell * cell, void * init_data)\n\
   // Function that creates all the new agents
   result << "\
 mlm_data *\n\
-AgentModel::modelNewAgent(void * position, SimCell * cell) {\n\
-  auto agent_iter = std::find_if(initial_agents.begin(), initial_agents.end(),\n\
-    [&](const auto& agent){\n\
-      return agent.is_at_position(position);\n\
-    });\n\
-  if(agent_iter != initial_agents.end()) {\n\
-    struct mlm_data * data = allocate_agent_space(agent_iter->getAgentType(), cell, agent_iter->getInitData());\n\
-    return data;\n\
-  }\n\
-\n\
-  return NULL;\n\
+AgentModel::modelNewAgent(SimCell * cell) {\n\
+  auto& init_agent = initial_agents[cell->position_to_index()];\n\
+  struct mlm_data * data = allocate_agent_space(init_agent.getAgentType(), cell, init_agent.getInitIndex());\n\
+  return data;\n\
 }";
 
   return result.str();
@@ -291,23 +390,6 @@ struct mlm_data {\n\
   return result.str();
 }
 
-std::vector<std::string>
-ABModel::gen_initial_agent_defs()
-{
-  std::vector<std::string> result;
-  for(auto& agent : init.agents) {
-    //if(agent.position.is_region()) {
-      for(auto& single_agent : agent.enumerate()) {
-        result.push_back(single_agent.gen_constructor());
-      }
-    // }
-    // else {
-    //   result.push_back(agent.gen_constructor());
-    // }
-  }
-  return result;
-}
-
 std::string
 ABModel::gen_spatial_enum()
 {
@@ -328,9 +410,9 @@ ABModel::gen_space_dims()
 {
   std::stringstream result;
   result << "{";
-  for(uint dim_index = 0; dim_index < init.dimension_sizes.size(); ++dim_index) {
-    result << init.dimension_sizes[dim_index];
-    if(dim_index != init.dimension_sizes.size() - 1) {
+  for(uint dim_index = 0; dim_index < dimension_sizes.size(); ++dim_index) {
+    result << dimension_sizes[dim_index];
+    if(dim_index != dimension_sizes.size() - 1) {
       result << ", ";
     }
   }
@@ -392,23 +474,36 @@ ABModel::agent_to_uint_by_name(const std::string& name) const
   return agent_to_uint(find_agent_by_name(name));
 }
 
-const AgentForm&
-ABModel::find_agent_by_name(const std::string& name) const
+size_t
+ABModel::get_agent_type_index(const std::string& agent_type) const
 {
-  auto agent_iter = std::find_if(
-    agents.begin(),
-    agents.end(),
-    [&](const AgentForm& agent) {
-      return agent.getName() == name;
-    });
+  auto iter = std::find_if(agents.begin(),
+                           agents.end(),
+                           [&](auto& ag) {
+    return agent_type == ag.getName();
+  });
 
-  if(agent_iter == agents.end()) {
-    std::cerr << "Failed to convert agent name \'" << name << "\' into uint.";
-    std::cerr << " Could not find corresponding agent." << std::endl;
+  if(iter == agents.end()) {
+    std::cerr << " Could not find agent type \'" << agent_type << "\'." << std::endl;
     exit(-1);
   }
 
-  return *agent_iter;
+  return iter - agents.begin();
+}
+
+const AgentForm&
+ABModel::find_agent_by_name(const std::string& name) const
+{
+  auto iter = std::find_if(agents.begin(), agents.end(), [&](auto& other) {
+    return other.getName() == name;
+  });
+
+  if (iter == agents.end()) {
+    std::cerr << "Could not find agent form with name \'" << name << "\'." << std::endl;
+    exit(-1);
+  }
+
+  return *iter;
 }
 
 std::string

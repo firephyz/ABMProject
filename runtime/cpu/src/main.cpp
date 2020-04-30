@@ -9,16 +9,6 @@
 #include <dlfcn.h>
 #include <cstdlib>
 
-#define DLSYM_ERROR_CHECK(varName, symbol)\
-if(varName == NULL) {\
-  std::cerr << "Error: Could not locate symbol \'" << symbol << "\'\n";\
-  char * error = dlerror();\
-  if(error != NULL) {\
-    std::cerr << error << std::endl;\
-  }\
-  exit(-1);\
-}
-
 //int SimAgent::num_dimensions = -1; // placeholder for actual number
 
 // TODO Allow setting this with command line arguments
@@ -26,7 +16,7 @@ if(varName == NULL) {\
 
 // Globals loaded with libdl with symbols provided by given model.so file
 AgentModel * loaded_model                                                                                 = NULL;
-mlm_data *          (*modelNewAgentPtr)(AgentModel * this_class, void *, SimCell * sim_cell)                                  = NULL;
+mlm_data *          (*modelNewAgentPtr)(AgentModel * this_class, SimCell * sim_cell)                                  = NULL;
 answer_block *      (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * mlm_data)                       = NULL;
 void                (*modelReceiveAnswerPtr)(AgentModel * this_class, mlm_data * data, answer_block * answer)     = NULL;
 const CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, mlm_data * data)                 = NULL;
@@ -96,37 +86,40 @@ extractMangledSymbols(const char * model_path) {
 }
 
 void loadModelSymbol(void * model_handle, std::string& symbol) {
+  void * symbol_ptr = dlsym(model_handle, symbol.c_str());
+
+  if(symbol_ptr == NULL) {
+    std::cerr << "Error: Could not locate symbol \'" << symbol << "\'\n";
+    char * error = dlerror();
+    if(error != NULL) {
+      std::cerr << error << std::endl;
+    }
+    exit(-1);
+  }
+
   if(symbol.find("loaded_model") != std::string::npos) {
-    loaded_model = (AgentModel *)dlsym(model_handle, symbol.c_str());
-    DLSYM_ERROR_CHECK(loaded_model, symbol);
+    loaded_model = (AgentModel *)symbol_ptr;
   }
   else if(symbol.find("modelGiveAnswer") != std::string::npos) {
-    modelGiveAnswerPtr = (answer_block * (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
-    DLSYM_ERROR_CHECK(modelGiveAnswerPtr, symbol);
+    modelGiveAnswerPtr = (answer_block * (*)(AgentModel *, mlm_data *))symbol_ptr;
   }
   else if(symbol.find("modelNewAgent") != std::string::npos) {
-    modelNewAgentPtr = (mlm_data * (*)(AgentModel *, void *, SimCell * sim_cell))dlsym(model_handle, symbol.c_str());
-    DLSYM_ERROR_CHECK(modelNewAgentPtr, symbol);
+    modelNewAgentPtr = (mlm_data * (*)(AgentModel *, SimCell * sim_cell))symbol_ptr;
   }
   else if(symbol.find("modelGiveNeighborhood") != std::string::npos) {
-    modelGiveNeighborhoodPtr = (const CommsNeighborhood& (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
-    DLSYM_ERROR_CHECK(modelGiveNeighborhoodPtr, symbol);
+    modelGiveNeighborhoodPtr = (const CommsNeighborhood& (*)(AgentModel *, mlm_data *))symbol_ptr;
   }
   else if(symbol.find("modelReceiveAnswer") != std::string::npos) {
-    modelReceiveAnswerPtr = (void (*)(AgentModel *, mlm_data *, answer_block *))dlsym(model_handle, symbol.c_str());
-    DLSYM_ERROR_CHECK(modelReceiveAnswerPtr, symbol);
+    modelReceiveAnswerPtr = (void (*)(AgentModel *, mlm_data *, answer_block *))symbol_ptr;
   }
   else if(symbol.find("modelUpdateAgent") != std::string::npos) {
-    modelUpdateAgentPtr = (void (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
-    DLSYM_ERROR_CHECK(modelUpdateAgentPtr, symbol);
+    modelUpdateAgentPtr = (void (*)(AgentModel *, mlm_data *))symbol_ptr;
   }
   else if(symbol.find("modelLog") != std::string::npos) {
-    modelLogPtr = (std::string (*)(AgentModel *, mlm_data *))dlsym(model_handle, symbol.c_str());
-    DLSYM_ERROR_CHECK(modelLogPtr, symbol);
-  } 
+    modelLogPtr = (std::string (*)(AgentModel *, mlm_data *))symbol_ptr;
+  }
   else if(symbol.find("modelTick") != std::string::npos) {
-  	modelTickPtr = (void (*)(AgentModel *))dlsym(model_handle, symbol.c_str());
-    DLSYM_ERROR_CHECK(modelTickPtr, symbol);
+  	modelTickPtr = (void (*)(AgentModel *))symbol_ptr;
   }
   else {
     std::cerr << "Could not match symbol \'" << symbol << "\' in the mangled symbols list." << std::endl;
@@ -134,7 +127,7 @@ void loadModelSymbol(void * model_handle, std::string& symbol) {
   }
 }
 
-void * loadModel(const char * model_path) {
+void * dlLoadModel(const char * model_path) {
   std::vector<std::string> symbols = extractMangledSymbols(model_path);
   symbols.emplace_back("loaded_model");
 
@@ -158,27 +151,38 @@ void * loadModel(const char * model_path) {
 }
 
 int main(int argc, char** argv) {
-  
-  const char* model_lib_path;
-  model_lib_path = *(argv + 1);
-  void * model_handle = loadModel(model_lib_path);
+
+  void * model_handle = dlLoadModel(argv[1]);
+  char * init_filename = NULL;
+
+  if (argc == 3) {
+    init_filename = argv[2];
+  }
+
+  // load model from shared library and process init file
+  loaded_model->modelLoadInitState(init_filename);
   SimSpace space(*loaded_model);
   SimCell::set_space(&space);
- 
+
+  // init sim cells to hold initial agent data
+  for(auto& cell : space.cells) {
+    cell.data = loaded_model->newAgent(&cell);
+  }
+
   // Open output file for logging
   std::string log_file_path = std::string("./log_file");
-  std::cout << "Log file output file: " << log_file_path << std::endl; 
-  std::ofstream log_file(log_file_path); 
- 
+  std::cout << "Log file output file: " << log_file_path << std::endl;
+  std::ofstream log_file(log_file_path);
+
   // Print out logfile headers
   log_file << loaded_model->model_name << std::endl; // model name
   // log_file <<  number of inital agents
   log_file << "Enviroment_Size:" <<  loaded_model->dimensions[0] << std::endl;
   log_file << "Grid_Space:" << "10" << std::endl;
-  log_file << "GridLines:" << "1" << std::endl;  
-  int limit = 100;
+  log_file << "GridLines:" << "1" << std::endl;
   log_file << "ColorByState:" << "1" << std::endl;
 
+  int limit = 100;
   int it = 0;
   while(it < limit) {
     // Ask every agent's question
@@ -201,13 +205,13 @@ int main(int argc, char** argv) {
       if(cell.is_empty()) continue; // skip empty cells
       loaded_model->updateAgent(cell.data);
     }
-	
+
     log_file << it;
     // Call log function for each cell containing an agent
     for(auto& cell : space.cells) {
       if(cell.is_empty()) continue; // skip empty cells
 			log_file << loaded_model->Log(cell.data);
-    } 
+    }
 
     log_file << std::endl;
 

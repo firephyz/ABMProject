@@ -213,7 +213,7 @@ SourceAST_constant_C::SourceAST_constant_C(xmlNodePtr node)
   if(xml_attr != NULL) {
     if(type == ConstantType::State) {
       std::string agent_name((const char *)xml_attr->children->content);
-      states_agent = &abmodel.find_agent_by_name(agent_name);
+      states_agent_index = abmodel.get_agent_type_index(agent_name);
     }
     else {
       util::error(node) << "Constant of type \'" << type_string << "\' does not need an \'agent\' attribute.\n";
@@ -232,7 +232,7 @@ SourceAST_constant_C::to_source() const
   CHECK_AST_CODE_GEN_READY();
 
   if(type == ConstantType::State) {
-    return "AgentState::STATE_" + states_agent->getName() + "_" + value;
+    return "AgentState::STATE_" + abmodel.agents[states_agent_index].getName() + "_" + value;
   }
   else {
     return value;
@@ -264,7 +264,7 @@ SourceAST_constant_C::to_string()
   result << "\' value=\'" << value << "\'";
 
   if(type == ConstantType::State) {
-    result << " agent=\'" << states_agent->getName() << "\'";
+    result << " agent=\'" << abmodel.agents[states_agent_index].getName() << "\'";
   }
 
   result << std::endl;

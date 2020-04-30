@@ -5,6 +5,7 @@
 #include <string>
 
 #include "agent/initial_agent.h"
+#include "agent/agent_iterator.h"
 
 // overrides the initial values of the vars decared in agent_scopes.
 // used during simulation initialization
@@ -18,18 +19,18 @@ struct VarValueOverride {
 // Holds the important data required when describing an initial agent like
 // the var overrides and agent type
 struct ConcreteInitialAgent : public InitialAgent {
+  ConcreteInitialAgent();
   ConcreteInitialAgent(xmlNodePtr node);
-  std::string gen_constructor() const {
-    std::cout << "ConcreteInitialAgent\n";
-    return std::string();
-  }
-  InitialAgentIterator enumerate() const;
-  bool operator!=(const ConcreteInitialAgent& other) const;
-  const std::string& getAgentName() const { return agent_type; }
+  ConcreteInitialAgent(const ConcreteInitialAgent& ag);
 
-  std::string agent_type;
+  InitialAgentIterator enumerate() const;
+  void setTypeRegionIndex(size_t index) { type_region_index = index; }
+  //bool operator!=(const ConcreteInitialAgent& other) const;
+
+  // index of the concrete_agent for the init vector in which it is stored
+  // under its particular type
+  size_t type_region_index;
   std::vector<VarValueOverride> vars;
-  int unique_id;
 };
 
 #endif

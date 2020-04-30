@@ -32,6 +32,7 @@
 #include "abmodel.h"
 #include "parser.h"
 #include "util.h"
+#include "debug.h"
 
 struct program_args_t pargs;
 ABModel abmodel;
@@ -66,7 +67,7 @@ void parseArgs(int argc, char *argv[])
   bool arg_parse_error = false;
 
   for(int arg_index = 1; arg_index < argc; ++arg_index) {
-    if(strcmp(argv[arg_index], "-target") == 0) {
+    if(strcmp(argv[arg_index], "--target") == 0) {
       ++arg_index;
 
       if(arg_index >= argc) {
@@ -89,7 +90,7 @@ void parseArgs(int argc, char *argv[])
         arg_parse_error = true;
       }
     }
-    else if(strcmp(argv[arg_index], "-runtime-path") == 0) {
+    else if(strcmp(argv[arg_index], "--runtime-path") == 0) {
       ++arg_index;
 
       if(arg_index >= argc) {
@@ -147,7 +148,6 @@ void parseArgs(int argc, char *argv[])
     if(last_slash_pos != std::string::npos) {
       pargs.model_lib_name = pargs.model_lib_name.substr(last_slash_pos + 1);
     }
-    pargs.model_lib_name += ".so";
   }
 
   if(arg_parse_error) {
@@ -167,6 +167,9 @@ void parseArgs(int argc, char *argv[])
   }
 }
 
+struct test_struct {
+  int a;
+};
 int main(int argc, char *argv[])
 {
   parseArgs(argc, argv);
@@ -174,16 +177,21 @@ int main(int argc, char *argv[])
   // load and parse input model
   ABModel& model = parse_model(pargs.xml_model_path.c_str());
 
-//  std::cout << model.to_string();
+  #if VERBOSE_AST_GEN
+  std::cout << model.to_string();
+  #endif
 
   // write out ast as code to file
   std::string unique_id = std::to_string((int)time(NULL));
   std::string source_file_name = "./model-" + unique_id + ".cpp";
   std::string object_file_name = "./model-" + unique_id + ".o";
   std::ofstream file_out(source_file_name);
-  std::string model_source = model.to_c_source();
+  std::string model_source = model.to_c_source(std::stol(unique_id));
   file_out << model_source << "\n";
   file_out.close();
+
+  // write out init file
+  model.write_init_file(std::stol(unique_id));
 
   // compile file
   std::cout << "Compiling output file \'" << source_file_name << "\'..." << std::endl;
@@ -195,14 +203,17 @@ int main(int argc, char *argv[])
   }
   else {
     // link the file
-    std::string link_command = "g++ -g -shared -o " + pargs.model_lib_name + " " + object_file_name;
+    std::string lib_name = pargs.model_lib_name + "-" + unique_id + ".so ";
+    std::string link_command = "g++ -g -shared -o " + lib_name + object_file_name;
+    std::cout << link_command << std::endl;
     system(link_command.c_str());
-    if(stat(pargs.model_lib_name.c_str(), &buf)) {
+    if(stat(("./" + lib_name).c_str(), &buf)) {
       std::cerr << "Failed to link the generated object file.\n";
+      perror(strerror(errno));
     }
 
     // cleanup
-    remove(object_file_name.c_str());
+    //remove(object_file_name.c_str());
   }
 
   // cleanup

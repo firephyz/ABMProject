@@ -3,8 +3,8 @@
 
 #include "communications.h"
 #include "spatial.h"
-#include <cstdlib>
 
+#include <cstdlib>
 #include <vector>
 #include <string.h>
 #include <iostream>
@@ -43,72 +43,42 @@ struct mlm_data {
 
 // Must be outside class to be resolved by dlsym
 // Declared and defined in main during model loading with libdl
-extern mlm_data *          (*modelNewAgentPtr)(AgentModel * this_class, void * position, SimCell * cell);
-extern answer_block *      (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * data);
-extern void                (*modelReceiveAnswerPtr)(AgentModel * this_class, mlm_data * data, answer_block * answer);
+extern mlm_data * (*modelNewAgentPtr)(AgentModel * this_class, SimCell * cell);
+extern answer_block * (*modelGiveAnswerPtr)(AgentModel * this_class, mlm_data * data);
+extern void (*modelReceiveAnswerPtr)(AgentModel * this_class, mlm_data * data, answer_block * answer);
 extern const CommsNeighborhood&  (*modelGiveNeighborhoodPtr)(AgentModel * this_class, mlm_data * data);
-extern void                (*modelUpdateAgentPtr)(AgentModel * this_class, mlm_data * data);
-extern std::string         (*modelLogPtr)(AgentModel * this_class, mlm_data * data);
-extern std::string 				 (*modelAgentTypeEnumToStringPtr)(AgentModel * this_class, AgentType type);
-extern void                (*modelTickPtr)(AgentModel * this_class);
+extern void (*modelUpdateAgentPtr)(AgentModel * this_class, mlm_data * data);
+extern void (*modelTickPtr)(AgentModel * this_class);
+
+extern std::string (*modelLogPtr)(AgentModel * this_class, mlm_data * data);
+extern std::string (*modelAgentTypeEnumToStringPtr)(AgentModel * this_class, AgentType type);
+
 /**********************************************************
  * The following class is only constructed in the MLM cpp files.
  * Not intended to be used by runtime
  **********************************************************/
 // holds data for initial agents in the simulation
-// template and constexpr strangeness is so we can construct
-// arrays of initial agents in the MLM binary with no runtime overhead
-template<int N_DIM>
-class SimAgent {
+// template
+class InitAgent {
 public:
-  static const int num_dimensions = N_DIM;
-
-  constexpr SimAgent(const uint agent_type, const std::initializer_list<size_t>& position, void * init_data)
-    : agent_type(agent_type)
-    , init_data(init_data)
-  {
-    std::copy(position.begin(), position.end(), this->position);
-  }
-
-  bool is_at_position(void * query_position) const
-  {
-    std::stringstream position_str;
-    size_t * query_position_array = (size_t *)query_position;
-    for(int i = 0; i < num_dimensions; ++i) {
-      if(query_position_array[i] != position[i]) {
-        return false;
-      }
-      position_str << query_position_array[i];
-      if(i != num_dimensions - 1) {
-        position_str << ", ";
-      }
-    }
-  
-    return true;
-  }
+  InitAgent() = default;
+  InitAgent(std::string init);
 
   uint getAgentType() const { return agent_type; }
-  void * getInitData() const { return init_data; }
+  size_t getInitIndex() const { return init_data_index; }
 
 private:
   uint agent_type;
-  size_t position[num_dimensions];
-  void * init_data;
+  size_t init_data_index;
 };
 
 class AgentModel {
 public:
 /***********************************************************************
  * Models must specify these elements                                  *
- ***********************************************************************/ 
-  // For Logging
-  const char * model_name;
-  const SpatialType space_type;
-  const int num_dimensions;
-  const size_t * dimensions;
-  
+ ***********************************************************************/
   // Model makers must implement functions below
-  mlm_data *          modelNewAgent(void * position, SimCell * cell);
+  mlm_data *          modelNewAgent(SimCell * cell);
   answer_block *      modelGiveAnswer(mlm_data * data);
   void                modelReceiveAnswer(mlm_data * data, answer_block * answer);
   const CommsNeighborhood&  modelGiveNeighborhood(mlm_data * data);
@@ -119,17 +89,36 @@ public:
  * Model specifc elements done                                         *
  ***********************************************************************/
 
+  // For Logging
+  const char * model_name;
+  const SpatialType space_type;
+  const int num_dims;
+  const size_t * dimensions;
+  const char * init_path;
+
+  // malloc space after loading model, vectors are not constexpr
+  size_t initial_agents_size;
+  InitAgent * initial_agents;
 
   // constexpr so it is constructed in place in the library at compile time
-  constexpr AgentModel(const char * model_name, SpatialType space_type, int num_dimensions, const size_t * dimensions)
+  constexpr AgentModel(const char * model_name,
+                       SpatialType space_type,
+                       int num_dimensions,
+                       const size_t * dimensions,
+                       const char * init_path)
     : model_name(model_name)
     , space_type(space_type)
-    , num_dimensions(num_dimensions)
+    , num_dims(num_dimensions)
     , dimensions(dimensions)
+    , init_path(init_path)
+    , initial_agents_size(0)
+    , initial_agents(NULL)
   {}
 
+  void modelLoadInitState(const char * init_filename);
+
   // So we can call these functions in runtime code nicely
-  inline mlm_data * newAgent(void * position, SimCell * cell) { return (*modelNewAgentPtr)(this, position, cell); }
+  inline mlm_data * newAgent(SimCell * cell) { return (*modelNewAgentPtr)(this, cell); }
   inline answer_block * giveAnswer(mlm_data * data) { return (*modelGiveAnswerPtr)(this, data); }
   inline void receiveAnswer(mlm_data * data, answer_block * answer) { return (*modelReceiveAnswerPtr)(this, data, answer); }
   inline const CommsNeighborhood& giveNeighborhood(mlm_data * data) { return (*modelGiveNeighborhoodPtr)(this, data); }

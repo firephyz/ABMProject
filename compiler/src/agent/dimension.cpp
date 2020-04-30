@@ -7,8 +7,10 @@
 
 extern ABModel abmodel;
 
-dimension::dimension(const std::string& str)
+dimension::dimension(int width, const std::string& str)
 {
+  this->width = width;
+
   if(str == "all") {
     position_type = type_t::All;
     return;
@@ -219,7 +221,7 @@ dimension::begin() const
 dimension
 dimension::end(int dim_index) const
 {
-  int max_value = abmodel.init.dimension_sizes[dim_index];
+  int max_value = abmodel.dimension_sizes[dim_index];
   dimension result(*this);
   result.second_value = -1;
   result.position_type = dimension::type_t::Absolute_Position;

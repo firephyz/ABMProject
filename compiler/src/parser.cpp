@@ -7,6 +7,7 @@
 #include "config.h"
 #include "util.h"
 #include "comms.h"
+#include "debug.h"
 #include "source_tree/source_c.h"
 #include "source_tree/source_verilog.h"
 
@@ -46,20 +47,37 @@ ABModel& parse_model(const char * xml_model_path)
 
     xmlNodePtr child = xmlFirstElementChild(root);
 
-    while (child != NULL) {
-        if (xmlStrcmp(child->name, (const xmlChar*)"environment") == 0){
-          // change parser state so we limit the allowed AST
-          parser.set_state(ParserState::Environment);
-          parseEnviroment(child);
-        } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){
-          parseAgents(child);
-        } else if(xmlStrcmp(child->name, (const xmlChar*)"initialState") == 0) {
-          parseInitialState(child);
-        } else {
-          std::cout << "OOPS" << std::endl;
-        }
+    // init state must be called after parseAgents so create a callback
+    // to manage time dependency
+    bool parsed_agents = false;
+    std::pair<void (*)(xmlNodePtr child), xmlNodePtr> init_state_callback;
 
-       child = xmlNextElementSibling(child);
+    while (child != NULL) {
+      if (xmlStrcmp(child->name, (const xmlChar*)"environment") == 0){
+        // change parser state so we limit the allowed AST
+        parser.set_state(ParserState::Environment);
+        parseEnviroment(child);
+      } else if(xmlStrcmp(child->name, (const xmlChar*)"agentDefinitions") == 0){
+        parseAgents(child);
+        parsed_agents = true;
+
+        // Now parse init state if its been waiting
+        if (init_state_callback.first) {
+          init_state_callback.first(init_state_callback.second);
+        }
+      } else if(xmlStrcmp(child->name, (const xmlChar*)"initialState") == 0) {
+        if (parsed_agents) {
+          parseInitialState(child);
+        }
+        else {
+          init_state_callback.first = parseInitialState;
+          init_state_callback.second = child;
+        }
+      } else {
+        std::cout << "OOPS" << std::endl;
+      }
+
+      child = xmlNextElementSibling(child);
     }
 
     return abmodel;
@@ -83,13 +101,41 @@ void parseInitialState(xmlNodePtr node)
     curNode = xmlNextElementSibling(curNode);
   }
 
-  // sort initial_agents by position so they are processed in the correct order
-  std::sort(abmodel.init.agents.begin(), abmodel.init.agents.end());
+  // Do final sorting and pointer linking
+  abmodel.init.sortInitAgents();
+  abmodel.init.resolveInitAgentLinks();
+
+  #if DEBUG
+  for(auto iter = abmodel.init.agents_by_type.begin(); iter != abmodel.init.agents_by_type.end(); ++iter) {
+    std::cout << *iter << ", ";
+  }
+  std::cout << std::endl;
+
+  for(auto iter = abmodel.init.agents_by_position.begin(); iter != abmodel.init.agents_by_position.end(); ++iter) {
+    std::cout << *iter << ", ";
+  }
+  std::cout << std::endl;
+  #endif
 }
 
 void parse_init_agent(xmlNodePtr node)
 {
+  // push back indicies into init.agents vector
+  abmodel.init.agents_by_type.emplace_back(abmodel.init.agents_by_type.size());
+  abmodel.init.agents_by_position.emplace_back(abmodel.init.agents_by_position.size());
+
+  // push back new agent
   abmodel.init.agents.emplace_back(node);
+
+  // increment agent type
+  auto& ag = abmodel.init.agents[abmodel.init.agents.size() - 1];
+  if (ag.type_unique_id >= abmodel.init.num_agents_by_type.size()) {
+    abmodel.init.num_agents_by_type.emplace_back(0);
+  }
+  abmodel.init.num_agents_by_type[ag.type_unique_id]++;
+
+  // set init data index for indexing into type init data array
+  ag.setTypeRegionIndex(abmodel.init.num_agents_by_type[ag.type_unique_id] - 1);
 }
 
 void parse_dimensions(xmlNodePtr curNode)
@@ -114,7 +160,7 @@ void parse_dimensions(xmlNodePtr curNode)
       size_t new_str_pos = dim_sizes_str.find(" ", str_pos);
       if(new_str_pos == std::string::npos) new_str_pos = dim_sizes_str.length();
       std::string dim_size_str = dim_sizes_str.substr(str_pos, new_str_pos - str_pos);
-      abmodel.init.dimension_sizes.push_back(std::stoi(dim_size_str));
+      abmodel.dimension_sizes.push_back(std::stoi(dim_size_str));
       str_pos = new_str_pos + 1;
     }
   }
@@ -122,7 +168,7 @@ void parse_dimensions(xmlNodePtr curNode)
 
 void parseEnviroment(xmlNodePtr envChild) {
   auto value_str = (const char*)xmlGetAttribute(envChild, (const char*)"relationType")->children->content;
-  uint test_dim_count = 0;
+//  uint test_dim_count = 0;
   if (value_str == NULL) {
   	std::cerr << "No relational type specified for enivroment: " << envChild->name;
   }
@@ -146,15 +192,15 @@ void parseEnviroment(xmlNodePtr envChild) {
 		std::cerr << "Error, other relatiion types are not supported at this time" << std::endl;
    }
 
-  // Check if the number of dimensions match the number supplied
-  if (abmodel.numOfDimensions != test_dim_count) {
-		std::cerr << "Number of dimenstions specified does not match the number of those supplied to enviroment tag" << std::endl;
-	}
-
-  // Check if the number of inital dimension sizes matches the number supplied
-  if (abmodel.numOfDimensions != abmodel.init.dimension_sizes.size()) {
-		std::cerr << "Number of dimensions specified does not match the number of initial dimensions supplied" << std::endl;
-	}
+  // // Check if the number of dimensions match the number supplied
+  // if (abmodel.numOfDimensions != test_dim_count) {
+	// 	std::cerr << "Number of dimensions specified does not match the number of those supplied to enviroment tag" << std::endl;
+	// }
+  //
+  // // Check if the number of inital dimension sizes matches the number supplied
+  // if (abmodel.numOfDimensions != abmodel.init.dimension_sizes.size()) {
+	// 	std::cerr << "Number of dimensions specified does not match the number of initial dimensions supplied" << std::endl;
+	// }
 }
 
 void parseAgents(xmlNodePtr agentsChild) {

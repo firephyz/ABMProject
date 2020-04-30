@@ -75,13 +75,13 @@ class VisualSim {
     // Set Hard Limits to prevent array access errors as well as wrap
     if (a.curPos.x <= 0) {
       a.curPos.x = envSize - 1; 
-    } else if (a.curPos.x >= (envSize - 1)) {
+    } else if (a.curPos.x > (envSize - 1)) {
       a.curPos.x = 0;
     }
     
     if (a.curPos.y <= 0) {
       a.curPos.y = (envSize - 1);  
-    } else if (a.curPos.y >= (envSize - 1)) {
+    } else if (a.curPos.y > (envSize - 1)) {
       a.curPos.y = 0; 
     }
     

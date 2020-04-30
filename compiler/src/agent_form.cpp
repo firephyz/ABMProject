@@ -54,9 +54,14 @@ StateInstance::gen_state_enum_name(const std::string& agent_name) const
 
 AgentForm::AgentForm(const std::string& name)
   : agent_name(name)
+  , id(-1)
   , neighborhood(nullptr)
   , log_en(false)
-{}
+{
+  static int NEXT_ID = 0;
+  id = NEXT_ID;
+  ++NEXT_ID;
+}
 
 void
 AgentForm::set_neighborhood(std::unique_ptr<CommsNeighborhood>&& n)
@@ -219,8 +224,6 @@ struct " << gen_mlm_data_string() << " : public mlm_data {\n";
   result << "\n";
 
   // constructor
-  //result << "\t AgentType * typePtr = (AgentType*)malloc(sizeof(AgentType));\n";
-	//result << "\t *typePtr = AgentType::" << gen_enum_type_name() << ";\n";
   result << "\t" << gen_mlm_data_string() << "(SimCell * sim_cell, struct agent_init_" << agent_name << " * init_data)\n";
   result << "\t\t: mlm_data(sim_cell, AgentType::" << gen_enum_type_name()  << ", " << neighborhood->gen_c_init_value() << ")\n";
   for(auto& var : agent_scope_vars) {

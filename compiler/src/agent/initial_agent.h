@@ -7,45 +7,23 @@
 #include <iostream>
 
 #include "agent/position.h"
+#include "compiler_types.h"
 
-// stores location information and variable overrides for the starting start of an agent
+// stores location information
 struct InitialAgent {
-  virtual std::string gen_constructor() const {
-    std::cerr << "Compiler runtime error: Failed to call derived class InitialAgent::gen_constructor.\n";
-    exit(-1);
-  }
+  InitialAgent() = default;
+  InitialAgent(const InitialAgent& ag);
+
   bool operator<(const InitialAgent& other) const;
-  static bool base_neq(const InitialAgent& a, const InitialAgent& other);
-  virtual const std::string& getAgentName() const = 0;
+  bool operator!=(const InitialAgent& other) const;
+  const std::string& getName() const { return agent_type; }
+  const size_t getUniqueId() const { return type_unique_id; }
+  const std::vector<SymbolBinding>& getAgentScopeBindings() const;
 
+  std::string agent_type;
+  size_t type_unique_id;
   AgentPosition position;
-};
-
-// Holds only an absolute position and a reference to an actual concrete initial agent
-// whose position region contains this agent
-struct ConcreteInitialAgent;
-struct LogicalInitialAgent : public InitialAgent {
-  LogicalInitialAgent(const ConcreteInitialAgent& agent);
-  std::string gen_constructor() const;
-  void next(); // increments position to next in the concrete agent region
-  bool operator!=(const LogicalInitialAgent& other) const;
-  const std::string& getAgentName() const;
-
-  const ConcreteInitialAgent& actual;
-};
-
-class ConcreteInitialAgent;
-
-class InitialAgentIterator {
-  LogicalInitialAgent agent; // filled during enumeration of regions
-public:
-  InitialAgentIterator(const ConcreteInitialAgent& agent) : agent(agent) {}
-  InitialAgentIterator& begin();
-  InitialAgentIterator& end();
-
-  bool operator!=(const InitialAgentIterator& other) const;
-  InitialAgentIterator& operator++();
-  LogicalInitialAgent& operator*();
+  const AgentForm * agent;
 };
 
 #endif

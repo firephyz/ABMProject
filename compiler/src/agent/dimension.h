@@ -24,7 +24,7 @@ struct dimension {
         All,
     };
 
-    dimension(const std::string& str);
+    dimension(int width, const std::string& str);
     bool overlaps(const struct dimension& other) const;
     bool operator<(const struct dimension& other) const;\
     bool operator>(const struct dimension& other) const {
@@ -65,7 +65,7 @@ struct dimension {
     // i.e. we are using exclusive relations. >=5,<10 stores 5 and 9
     int first_value = -1;
     int second_value = -1; // only present if relation is a binary one
-    int width;
+    int width = -1;
     PositionRelation relation {PositionRelation::None};
     type_t position_type {dimension::type_t::None};
 };

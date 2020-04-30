@@ -26,9 +26,6 @@ SimCell::SimCell(SimSpace& space, int position_index)
     position[dim] = position_index / mod_amount;
     position_index = position_index % mod_amount;
   }
-
-  // create agent data if one is present. Keep NULL otherwise
-  data = loaded_model->newAgent(position, this);
 }
 
 SimCell::SimCell(SimCell&& other) noexcept
@@ -48,11 +45,19 @@ std::string SimCell::readPosition() const {
 }
 
 size_t
-SimCell::position_to_index(const size_t * pos) const
+SimCell::position_to_index() const
+{
+  return position_to_index(position);
+}
+
+size_t
+SimCell::position_to_index(size_t * new_pos) const
 {
   size_t result = 0;
+  int scale = 1;
   for(int i = 0; i < space->num_dimensions; ++i) {
-    result += pos[i] * space->dimensions[i];
+    result += new_pos[i] * scale;
+    scale *= space->dimensions[i];
   }
   return result;
 }
@@ -78,18 +83,19 @@ SimCell::move_mlm_data(size_t * new_pos)
   return true;
 }
 
-SimSpace::SimSpace(AgentModel& model) 
+SimSpace::SimSpace(AgentModel& model)
   : space_type(model.space_type)
-  , num_dimensions(model.num_dimensions)
-  , dimensions(new size_t[model.num_dimensions])
+  , num_dimensions(model.num_dims)
+  , dimensions(new size_t[model.num_dims])
   , cells()
 {
   int num_cells = 1;
-  for(int dim = 0; dim < model.num_dimensions; ++dim) {
+  for(int dim = 0; dim < model.num_dims; ++dim) {
     num_cells *= model.dimensions[dim];
     dimensions[dim] = model.dimensions[dim];
   }
 
+  // populate simulation cells and fill with init data
   cells.reserve(num_cells);
   for(int i = 0; i < num_cells; ++i) {
     cells.emplace_back(*this, i);

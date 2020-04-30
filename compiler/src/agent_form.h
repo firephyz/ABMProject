@@ -38,6 +38,7 @@ class Answer;
 class AgentForm {
 public:
   const std::string agent_name;
+  int id;
   std::vector<SymbolBinding> agent_scope_vars;
   std::vector<StateInstance> states;
   std::vector<std::shared_ptr<Question>> questions;
@@ -53,6 +54,7 @@ public:
   std::vector<StateInstance>& getStates() { return states; }
   const std::vector<StateInstance>& getStates() const { return states; }
   const std::string& getName() const { return agent_name; }
+  const int getId() const { return id; }
   const SymbolBinding& getSymbolBindingByName(const std::string& name) const;
 
   const std::vector<std::shared_ptr<Question>>& getQuestions() const { return questions; }
