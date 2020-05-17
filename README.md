@@ -1,4 +1,4 @@
-# ABM (Agent-Based Model) Project
+# ABM (Agent-Based Model) Compiler
 This project encompasses a compiler, cpu runtime and various XML models for simulation. The compiler is used along with an XML model to produce a library for linking on CPU targets. The cpu runtime executable then attaches to the library to simulate and produce a simulation log which can be viewed by the viewer tool.
 A full description of the project can be found in our report here: https://docs.google.com/document/d/1rTIuANcLehnYA-dHvYjS5EHK8xtV4vUDP5kjVS6xR2k/
 ## Project Layout
